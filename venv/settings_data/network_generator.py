@@ -1,0 +1,329 @@
+import math
+import random
+
+import networkx as nx
+
+
+def network_gen(X, Y, num_nodes=30, knn=4, node_space=100, space_probability=100,
+                node_space_ll=0, node_space_ul=350, min_edge_angle=15,
+                start_rect=None,
+                end_rect=None,
+                positive=True, shapes="None"):
+    nodes = num_nodes  # number of nodes on graph
+    node_list = []  # list to hold nodes
+    edge_list = []  # list to hold edges
+    k_neighbors = knn  # parameter affects number of edges from each node
+    flag = False  # shouldn't be needed, simplify code
+    ul = node_space_ul  # parameter, upper limit of edge length
+    ll = node_space_ll  # parameter, lower limit of path length
+    p_space = space_probability  # parameter, probability of ignoring spacing parameter
+    spacing = node_space  # parameter, defines minimum node spacing
+    # calculate mandatory region for starting node, based on xy_bounds
+    start_bound = start_rect
+    end_bound = end_rect
+    # calculate mandatory region for ending node, based on xy_bounds
+    start_node = [0, 0]  # placeholder for starting node
+    end_node = [0, 0]  # placeholder for ending node
+    theta_min = min_edge_angle  # parameter, defines angular spacing minimum for edges around a node
+    theta_flag = False  # shouldn't be needed, simplify code
+
+    # start node
+    x = random.randint(start_bound[0], start_bound[2])
+    y = random.randint(start_bound[1], start_bound[3])
+    start_node[0] = x
+    start_node[1] = y
+    node_list.append(start_node)
+
+    # end node
+    x = random.randint(end_bound[0], end_bound[2])
+    y = random.randint(end_bound[1], end_bound[3])
+    end_node[0] = x
+    end_node[1] = y
+    node_list.append(end_node)
+    count = 0
+    while len(node_list) < nodes:
+        print(count)
+        count += 1
+        if count % nodes == 0:
+            spacing -= 1
+        x = random.randint(0, X)
+        y = random.randint(0, Y)
+
+        valid = False
+        if shapes != "None":
+            for polygon in shapes:
+                if polygon_check((x, y), polygon) and positive:
+                    valid = True
+                    break
+                elif not polygon_check((x, y), polygon) and not positive:
+                    valid = True
+                    break
+        if shapes == "None" or valid:
+            init_pair = [x, y]
+            rand_int = random.randint(0, 100)
+            if rand_int > p_space:
+                for value in enumerate(node_list):
+                    if value == init_pair:
+                        flag = True
+                if not flag:
+                    node_list.append(init_pair)
+                flag = False
+            else:
+                for i, pair in enumerate(node_list):
+                    path_dist = pythag(pair[0], pair[1], init_pair[0], init_pair[1])
+                    if path_dist < spacing:
+                        flag = True
+                if not flag:
+                    node_list.append(init_pair)
+                flag = False
+        print(node_list)
+    # nested for loops iterate over every pair of nodes, once each
+    #   and place into a list of pairs
+    for i, option_i in enumerate(node_list):
+        pair_1x = node_list[i - 1][0]
+        pair_1y = node_list[i - 1][1]
+        pair_list = []
+        for j, option_j in enumerate(node_list[i:]):
+            pair_2x = node_list[j + i][0]
+            pair_2y = node_list[j + i][1]
+            pair = [pair_1x, pair_1y, pair_2x, pair_2y]
+            pair_list.append(pair)
+
+        # compute path distance between each pair of nodes in list
+        for k, pair in enumerate(pair_list):
+            path_dist = pythag(pair[0], pair[1], pair[2], pair[3])
+            pair_list[k].append(path_dist)
+            pair_list[k].append(0)
+
+        # sort list by path distance, ascending
+        pair_list = sorted(pair_list, key=lambda x: x[4])
+        index = 0
+        flag = False
+        temp_list = []
+
+        # eliminate pairs with zero path distance, MAY BE OBSOLETE
+        while flag:
+            if pair_list[0][1] == 0:
+                pair_list = pair_list[1:]
+            else:
+                flag = False
+
+        # take up to k pairs and add to edge list, starting with shortest path
+        #   distance, check path distance is between ul and ll, check candidate
+        #   angle spacing with respect to existing edges at that node
+        while index < k_neighbors - 1:
+            if len(pair_list) > index and ul > pair_list[index][4] > ll:
+                for t, temp in enumerate(edge_list):
+                    if share_node(temp, pair_list[index]):
+                        theta = theta_calc(temp, pair_list[index])
+                        if abs(theta) < theta_min:
+                            theta_flag = True
+                if not theta_flag:
+                    edge_list.append(pair_list[index])
+                    temp_list.append(pair_list[index])
+                theta_flag = False
+                index += 1
+            else:
+                index += 1
+
+    # append number name '0' to all nodes nodes
+    for i, value in enumerate(node_list):
+        node_list[i].append(2)
+
+    # name entry node '1' and exit node '0'
+    for i, value in enumerate(node_list):
+        if value[0] == start_node[0] and value[1] == start_node[1]:
+            node_list[i][2] = 1
+        elif value[0] == end_node[0] and value[1] == end_node[1]:
+            node_list[i][2] = 0
+
+    # sort node_list by name, ascending
+    node_list = sorted(node_list, key=lambda x: x[2])
+    # append number 'name' to other nodes nodes
+    for i, value in enumerate(node_list):
+        node_list[i][2] = i
+
+    while not flag:
+        edge_list = cross_check(edge_list)
+        if edge_list[len(edge_list) - 1][5] == 0:
+            flag = True
+        else:
+            del (edge_list[len(edge_list) - 1])
+
+    # create empty graph
+
+    g = nx.Graph()
+
+    for i, value in enumerate(node_list):
+        g.add_node(value[2], X=value[0], Y=value[1])
+    for i, value in enumerate(edge_list):
+        n1 = 0
+        n2 = 0
+        for j, pair in enumerate(node_list):
+            if value[0] == pair[0] and value[1] == pair[1]:
+                n1 = pair[2]
+            if value[2] == pair[0] and value[3] == pair[1]:
+                n2 = pair[2]
+        g.add_edge(n1, n2)
+
+    valid_path = nx.has_path(g, 0, 1)
+    if valid_path:
+        entry_exit_pathlength = nx.shortest_path_length(g, 0, 1)
+        valid_path = 1
+    else:
+        entry_exit_pathlength = "N/A"
+        valid_path = 0
+    num_isolates = nx.number_of_isolates(g)
+    set_island_check = set()
+    number_islands = 0
+    for i, value in enumerate(node_list):
+        if set_island_check.__contains__(i):
+            list_island_check = list(nx.dfs_preorder_nodes(g, i))
+            for i, value in enumerate(list_island_check):
+                set_island_check.remove(value)
+            number_islands += 1
+    if nx.is_connected(g):
+        average_shortest_path_length = nx.average_shortest_path_length(g)
+    else:
+        average_shortest_path_length = "N/A"
+
+    edge_connectivity = nx.edge_connectivity(g)
+    for i, value in enumerate(node_list):
+        set_island_check.add(i)
+
+    neighbors_dict = {}
+    edge_dict = {}
+
+    for i, value in enumerate(node_list):
+        neighbors_dict[value[2]] = [n for n in g.neighbors(i)]
+        edge_dict[value[2]] = [n for n in g.edges(i)]
+
+    return node_list, edge_list, neighbors_dict, edge_dict, valid_path
+
+
+def polygon_check(point, polygon):
+    check_point = (point[0] + 5000, point[1])
+    check_point_b = (point[0], point[1] + 5000)
+    n = 0
+    a = None
+    b = None
+    for i in range(len(polygon)):
+        if cross_check_2(point, check_point, polygon[i - 1], polygon[i]):
+            n += 1
+    if n % 2 == 1:
+        a = True
+    n = 0
+    for i in range(len(polygon)):
+        if cross_check_2(point, check_point_b, polygon[i - 1], polygon[i]):
+            n += 1
+    if n % 2 == 1:
+        b = True
+    if a and b:
+        return True
+    return False
+
+
+def theta_calc(a, b):
+    avx = a[0] - a[2]
+    avy = a[1] - a[3]
+    bvx = b[0] - b[2]
+    bvy = b[1] - b[3]
+    num = (avx * bvx) + (avy * bvy)
+    den = (math.sqrt((avx ** 2) + (avy ** 2)) * math.sqrt((bvx ** 2) + (bvy ** 2)))
+    if abs(num / den) > 1:
+        qot = 1
+    else:
+        qot = num / den
+    rad = math.acos(qot)
+    deg = rad * 180 / 3.14159
+    return deg
+
+
+class Point:
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+
+
+def onSegment(p, q, r):
+    if ((q.x <= max(p.x, r.x)) and (q.x >= min(p.x, r.x)) and
+            (q.y <= max(p.y, r.y)) and (q.y >= min(p.y, r.y))):
+        return True
+    return False
+
+
+def orientation(p, q, r):
+    val = (float(q.y - p.y) * (r.x - q.x)) - (float(q.x - p.x) * (r.y - q.y))
+    if (val > 0):
+        return 1
+    elif (val < 0):
+        return 2
+    else:
+        return 0
+
+
+def doIntersect(p1, q1, p2, q2):
+    o1 = orientation(p1, q1, p2)
+    o2 = orientation(p1, q1, q2)
+    o3 = orientation(p2, q2, p1)
+    o4 = orientation(p2, q2, q1)
+
+    if ((o1 != o2) and (o3 != o4)):
+        return True
+
+    if ((o1 == 0) and onSegment(p1, p2, q1)):
+        return True
+    if ((o2 == 0) and onSegment(p1, q2, q1)):
+        return True
+    if ((o3 == 0) and onSegment(p2, p1, q2)):
+        return True
+    if ((o4 == 0) and onSegment(p2, q1, q2)):
+        return True
+    return False
+
+
+def cross_check_2(A, B, C, D):
+    p1 = Point(A[0], A[1])
+    q1 = Point(B[0], B[1])
+    p2 = Point(C[0], C[1])
+    q2 = Point(D[0], D[1])
+    if doIntersect(p1, q1, p2, q2):
+        return True
+    return False
+
+
+def share_node(value, pair):
+    A = (value[0], value[1])
+    B = (value[2], value[3])
+    C = (pair[0], pair[1])
+    D = (pair[2], pair[3])
+    if A[0] == C[0] and A[1] == C[1]:
+        return True
+    elif A[0] == D[0] and A[1] == D[1]:
+        return True
+    elif B[0] == C[0] and B[1] == C[1]:
+        return True
+    elif B[0] == D[0] and B[1] == D[1]:
+        return True
+
+
+def cross_check(elist):
+    for i, value in enumerate(elist):
+        elist[i][5] = 0
+    for i, value in enumerate(elist):
+        for j, pair in enumerate(elist[i + 1:]):
+            A = (value[0], value[1])
+            B = (value[2], value[3])
+            C = (pair[0], pair[1])
+            D = (pair[2], pair[3])
+            if share_node(value, pair):
+                pass
+            elif cross_check_2(A, B, C, D):
+                elist[i][5] += 1
+    elist = sorted(elist, key=lambda x: x[5])
+    return elist
+
+
+def pythag(A, B, C, D):
+    distance = int(math.sqrt(((A - C) ** 2) + ((B - D) ** 2)))
+    return distance
