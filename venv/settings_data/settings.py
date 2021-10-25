@@ -1200,6 +1200,15 @@ class PlayerCharacter(object):
         self.level = 1
         self.exp = 0
         self.skill_points = 0
+        self.experience_to_level = 0
+
+    def update(self):
+        if self.level < len(EXPERIENCE_CURVE) + 1:
+            self.experience_to_level = sum(EXPERIENCE_CURVE[:self.level]) - self.exp
+            if self.exp > sum(EXPERIENCE_CURVE[:self.level]):
+                self.level += 1
+                self.skill_points += 1
+
 
 
 battle_characters = {
@@ -1264,9 +1273,6 @@ STATUS_LIST = ["dazed",  # can't use abilities *** NOT WORKING
                "quick",  # speed up *** NOT WORKING
                "lucky",  # luck up *** NOT WORKING
                "focus",  # crit rate up *** NOT WORKING
-               "bleed",  # hp loss based on remaining hp *** NOT WORKING
-               "toxic",  # hp loss based on missing hp *** NOT WORKING
-               "burn",  # flat hp loss *** NOT WORKING
                "curse",  # damage multiplied after calulation *** NOT WORKING
                "spite",  # damage added after calculation *** NOT WORKING
                "invincible",  # immune to damage *** NOT WORKING
@@ -1280,12 +1286,15 @@ STATUS_LIST = ["dazed",  # can't use abilities *** NOT WORKING
                "hex",  # luck down *** NOT WORKING
                "dull",  # crit rate down *** NOT WORKING
                "savage",  # crit damage up *** NOT WORKING
-               "gentle"]  # crit damage down *** NOT WORKING
+               "gentle",  # crit damage down *** NOT WORKING
+               "bleed",  # hp loss based on remaining hp
+               "toxic",  # hp loss based on missing hp
+               "burn"]  # flat hp loss
 
 STATUS_LIST_EOT = {
-    "bleed": {'effect': 5, 'animation': 'none', },  # hp loss based on remaining hp *** NOT WORKING
-    "toxic": {'effect': 5, 'animation': 'none', },  # hp loss based on missing hp *** NOT WORKING
-    "burn": {'effect': 5, 'animation': 'none', },  # flat hp loss *** NOT WORKING]
+    "bleed": {'effect': 5, 'animation': 'none', },  # hp loss based on remaining hp
+    "toxic": {'effect': 5, 'animation': 'none', },  # hp loss based on missing hp
+    "burn": {'effect': 5, 'animation': 'none', },  # flat hp loss
 }
 
 bestiary = {

@@ -437,7 +437,6 @@ class BattleManager(object):
                                                            getattr(self, self.status_tick[0][0]).y +
                                                            getattr(self, self.status_tick[0][0]).rect[3] / 2,
                                                            self.status_tick[0][1] + ' has worn off', velocity=(1, -1.2))
-
                 self.status_tick = self.status_tick[1:]
             else:
                 self.state = "Turn"
