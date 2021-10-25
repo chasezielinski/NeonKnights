@@ -1210,7 +1210,6 @@ class PlayerCharacter(object):
                 self.skill_points += 1
 
 
-
 battle_characters = {
     "Fighter": {'sprites': [image_load(r"C:\Users\Chase\Dropbox\Pycharm\FinalRogue\venv\resources\sprites"
                                        r"\Character\Battle\Fighter\Fighter_Battle128p1.png"),
@@ -1297,47 +1296,142 @@ STATUS_LIST_EOT = {
     "burn": {'effect': 5, 'animation': 'none', },  # flat hp loss
 }
 
-bestiary = {
-    "Slime": {'base_hp': [100, 120, 140, 160, 190, 220, 250, 300],
-              'base_mp': [100, 110, 120, 130, 140, 150, 160, 180],
-              'base_attack': [10, 12, 14, 16, 18, 20, 22, 28],
-              'base_magic': [10, 12, 14, 16, 18, 20, 22, 28],
-              'base_defense': [10, 12, 14, 16, 18, 20, 22, 28],
-              'base_spirit': [10, 12, 14, 16, 18, 20, 22, 28],
-              'base_luck': [10, 12, 14, 16, 18, 20, 22, 28],
-              'base_speed': [10, 12, 14, 16, 18, 20, 22, 28],
-              'exp_reward': [10, 12, 14, 16, 18, 20, 22, 28],
-              'gold_reward': [20, 25, 30, 35, 40, 45, 50, 60],
-              'supply_reward': [(0, 1), (0, 1), (0, 1), (0, 1), (0, 2), (0, 2), (0, 2), (0, 2)],
-              'elixir_reward': [(0, 1), (0, 1), (0, 1), (0, 1), (0, 2), (0, 2), (0, 2), (0, 2)],
-              'charger_reward': [(0, 1), (0, 1), (0, 1), (0, 1), (0, 2), (0, 2), (0, 2), (0, 2)],
-              'crit_rate': [1, 1, 1, 1, 1, 1.1, 1.1, 1.1],
-              'crit_damage': [1, 1, 1, 1, 1, 1, 1, 1],
-              'item_reward': [['none', 'common', 'rare'], [60, 37, 3]],
-              'attack_type': "Attack",
-              'regions': {"Desert": True, "Forest": True, "Valley": True, "Grasslands": True, "Badlands": True,
-                          "Tundra": True, "Savannah": True, "Rainforest": True, "Steppe": True, "Taiga": True},
-              'sprites': [image_load(r"C:\Users\Chase\Dropbox\Pycharm\FinalRogue\venv\resources\sprites"
-                                     r"\Enemy\Slime\Slime128p1.png"),
-                          image_load(r"C:\Users\Chase\Dropbox\Pycharm\FinalRogue\venv\resources\sprites"
-                                     r"\Enemy\Slime\Slime128p2.png"),
-                          image_load(r"C:\Users\Chase\Dropbox\Pycharm\FinalRogue\venv\resources\sprites"
-                                     r"\Enemy\Slime\Slime128p3.png"),
-                          image_load(r"C:\Users\Chase\Dropbox\Pycharm\FinalRogue\venv\resources\sprites"
-                                     r"\Enemy\Slime\Slime128p4.png")],
-              'idle': [0, 1],  # frames of sprites associated with idle state
-              'idle weights': [3, 1],  # time weights for idle frames
-              'idle speed': 1000,  # ms to complete idle cycle
-              'attack': [2],  # frames of sprites associated with attack state
-              'cast': [3],  # frames of sprites associated with cast state
-              'hit': [2],  # frames of sprites associated with hit state
-              'miss': [3],  # frames of sprites associated with miss state
-              'ai': {'ai_type': 'simple',
-                     'actions': [["Attack", "Attack"], ["Skill", "Slime Ball"]],
-                     'weights': [50, 50],
-                     'target': 'random', }
-              },
-}
+
+
+def weights_convert(idle_speed, idle_weights):
+    weight_sum = 0
+    for value in idle_weights:
+        weight_sum += value
+    for i, value in enumerate(idle_weights):
+        idle_weights[i] = value * idle_speed / weight_sum
+    return idle_weights
+
+
+class BattleCharacter(pygame.sprite.Sprite):
+    def __init__(self):
+        super().__init__()
+        self.action = None
+        self.hover = False
+        self.selected = False
+        self.current_sprite = 0
+        self.dazed = 0
+        self.disabled = 0
+        self.stunned = 0
+        self.perplexed = 0
+        self.vigilant = 0
+        self.smitten = 0
+        self.faith = 0
+        self.brave = 0
+        self.calm = 0
+        self.haste = 0
+        self.turns = 0
+        self.quick = 0
+        self.lucky = 0
+        self.focus = 0
+        self.bleed = 0
+        self.toxic = 0
+        self.burn = 0
+        self.curse = 0
+        self.spite = 0
+        self.invincible = 0
+        self.shield = 0
+        self.ward = 0
+        self.frail = 0
+        self.terrify = 0
+        self.weak = 0
+        self.distract = 0
+        self.slow = 0
+        self.hex = 0
+        self.dull = 0
+        self.savage = 0
+        self.gentle = 0
+        self.state = "Idle"
+
+
+class Slime(BattleCharacter):
+    def __init__(self, enemy_slot, region_index, n_enemy):
+        super().__init__()
+        self.hover = False
+        self.slot = enemy_slot
+        self.sprites = [image_load(r"C:\Users\Chase\Dropbox\Pycharm\FinalRogue\venv\resources\sprites"
+                                   r"\Enemy\Slime\Slime128p1.png"),
+                        image_load(r"C:\Users\Chase\Dropbox\Pycharm\FinalRogue\venv\resources\sprites"
+                                   r"\Enemy\Slime\Slime128p2.png"),
+                        image_load(r"C:\Users\Chase\Dropbox\Pycharm\FinalRogue\venv\resources\sprites"
+                                   r"\Enemy\Slime\Slime128p3.png"),
+                        image_load(r"C:\Users\Chase\Dropbox\Pycharm\FinalRogue\venv\resources\sprites"
+                                   r"\Enemy\Slime\Slime128p4.png")]
+        self.idle_frames = [0, 1]
+        self.idle_weights = [3, 1]
+        self.idle_speed = 1000
+        self.idle_time = random_int(0, self.idle_speed)
+        self.idle_index = 0
+        self.idle_weights = weights_convert(self.idle_speed, self.idle_weights)
+        self.attack_frames = [2]
+        self.cast_frames = [3]
+        self.hit_frames = [2]
+        self.miss_frames = [3]
+        self.x = self.base_x = BATTLE_MENUS['enemy positions'][n_enemy][enemy_slot][0]
+        self.y = self.base_y = BATTLE_MENUS['enemy positions'][n_enemy][enemy_slot][1]
+        self.image = self.sprites[self.idle_frames[self.idle_index]]
+        self.rect = pygame.rect.Rect(self.x, self.y, self.image.get_width(), self.image.get_height())
+        self.hp = self.max_hp = [100, 120, 140, 160, 190, 220, 250, 300][region_index]
+        self.mp = self.max_mp = [100, 110, 120, 130, 140, 150, 160, 180][region_index]
+        self.strength = [10, 12, 14, 16, 18, 20, 22, 28][region_index]
+        self.magic = [10, 12, 14, 16, 18, 20, 22, 28][region_index]
+        self.defense = [10, 12, 14, 16, 18, 20, 22, 28][region_index]
+        self.spirit = [10, 12, 14, 16, 18, 20, 22, 28][region_index]
+        self.luck = [10, 12, 14, 16, 18, 20, 22, 28][region_index]
+        self.speed = [10, 12, 14, 16, 18, 20, 22, 28][region_index]
+        self.crit_rate = [1, 1, 1, 1, 1, 1.1, 1.1, 1.1][region_index]
+        self.crit_damage = [1, 1, 1, 1, 1, 1, 1, 1][region_index]
+        self.ai = {'ai_type': 'simple',
+                   'actions': [["Attack", "Attack"], ["Skill", "Slime Ball"]],
+                   'weights': [50, 50],
+                   'target': 'random', }
+        self.exp_reward = [10, 12, 14, 16, 18, 20, 22, 28][region_index]
+        self.supply_reward = random_int([(0, 1), (0, 1), (0, 1), (0, 1), (0, 2), (0, 2), (0, 2), (0, 2)][region_index][0],
+                            [(0, 1), (0, 1), (0, 1), (0, 1), (0, 2), (0, 2), (0, 2), (0, 2)][region_index][1])
+        self.elixir_reward = random_int([(0, 1), (0, 1), (0, 1), (0, 1), (0, 2), (0, 2), (0, 2), (0, 2)][region_index][0],
+                            [(0, 1), (0, 1), (0, 1), (0, 1), (0, 2), (0, 2), (0, 2), (0, 2)][region_index][1])
+        self.charger_reward = random_int([(0, 1), (0, 1), (0, 1), (0, 1), (0, 2), (0, 2), (0, 2), (0, 2)][region_index][0],
+                             [(0, 1), (0, 1), (0, 1), (0, 1), (0, 2), (0, 2), (0, 2), (0, 2)][region_index][1])
+        self.item_reward = self.reward(region_index)
+
+    def reward(self, region_index):
+        if len([['none', 'common', 'rare'], [60, 37, 3]][region_index]) == 1:
+            if [['none', 'common', 'rare'], [60, 37, 3]][region_index][0] != 'none':
+                item = item_generate([['none', 'common', 'rare'], [60, 37, 3]][region_index])
+            else:
+                item = 'none'
+        else:
+            n = random_int(0, len([['none', 'common', 'rare'], [60, 37, 3]][region_index]))
+            if [['none', 'common', 'rare'], [60, 37, 3]][region_index][n - 1] != 'none':
+                item = item_generate([['none', 'common', 'rare'], [60, 37, 3]][region_index])
+            else:
+                item = 'none'
+        return item
+
+    def update(self, dt):
+        if self.state == "Idle":
+            self.idle_time += random_int(15, 20)
+            if self.idle_time > self.idle_weights[self.idle_index]:
+                self.idle_time -= self.idle_weights[self.idle_index]
+                self.idle_index += 1
+                if self.idle_index >= len(self.idle_frames):
+                    self.idle_index = 0
+            self.image = self.sprites[self.idle_frames[self.idle_index]]
+        elif self.state == "Attack":
+            self.image = self.sprites[self.attack_frames[0]]
+        elif self.state == "Cast":
+            self.image = self.sprites[self.cast_frames[0]]
+        elif self.state == "Hit":
+            self.image = self.sprites[self.hit_frames[0]]
+        elif self.state == "Miss":
+            self.image = self.sprites[self.miss_frames[0]]
+        self.rect = pygame.rect.Rect(self.x, self.y, self.image.get_width(), self.image.get_height())
+
+
 actions_dict = {
     "Attack": {
         "Attack": {

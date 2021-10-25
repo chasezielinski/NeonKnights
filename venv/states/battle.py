@@ -231,10 +231,10 @@ class BattleManager(object):
         self.effects = pygame.sprite.Group()
         self.list_enemy_slot = ['enemy_a', 'enemy_b', 'enemy_c', 'enemy_d', 'enemy_e']
         n_enemy = len(persist['nodes'][persist['current_position']].event_data.battle)
-        reg = persist['region_index']
+        region_index = persist['region_index']
         for i in range(n_enemy):
-            setattr(self, self.list_enemy_slot[i], Enemy(persist['nodes'][persist['current_position']].event_data.battle[0],
-                                                    self.list_enemy_slot[i], reg, n_enemy))
+            enemy = persist['nodes'][persist['current_position']].event_data.battle[i]
+            setattr(self, self.list_enemy_slot[i], eval("settings."+enemy)(self.list_enemy_slot[i], region_index, n_enemy))
             self.enemies.add(getattr(self, self.list_enemy_slot[i]))
             self.battle_characters.add(getattr(self, self.list_enemy_slot[i]))
             setattr(getattr(self, self.list_enemy_slot[i]), 'action', BattleAction(self.list_enemy_slot[i],
@@ -690,87 +690,6 @@ class Hero(Character):
         self.crit_rate = persist['characters'][player_holder].crit_rate
         self.crit_damage = persist['characters'][player_holder].crit_damage
         self.attack_type = persist['characters'][player_holder].attack_type
-
-    def update(self, dt):
-        if self.state == "Idle":
-            self.idle_time += settings.random_int(15, 20)
-            if self.idle_time > self.idle_weights[self.idle_index]:
-                self.idle_time -= self.idle_weights[self.idle_index]
-                self.idle_index += 1
-                if self.idle_index >= len(self.idle_frames):
-                    self.idle_index = 0
-            self.image = self.sprites[self.idle_frames[self.idle_index]]
-        elif self.state == "Attack":
-            self.image = self.sprites[self.attack_frames[0]]
-        elif self.state == "Cast":
-            self.image = self.sprites[self.cast_frames[0]]
-        elif self.state == "Hit":
-            self.image = self.sprites[self.hit_frames[0]]
-        elif self.state == "Miss":
-            self.image = self.sprites[self.miss_frames[0]]
-        self.rect = pygame.rect.Rect(self.x, self.y, self.image.get_width(), self.image.get_height())
-
-
-class Enemy(Character):
-    def __init__(self, enemy_type, enemy_holder, region_index, num_enemy):
-        super().__init__()
-        self.hover = False
-        self.slot = enemy_holder
-        self.sprites = settings.bestiary[enemy_type]['sprites']
-        self.idle_frames = settings.bestiary[enemy_type]['idle']
-        self.idle_weights = settings.bestiary[enemy_type]['idle weights']
-        self.idle_speed = settings.bestiary[enemy_type]['idle speed']
-        self.idle_time = settings.random_int(0, self.idle_speed)
-        self.idle_index = 0
-        weight_sum = 0
-        for value in self.idle_weights:
-            weight_sum += value
-        for i, value in enumerate(self.idle_weights):
-            self.idle_weights[i] = value * self.idle_speed / weight_sum
-        self.attack_frames = settings.bestiary[enemy_type]['attack']
-        self.cast_frames = settings.bestiary[enemy_type]['cast']
-        self.hit_frames = settings.bestiary[enemy_type]['hit']
-        self.miss_frames = settings.bestiary[enemy_type]['miss']
-        self.x = self.base_x = settings.BATTLE_MENUS['enemy positions'][num_enemy][enemy_holder][0]
-        self.y = self.base_y = settings.BATTLE_MENUS['enemy positions'][num_enemy][enemy_holder][1]
-        self.image = self.sprites[self.idle_frames[self.idle_index]]
-        self.rect = pygame.rect.Rect(self.x, self.y, self.image.get_width(), self.image.get_height())
-        self.hp = self.max_hp = settings.bestiary[enemy_type]['base_hp'][region_index]
-        self.mp = self.max_mp = settings.bestiary[enemy_type]['base_mp'][region_index]
-        self.strength = settings.bestiary[enemy_type]['base_attack'][region_index]
-        self.magic = settings.bestiary[enemy_type]['base_magic'][region_index]
-        self.defense = settings.bestiary[enemy_type]['base_defense'][region_index]
-        self.spirit = settings.bestiary[enemy_type]['base_spirit'][region_index]
-        self.luck = settings.bestiary[enemy_type]['base_luck'][region_index]
-        self.speed = settings.bestiary[enemy_type]['base_speed'][region_index]
-        self.crit_rate = settings.bestiary[enemy_type]['crit_rate'][region_index]
-        self.crit_damage = settings.bestiary[enemy_type]['crit_damage'][region_index]
-        self.ai = settings.bestiary[enemy_type]['ai']
-        self.exp_reward, self.gold_reward, self.supply_reward, self.elixir_reward, self.charger_reward, \
-        self.item_reward = self.reward(enemy_type, region_index)
-
-    def reward(self, enemy_type, region_index):
-        exp = settings.bestiary[enemy_type]['exp_reward'][region_index]
-        gold = int(
-            settings.bestiary[enemy_type]['gold_reward'][region_index] * settings.random_int(50, 100) / 100)
-        supply = settings.random_int(settings.bestiary[enemy_type]['supply_reward'][region_index][0],
-                                     settings.bestiary[enemy_type]['supply_reward'][region_index][1])
-        elixir = settings.random_int(settings.bestiary[enemy_type]['elixir_reward'][region_index][0],
-                                     settings.bestiary[enemy_type]['elixir_reward'][region_index][1])
-        charger = settings.random_int(settings.bestiary[enemy_type]['charger_reward'][region_index][0],
-                                      settings.bestiary[enemy_type]['charger_reward'][region_index][1])
-        if len(settings.bestiary[enemy_type]['item_reward'][region_index]) == 1:
-            if settings.bestiary[enemy_type]['item_reward'][region_index][0] != 'none':
-                item = settings.item_generate(settings.bestiary[enemy_type]['item_reward'][region_index])
-            else:
-                item = 'none'
-        else:
-            n = settings.random_int(0, len(settings.bestiary[enemy_type]['item_reward'][region_index]))
-            if settings.bestiary[enemy_type]['item_reward'][region_index][n - 1] != 'none':
-                item = settings.item_generate(settings.bestiary[enemy_type]['item_reward'][region_index])
-            else:
-                item = 'none'
-        return exp, gold, supply, elixir, charger, item
 
     def update(self, dt):
         if self.state == "Idle":
