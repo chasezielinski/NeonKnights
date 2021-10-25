@@ -1170,46 +1170,6 @@ class InventoryManager(object):
         self.inventory = []
 
 
-class PlayerCharacter(object):
-    def __init__(self, char_class, name="bob"):
-        char_class_upper = char_class.upper()
-        self.attack_type = "Attack"
-        self.name = name
-        self.base_class = self.current_class = char_class
-        self.hp = self.max_hp = self.base_hp = BASE_STATS[char_class_upper + "_BASE_STATS"][
-            char_class_upper + "_BASE_HP"]
-        self.mp = self.max_mp = self.base_mp = BASE_STATS[char_class_upper + "_BASE_STATS"][
-            char_class_upper + "_BASE_MP"]
-        self.strength = self.base_strength = BASE_STATS[char_class_upper + "_BASE_STATS"][
-            char_class_upper + "_BASE_STRENGTH"]
-        self.defense = self.base_defense = BASE_STATS[char_class_upper + "_BASE_STATS"][
-            char_class_upper + "_BASE_DEFENSE"]
-        self.magic = self.base_magic = BASE_STATS[char_class_upper + "_BASE_STATS"][char_class_upper + "_BASE_MAGIC"]
-        self.spirit = self.base_spirit = BASE_STATS[char_class_upper + "_BASE_STATS"][char_class_upper + "_BASE_SPIRIT"]
-        self.speed = self.base_speed = BASE_STATS[char_class_upper + "_BASE_STATS"][char_class_upper + "_BASE_SPEED"]
-        self.luck = self.base_luck = BASE_STATS[char_class_upper + "_BASE_STATS"][char_class_upper + "_BASE_LUCK"]
-        self.equipment_options = self.base_equipment_options = BASE_STATS[char_class_upper + "_BASE_STATS"][
-            char_class_upper + "_BASE_EQUIPMENT_OPTIONS"]
-        self.base_attack_type = self.attack_type = BASE_STATS[char_class_upper + "_BASE_STATS"][
-            char_class_upper + "_BASE_ATTACK_TYPE"]
-        self.equipment = {}
-        self.techniques = self.base_techniques = BASE_STATS[char_class_upper + "_BASE_STATS"][
-            char_class_upper + "_BASE_TECHNIQUES"]
-        self.crit_rate = self.base_crit_rate = 1
-        self.crit_damage = self.base_crit_damage = 1
-        self.level = 1
-        self.exp = 0
-        self.skill_points = 0
-        self.experience_to_level = 0
-
-    def update(self):
-        if self.level < len(EXPERIENCE_CURVE) + 1:
-            self.experience_to_level = sum(EXPERIENCE_CURVE[:self.level]) - self.exp
-            if self.exp > sum(EXPERIENCE_CURVE[:self.level]):
-                self.level += 1
-                self.skill_points += 1
-
-
 battle_characters = {
     "Fighter": {'sprites': [image_load(r"C:\Users\Chase\Dropbox\Pycharm\FinalRogue\venv\resources\sprites"
                                        r"\Character\Battle\Fighter\Fighter_Battle128p1.png"),
@@ -1231,6 +1191,7 @@ battle_characters = {
                 'miss': [2],  # frames of sprites associated with miss state
                 },
 }
+
 
 BATTLE_ANIMATIONS = {
     "Slash_1": {
@@ -1296,8 +1257,6 @@ STATUS_LIST_EOT = {
     "burn": {'effect': 5, 'animation': 'none', },  # flat hp loss
 }
 
-
-
 def weights_convert(idle_speed, idle_weights):
     weight_sum = 0
     for value in idle_weights:
@@ -1305,6 +1264,7 @@ def weights_convert(idle_speed, idle_weights):
     for i, value in enumerate(idle_weights):
         idle_weights[i] = value * idle_speed / weight_sum
     return idle_weights
+
 
 
 class BattleCharacter(pygame.sprite.Sprite):
@@ -1346,6 +1306,47 @@ class BattleCharacter(pygame.sprite.Sprite):
         self.savage = 0
         self.gentle = 0
         self.state = "Idle"
+
+
+class PlayerCharacter(BattleCharacter):
+    def __init__(self, char_class, name="bob"):
+        super().__init__()
+        char_class_upper = char_class.upper()
+        self.attack_type = "Attack"
+        self.name = name
+        self.base_class = self.current_class = char_class
+        self.hp = self.max_hp = self.base_hp = BASE_STATS[char_class_upper + "_BASE_STATS"][
+            char_class_upper + "_BASE_HP"]
+        self.mp = self.max_mp = self.base_mp = BASE_STATS[char_class_upper + "_BASE_STATS"][
+            char_class_upper + "_BASE_MP"]
+        self.strength = self.base_strength = BASE_STATS[char_class_upper + "_BASE_STATS"][
+            char_class_upper + "_BASE_STRENGTH"]
+        self.defense = self.base_defense = BASE_STATS[char_class_upper + "_BASE_STATS"][
+            char_class_upper + "_BASE_DEFENSE"]
+        self.magic = self.base_magic = BASE_STATS[char_class_upper + "_BASE_STATS"][char_class_upper + "_BASE_MAGIC"]
+        self.spirit = self.base_spirit = BASE_STATS[char_class_upper + "_BASE_STATS"][char_class_upper + "_BASE_SPIRIT"]
+        self.speed = self.base_speed = BASE_STATS[char_class_upper + "_BASE_STATS"][char_class_upper + "_BASE_SPEED"]
+        self.luck = self.base_luck = BASE_STATS[char_class_upper + "_BASE_STATS"][char_class_upper + "_BASE_LUCK"]
+        self.equipment_options = self.base_equipment_options = BASE_STATS[char_class_upper + "_BASE_STATS"][
+            char_class_upper + "_BASE_EQUIPMENT_OPTIONS"]
+        self.base_attack_type = self.attack_type = BASE_STATS[char_class_upper + "_BASE_STATS"][
+            char_class_upper + "_BASE_ATTACK_TYPE"]
+        self.equipment = {}
+        self.techniques = self.base_techniques = BASE_STATS[char_class_upper + "_BASE_STATS"][
+            char_class_upper + "_BASE_TECHNIQUES"]
+        self.crit_rate = self.base_crit_rate = 1
+        self.crit_damage = self.base_crit_damage = 1
+        self.level = 1
+        self.exp = 0
+        self.skill_points = 0
+        self.experience_to_level = 0
+
+    def update(self):
+        if self.level < len(EXPERIENCE_CURVE) + 1:
+            self.experience_to_level = sum(EXPERIENCE_CURVE[:self.level]) - self.exp
+            if self.exp > sum(EXPERIENCE_CURVE[:self.level]):
+                self.level += 1
+                self.skill_points += 1
 
 
 class Slime(BattleCharacter):
