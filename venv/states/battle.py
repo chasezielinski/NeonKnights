@@ -5,6 +5,28 @@ import pytweening
 from base import BaseState
 
 
+class BattleMessage:
+    def __init__(self):
+        self.message = None
+        self.timer = 0
+
+    def draw(self, surface):
+        if self.message is not None:
+            pygame.draw.rect(surface, (100, 100, 100), [200, 50, 880, 100], border_radius=12)
+            settings.tw(surface, self.message, settings.TEXT_COLOR, [200, 50, 880, 100], settings.TEXT_FONT)
+            pass
+
+    def update(self, dt):
+        if self.timer != -1:
+            if self.timer > 0:
+                self.timer -= dt
+            if self.dt <= 0:
+                self.message = None
+
+    def set_message(self, message, duration):
+        self.message = message
+        self.timer = duration
+
 class DamageParticle:
     def __init__(self):
         self.particles = []
