@@ -3,6 +3,7 @@ import random
 import numpy as np
 import pygame
 import names
+import pytweening
 
 pygame.init()
 pygame.mixer.init()
@@ -1192,7 +1193,6 @@ battle_characters = {
                 },
 }
 
-
 BATTLE_ANIMATIONS = {
     "Slash_1": {
         'sprites': [image_load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Battle\Effects"
@@ -1257,6 +1257,7 @@ STATUS_LIST_EOT = {
     "burn": {'effect': 5, 'animation': 'none', },  # flat hp loss
 }
 
+
 def weights_convert(idle_speed, idle_weights):
     weight_sum = 0
     for value in idle_weights:
@@ -1264,7 +1265,6 @@ def weights_convert(idle_speed, idle_weights):
     for i, value in enumerate(idle_weights):
         idle_weights[i] = value * idle_speed / weight_sum
     return idle_weights
-
 
 
 class BattleCharacter(pygame.sprite.Sprite):
@@ -1307,10 +1307,36 @@ class BattleCharacter(pygame.sprite.Sprite):
         self.gentle = 0
         self.state = "Idle"
 
+    def update(self, dt):
+        pass
+
 
 class PlayerCharacter(BattleCharacter):
-    def __init__(self, char_class, name="bob"):
+    def __init__(self, char_class, player_holder, name="bob"):
         super().__init__()
+        self.slot = player_holder
+        self.move_selected = False
+        self.sprites = battle_characters[char_class]['sprites']
+        self.idle_frames = battle_characters[char_class]['idle']
+        self.idle_weights = battle_characters[char_class]['idle weights']
+        self.idle_speed = battle_characters[char_class]['idle speed']
+        self.idle_time = random_int(0, self.idle_speed)
+        self.idle_index = 0
+        weight_sum = 0
+        for value in self.idle_weights:
+            weight_sum += value
+        for i, value in enumerate(self.idle_weights):
+            self.idle_weights[i] = value * self.idle_speed / weight_sum
+        self.attack_frames = battle_characters[char_class]['attack']
+        self.cast_frames = battle_characters[char_class]['cast']
+        self.hit_frames = battle_characters[char_class]['hit']
+        self.miss_frames = battle_characters[char_class]['miss']
+        self.base_x = 300
+        self.x = self.base_x
+        self.base_y = 300
+        self.y = self.base_y
+        self.image = self.sprites[self.idle_frames[self.idle_index]]
+        self.rect = pygame.rect.Rect(self.x, self.y, self.image.get_width(), self.image.get_height())
         char_class_upper = char_class.upper()
         self.attack_type = "Attack"
         self.name = name
@@ -1341,12 +1367,29 @@ class PlayerCharacter(BattleCharacter):
         self.skill_points = 0
         self.experience_to_level = 0
 
-    def update(self):
+    def update(self, dt):
         if self.level < len(EXPERIENCE_CURVE) + 1:
             self.experience_to_level = sum(EXPERIENCE_CURVE[:self.level]) - self.exp
             if self.exp > sum(EXPERIENCE_CURVE[:self.level]):
                 self.level += 1
                 self.skill_points += 1
+        if self.state == "Idle":
+            self.idle_time += random_int(15, 20)
+            if self.idle_time > self.idle_weights[self.idle_index]:
+                self.idle_time -= self.idle_weights[self.idle_index]
+                self.idle_index += 1
+                if self.idle_index >= len(self.idle_frames):
+                    self.idle_index = 0
+            self.image = self.sprites[self.idle_frames[self.idle_index]]
+        elif self.state == "Attack":
+            self.image = self.sprites[self.attack_frames[0]]
+        elif self.state == "Cast":
+            self.image = self.sprites[self.cast_frames[0]]
+        elif self.state == "Hit":
+            self.image = self.sprites[self.hit_frames[0]]
+        elif self.state == "Miss":
+            self.image = self.sprites[self.miss_frames[0]]
+        self.rect = pygame.rect.Rect(self.x, self.y, self.image.get_width(), self.image.get_height())
 
 
 class Slime(BattleCharacter):
@@ -1391,12 +1434,15 @@ class Slime(BattleCharacter):
                    'weights': [50, 50],
                    'target': 'random', }
         self.exp_reward = [10, 12, 14, 16, 18, 20, 22, 28][region_index]
-        self.supply_reward = random_int([(0, 1), (0, 1), (0, 1), (0, 1), (0, 2), (0, 2), (0, 2), (0, 2)][region_index][0],
-                            [(0, 1), (0, 1), (0, 1), (0, 1), (0, 2), (0, 2), (0, 2), (0, 2)][region_index][1])
-        self.elixir_reward = random_int([(0, 1), (0, 1), (0, 1), (0, 1), (0, 2), (0, 2), (0, 2), (0, 2)][region_index][0],
-                            [(0, 1), (0, 1), (0, 1), (0, 1), (0, 2), (0, 2), (0, 2), (0, 2)][region_index][1])
-        self.charger_reward = random_int([(0, 1), (0, 1), (0, 1), (0, 1), (0, 2), (0, 2), (0, 2), (0, 2)][region_index][0],
-                             [(0, 1), (0, 1), (0, 1), (0, 1), (0, 2), (0, 2), (0, 2), (0, 2)][region_index][1])
+        self.supply_reward = random_int(
+            [(0, 1), (0, 1), (0, 1), (0, 1), (0, 2), (0, 2), (0, 2), (0, 2)][region_index][0],
+            [(0, 1), (0, 1), (0, 1), (0, 1), (0, 2), (0, 2), (0, 2), (0, 2)][region_index][1])
+        self.elixir_reward = random_int(
+            [(0, 1), (0, 1), (0, 1), (0, 1), (0, 2), (0, 2), (0, 2), (0, 2)][region_index][0],
+            [(0, 1), (0, 1), (0, 1), (0, 1), (0, 2), (0, 2), (0, 2), (0, 2)][region_index][1])
+        self.charger_reward = random_int(
+            [(0, 1), (0, 1), (0, 1), (0, 1), (0, 2), (0, 2), (0, 2), (0, 2)][region_index][0],
+            [(0, 1), (0, 1), (0, 1), (0, 1), (0, 2), (0, 2), (0, 2), (0, 2)][region_index][1])
         self.item_reward = self.reward(region_index)
 
     def reward(self, region_index):
@@ -1431,6 +1477,99 @@ class Slime(BattleCharacter):
         elif self.state == "Miss":
             self.image = self.sprites[self.miss_frames[0]]
         self.rect = pygame.rect.Rect(self.x, self.y, self.image.get_width(), self.image.get_height())
+
+
+class BattleOverlay(object):
+    def __init__(self, persist, parent):
+        # point to parent and persist dictionary
+        self.persist = persist
+        self.parent = parent
+        # target reticle flash variables
+        self.reticle_color = None
+        self.target_color = (255, 180, 180)
+        self.target_speed = 500
+        self.target_time = 0
+        self.target_direction = 1
+
+    def update(self, dt):
+        self.reticle_color_update(dt)
+
+    def draw(self, surface):
+        pygame.draw.rect(surface, (50, 50, 50), [0, Y * 75 / 100, X, Y * 25 / 100])
+        pygame.draw.rect(surface, (50, 50, 50), [X * 80 / 100, 0, X * 20 / 100, Y])
+        if self.parent.state == "Turn":
+            if self.parent.turn_sub_state == "Move_Select" or self.parent.turn_sub_state == "Item" or \
+                    self.parent.turn_sub_state == "Skill":
+                pygame.draw.rect(surface, (150, 0, 150), BATTLE_MENUS['move_top_menu_rects']['border'], 2)
+                for i, option in enumerate(actions_dict.keys()):
+                    color = TEXT_COLOR
+                    if i == self.parent.action_type_index:
+                        color = SELECTED_COLOR
+                    tw(surface, option, color, BATTLE_MENUS['move_top_menu_rects'][option], TEXT_FONT)
+            elif self.parent.state == "Browse":
+                pygame.draw.rect(surface, (150, 150, 20), BATTLE_MENUS['turn_end_rect'], 5, 12)
+                tw(surface, "END TURN", TEXT_COLOR, BATTLE_MENUS['turn_end_rect'],
+                            HEADING_FONT)
+            elif self.parent.state == "Target_Single":
+                for i, sprite in enumerate(self.persist['battle manager'].battle_characters.sprites()):
+                    if sprite.rect.collidepoint(pygame.mouse.get_pos()):
+                        pygame.draw.rect(surface, self.reticle_color, [sprite.rect.left - 4, sprite.rect.top - 4,
+                                                                       sprite.rect.width + 8, sprite.rect.height + 8], 2)
+            elif self.parent.state == "Target_Team":
+                for i, sprite in enumerate(self.persist['battle manager'].enemies.sprites()):
+                    if sprite.rect.collidepoint(pygame.mouse.get_pos()):
+                        left = []
+                        top = []
+                        right = []
+                        bottom = []
+                        for j, value in enumerate(self.persist['battle manager'].enemies.sprites()):
+                            left.append(value.rect.left)
+                            top.append(value.rect.top)
+                            right.append(value.rect.right)
+                            bottom.append(value.rect.bottom)
+                        rect = [min(left)-4, min(top) -4, max(right) - min(left) + 4, max(bottom) - min(top) + 4]
+                        pygame.draw.rect(surface, self.reticle_color, rect, 2)
+                        break
+                for i, sprite in enumerate(self.persist['battle manager'].heroes.sprites()):
+                    if sprite.rect.collidepoint(pygame.mouse.get_pos()):
+                        left = []
+                        top = []
+                        right = []
+                        bottom = []
+                        for j, value in enumerate(self.persist['battle manager'].heroes.sprites()):
+                            left.append(value.rect.left)
+                            top.append(value.rect.top)
+                            right.append(value.rect.right)
+                            bottom.append(value.rect.bottom)
+                        rect = [min(left)-4, min(top) -4, max(right) - min(left) + 4, max(bottom) - min(top) + 4]
+                        pygame.draw.rect(surface, self.reticle_color, rect, 2)
+                        break
+            elif self.parent.state == "Target_All":
+                for i, sprite in enumerate(self.persist['battle manager'].battle_characters.sprites()):
+                    if sprite.rect.collidepoint(pygame.mouse.get_pos()):
+                        left = []
+                        top = []
+                        right = []
+                        bottom = []
+                        for j, value in enumerate(self.persist['battle manager'].battle_characters.sprites()):
+                            left.append(value.rect.left)
+                            top.append(value.rect.top)
+                            right.append(value.rect.right)
+                            bottom.append(value.rect.bottom)
+                        rect = [min(left)-4, min(top) -4, max(right) - min(left) + 4, max(bottom) - min(top) + 4]
+                        pygame.draw.rect(surface, self.reticle_color, rect, 2)
+                        break
+
+    def reticle_color_update(self, dt):
+        self.target_time += dt * self.target_direction
+        if self.target_time <= 0:
+            self.target_time = 0
+            self.target_direction *= -1
+        elif self.target_time >= self.target_speed:
+            self.target_time = self.target_speed
+            self.target_direction *= -1
+        step = pytweening.easeInOutSine(self.target_time / self.target_speed)
+        self.reticle_color = (self.target_color[0] * step, self.target_color[1] * step, self.target_color[2] * step)
 
 
 actions_dict = {

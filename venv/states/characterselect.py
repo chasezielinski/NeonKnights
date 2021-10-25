@@ -469,7 +469,7 @@ class CharacterSelect(BaseState):
             self.persist['region_generate'] = True
             self.persist['region_index'] = 0
             self.persist['characters'] = {}
-            self.persist['characters']['player_a'] = PlayerCharacter(self.options[self.active_index], self.name_entry)
+            self.persist['characters']['player_a'] = PlayerCharacter(self.options[self.active_index], 'player_a', name=self.name_entry)
             self.persist['supplies'] = 10
             self.persist['chargers'] = 5
             self.persist['elixirs'] = 5

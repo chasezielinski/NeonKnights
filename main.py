@@ -8,7 +8,7 @@ from splash import Splash
 from game import Game
 from characterselect import CharacterSelect
 from region import Region
-from battle import Battle
+from battle2 import Battle
 from map_bounds import MapBounds
 
 # initialize the game
