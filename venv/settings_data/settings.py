@@ -4,6 +4,7 @@ import numpy as np
 import pygame
 import names
 import pytweening
+import settings
 
 pygame.init()
 pygame.mixer.init()
@@ -692,7 +693,7 @@ BATTLE_MENUS = {
             'player_b': (500, 100),
             'player_c': (500, 200)}
     },
-    'slot positions': {
+    'slot_positions': {
         0: (X * 80 / 100, Y * 1 / 100),
         1: (X * 80 / 100, Y * 10 / 100),
         2: (X * 80 / 100, Y * 19 / 100),
@@ -751,7 +752,7 @@ BATTLE_MENUS = {
 }
 
 BATTLE_MENU_SPRITES = {
-    'action slot sprites': [image_load(
+    'action_slot_sprites': [image_load(
         r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Battle\Menus\Action Slot720p1.png"),
         image_load(
             r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Battle\Menus\Action Slot720p2.png"),
@@ -776,17 +777,17 @@ BATTLE_MENU_SPRITES = {
         image_load(
             r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Battle\Menus\Action Slot720p12.png")
     ],
-    'attack action': [0],
-    'attack action weights': [1],
-    'skill action': [1],
-    'skill action weights': [1],
-    'item action': [2],
-    'item action weights': [1],
-    'defend action': [3],
-    'defend action weights': [1],
-    'no action': [4, 5, 6, 7, 8, 9, 10, 11],
-    'no action weights': [8, 1, 1, 1, 16, 1, 1, 1],
-    'animation speed': 2000,
+    'attack_action': [0],
+    'attack_action_weights': [1],
+    'ability_action': [1],
+    'ability_action_weights': [1],
+    'item_action': [2],
+    'item_action_weights': [1],
+    'defend_action': [3],
+    'defend_action_weights': [1],
+    'no_action': [4, 5, 6, 7, 8, 9, 10, 11],
+    'no_action_weights': [8, 1, 1, 1, 16, 1, 1, 1],
+    'animation_speed': 2000,
     'target_reticules': {
         'target': image_load(
             r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Battle\Menus\Target Rets128p2.png"),
@@ -1268,8 +1269,9 @@ def weights_convert(idle_speed, idle_weights):
 
 
 class BattleCharacter(pygame.sprite.Sprite):
-    def __init__(self):
+    def __init__(self, parent):
         super().__init__()
+        self.parent = parent
         self.action = None
         self.hover = False
         self.selected = False
@@ -1312,8 +1314,8 @@ class BattleCharacter(pygame.sprite.Sprite):
 
 
 class PlayerCharacter(BattleCharacter):
-    def __init__(self, char_class, player_holder, name="bob"):
-        super().__init__()
+    def __init__(self, char_class, player_holder, parent="None", name="bob"):
+        super().__init__(parent)
         self.slot = player_holder
         self.move_selected = False
         self.sprites = battle_characters[char_class]['sprites']
@@ -1393,8 +1395,8 @@ class PlayerCharacter(BattleCharacter):
 
 
 class Slime(BattleCharacter):
-    def __init__(self, enemy_slot, region_index, n_enemy):
-        super().__init__()
+    def __init__(self, enemy_slot, region_index, n_enemy, parent):
+        super().__init__(parent)
         self.hover = False
         self.slot = enemy_slot
         self.sprites = [image_load(r"C:\Users\Chase\Dropbox\Pycharm\FinalRogue\venv\resources\sprites"
@@ -1443,6 +1445,9 @@ class Slime(BattleCharacter):
         self.charger_reward = random_int(
             [(0, 1), (0, 1), (0, 1), (0, 1), (0, 2), (0, 2), (0, 2), (0, 2)][region_index][0],
             [(0, 1), (0, 1), (0, 1), (0, 1), (0, 2), (0, 2), (0, 2), (0, 2)][region_index][1])
+        self.action_options = []
+        self.action_options.append(Attack(self))
+        self.action_options.append(SlimeBall(self))
         self.item_reward = self.reward(region_index)
 
     def reward(self, region_index):
@@ -1477,6 +1482,26 @@ class Slime(BattleCharacter):
         elif self.state == "Miss":
             self.image = self.sprites[self.miss_frames[0]]
         self.rect = pygame.rect.Rect(self.x, self.y, self.image.get_width(), self.image.get_height())
+
+    def select_action(self):
+        values = []
+        weights = []
+        options = []
+        for action in self.action_options:
+            values.append(action.situational_value())
+        print(values)
+        for value_set in values:
+            for weight in value_set:
+                weights.append(weight[2])
+                options.append((weight[0], weight[1]))
+        choice = choose_random_weighted(options, weights)
+        print(choice)
+        print(choice[0])
+        print(choice[1])
+        print(self.slot)
+        self.action = eval(choice[0])( self, choice[1])
+        self.parent.battle_actions.add(self.action)
+        self.parent.battle_objects.add(self.action)
 
 
 class BattleOverlay(object):
@@ -1570,6 +1595,124 @@ class BattleOverlay(object):
             self.target_direction *= -1
         step = pytweening.easeInOutSine(self.target_time / self.target_speed)
         self.reticle_color = (self.target_color[0] * step, self.target_color[1] * step, self.target_color[2] * step)
+        
+        
+class BattleAction(pygame.sprite.Sprite):
+    def __init__(self, parent, target=None):
+        super().__init__()
+        if target is None:
+            target = ['none']
+        self.state = "Idle"
+        self.target = target
+        self.hover = False
+        self.parent = parent
+        self.source = self.parent.slot
+        self.speed = self.parent.speed
+        self.queue = 0
+        self.priority = False
+        self.x = 0
+        self.y = 0
+        self.action_type = "None"
+        self.name = "None"
+        self.animation_speed = BATTLE_MENU_SPRITES['animation_speed']
+        self.sprites = BATTLE_MENU_SPRITES['action_slot_sprites']
+        self.attack_frames = BATTLE_MENU_SPRITES['attack_action']
+        self.attack_weights = weights_convert(self.animation_speed,BATTLE_MENU_SPRITES['attack_action_weights'])
+        self.ability_frames = BATTLE_MENU_SPRITES['ability_action']
+        self.ability_weights = weights_convert(self.animation_speed,BATTLE_MENU_SPRITES['ability_action_weights'])
+        self.item_frames = BATTLE_MENU_SPRITES['item_action']
+        self.item_weights = weights_convert(self.animation_speed, BATTLE_MENU_SPRITES['item_action_weights'])
+        self.defend_frames = BATTLE_MENU_SPRITES['defend_action']
+        self.defend_weights = weights_convert(self.animation_speed,BATTLE_MENU_SPRITES['defend_action_weights'])
+        self.skill_frames = BATTLE_MENU_SPRITES['ability_action']
+        self.skill_weights = weights_convert(self.animation_speed,BATTLE_MENU_SPRITES['ability_action_weights'])
+        self.none_frames = BATTLE_MENU_SPRITES['no_action']
+        self.none_weights = weights_convert(self.animation_speed,BATTLE_MENU_SPRITES['no_action_weights'])
+        self.image = self.sprites[4]
+        self.timer = self.animation_speed
+        self.animation_index = 0
+        self.turns = 0
+        self.hits = 0
+        self.mp_cost = 0
+        self.rect = pygame.Rect(self.x, self.y, self.image.get_width(), self.image.get_height())
+
+    def delete_action(self):
+        del self
+        
+    def update(self, dt):
+        self.rect = pygame.Rect(self.x, self.y, self.image.get_width(), self.image.get_height())
+        self.timer -= dt
+        if self.timer <= 0:
+            self.animation_index += 1
+            self.animation_index %= len(getattr(self, self.action_type.lower() + "_frames"))
+            self.timer = getattr(self, self.action_type.lower() + "_weights")[self.animation_index]
+            self.image = self.sprites[getattr(self, self.action_type.lower() + "_frames")[self.animation_index]]
+        if self.state == "Idle":
+            self.x, self.y = BATTLE_MENUS['slot_positions'][self.queue]
+
+    def draw_text(self, surface):
+        pygame.draw.rect(surface, (0, 0, 0), [self.rect[0] + 17, self.rect[1] + 10, self.rect[2] - 34, self.rect[3] -
+                                              20], border_radius=5)
+        tw(surface, self.source + ':' + self.name.rjust(5), TEXT_COLOR,
+           [self.rect[0] + 26, self.rect[1] + 20, self.rect[2] - 14, self.rect[3] - 24], DETAIL_FONT)
+
+           
+           
+class NoActionSelected(BattleAction):
+    def __init__(self, parent, target=None):
+        super().__init__(parent, target=None)
+
+
+class SlimeBall(BattleAction):
+    def __init__(self, parent, target=None):
+        super().__init__(parent, target=None)
+        self.target_type = "Single"
+        self.attack_stat = "strength"
+        self.defend_stat = "defense"
+        self.power = 10
+        self.mp_cost = 10
+        self.effect = [("frail", 100)]
+        self.name = "SlimeBall"
+        self.action_type = "Skill"
+
+    def situational_value(self):
+        value_set = []
+        for player in self.parent.parent.player_characters.sprites():
+            if self.parent.mp < self.mp_cost:
+                value = 0
+            elif player.frail == 0:
+                value = player.defense
+            else:
+                value = player.defense / 2
+            value_set.append((self.name, player.slot, value))
+        return value_set
+
+
+class Attack(BattleAction):
+    def __init__(self, parent, target=None):
+        super().__init__(parent, target=None)
+        self.target_type = "Single"
+        self.attack_stat = "strength"
+        self.defend_stat = "defense"
+        self.power = 20
+        self.animation = "Slash_1"
+        self.name = "Attack"
+        self.action_type = "Attack"
+
+    def situational_value(self):
+        value_set = []
+        for player in self.parent.parent.player_characters.sprites():
+            a = self.parent.strength
+            d = player.defense
+            if a/d > 1:
+                value = self.parent.strength + 20
+            else:
+                value = a/d * self.parent.strength
+            if player.frail > 0:
+                value *= 2
+            value_set.append((self.name, player.slot, value))
+        return value_set
+
 
 
 actions_dict = {
@@ -1654,7 +1797,6 @@ actions_dict = {
         },
     },
     "Defend": {
-
     },
     "Skill": {
         "Slime Ball": {
@@ -1668,7 +1810,10 @@ actions_dict = {
     },
     "Item": {
 
-    }
+    },
+    "Run": {
+
+    },
 }
 weapon_dict = {
     "Short Sword": {
