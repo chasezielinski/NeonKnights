@@ -470,23 +470,8 @@ class BattleManager(object):
                 self.state = "Do_Action"
 
 #  Sorting algorithm for action speed
-    def sort_actions(self):
-        self.actions_sorted = False
-        for i, action in enumerate(self.actions.sprites()):
-            action.order = i
-            action.action = 'none'
-        while not self.actions_sorted:
-            flag = True
-            for action1 in self.actions:
-                for action2 in self.actions:
-                    a = action1.order
-                    b = action2.order
-                    if a > b and action1.speed > action2.speed:
-                        action1.order = b
-                        action2.order = a
-                        flag = False
-            if flag:
-                self.actions_sorted = True
+
+
 
 #  set an action to a BattleAction container
     def set_action(self, source, target, action, action_type):
