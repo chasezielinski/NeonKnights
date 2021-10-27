@@ -1856,16 +1856,65 @@ class Attack(BattleAction):
     def situational_value(self):
         value_set = []
         for player in self.parent.parent.player_characters.sprites():
+            damage_low, damage_high = attack_defense_calculate(self, self.parent, player, estimate=True)
             a = self.parent.strength
             d = player.defense
-            if a / d > 1:
-                value = self.parent.strength + 20
+            if player.hp <= damage_low:
+                value = 100
+            elif damage_low < player.hp < damage_high:
+                value = 20*(damage_high-player.hp)/(damage_high-damage_low) + 80
             else:
-                value = a / d * self.parent.strength
-            if player.frail > 0:
-                value *= 2
+                value = 80 * damage_low/player.hp
             value_set.append((self.name, player.slot, value))
         return value_set
+
+
+def attack_defense_calculate(action, source, target, critical_roll=None, miss_roll=None, damage_roll=None, estimate=False):
+    attack = source.attack
+    defense = target.defense
+    source_luck = source.luck
+    target_luck = target.luck
+    if source.brave > 0:
+        attack *= 1.5
+    if source.weak > 0:
+        attack /= 1.5
+    if target.vigilant > 0:
+        defense *= 1.5
+    if target.frail > 0:
+        defense /= 1.5
+    if source.lucky > 0:
+        source_luck *= 1.5
+    if source.hex > 0:
+        source_luck /= 1.5
+    if target.lucky > 0:
+        target_luck *= 1.5
+    if target.hex > 0:
+        target_luck /= 1.5
+    if estimate:
+        low_end = (action.power * attack / defense) * 85 / 100
+        high_end = (action.power * attack / defense)
+        if target.shield > 0:
+            low_end /= 2
+            high_end /= 2
+        if target.invincible > 0:
+            low_end = 0
+            high_end = 0
+        if target.spite > 0:
+            low_end += 10
+            high_end += 10
+        if target.curse > 0:
+            low_end *= 2
+            high_end *= 2
+        return low_end, high_end
+
+    if miss_roll * source_luck / target_luck < action.accuracy:
+        damage = 'miss'
+    else:
+        critical = 1
+        if critical_roll * source.crit_rate * target_luck / source_luck <= action.crit_rate:
+            critical = 1.5 * source.crit_damage
+        damage = (action.power * attack / defense) * critical * damage_roll / 100
+    return damage
 
 
 actions_dict = {
