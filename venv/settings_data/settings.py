@@ -1610,9 +1610,8 @@ class Slime(BattleCharacter):
 
 
 class BattleOverlay(object):
-    def __init__(self, persist, parent):
+    def __init__(self, parent):
         # point to parent and persist dictionary
-        self.persist = persist
         self.parent = parent
         # target reticle flash variables
         self.reticle_color = None
@@ -1641,19 +1640,19 @@ class BattleOverlay(object):
                 tw(surface, "END TURN", TEXT_COLOR, BATTLE_MENUS['turn_end_rect'],
                    HEADING_FONT)
             elif self.parent.state == "Target_Single":
-                for i, sprite in enumerate(self.persist['battle manager'].battle_characters.sprites()):
+                for i, sprite in enumerate(self.parent.persist['battle manager'].battle_characters.sprites()):
                     if sprite.rect.collidepoint(pygame.mouse.get_pos()):
                         pygame.draw.rect(surface, self.reticle_color, [sprite.rect.left - 4, sprite.rect.top - 4,
                                                                        sprite.rect.width + 8, sprite.rect.height + 8],
                                          2)
             elif self.parent.state == "Target_Team":
-                for i, sprite in enumerate(self.persist['battle manager'].enemies.sprites()):
+                for i, sprite in enumerate(self.parent.persist['battle manager'].enemies.sprites()):
                     if sprite.rect.collidepoint(pygame.mouse.get_pos()):
                         left = []
                         top = []
                         right = []
                         bottom = []
-                        for j, value in enumerate(self.persist['battle manager'].enemies.sprites()):
+                        for j, value in enumerate(self.parent.persist['battle manager'].enemies.sprites()):
                             left.append(value.rect.left)
                             top.append(value.rect.top)
                             right.append(value.rect.right)
@@ -1661,13 +1660,13 @@ class BattleOverlay(object):
                         rect = [min(left) - 4, min(top) - 4, max(right) - min(left) + 4, max(bottom) - min(top) + 4]
                         pygame.draw.rect(surface, self.reticle_color, rect, 2)
                         break
-                for i, sprite in enumerate(self.persist['battle manager'].heroes.sprites()):
+                for i, sprite in enumerate(self.parent.persist['battle manager'].heroes.sprites()):
                     if sprite.rect.collidepoint(pygame.mouse.get_pos()):
                         left = []
                         top = []
                         right = []
                         bottom = []
-                        for j, value in enumerate(self.persist['battle manager'].heroes.sprites()):
+                        for j, value in enumerate(self.parent.persist['battle manager'].heroes.sprites()):
                             left.append(value.rect.left)
                             top.append(value.rect.top)
                             right.append(value.rect.right)
@@ -1676,13 +1675,13 @@ class BattleOverlay(object):
                         pygame.draw.rect(surface, self.reticle_color, rect, 2)
                         break
             elif self.parent.state == "Target_All":
-                for i, sprite in enumerate(self.persist['battle manager'].battle_characters.sprites()):
+                for i, sprite in enumerate(self.parent.persist['battle manager'].battle_characters.sprites()):
                     if sprite.rect.collidepoint(pygame.mouse.get_pos()):
                         left = []
                         top = []
                         right = []
                         bottom = []
-                        for j, value in enumerate(self.persist['battle manager'].battle_characters.sprites()):
+                        for j, value in enumerate(self.parent.persist['battle manager'].battle_characters.sprites()):
                             left.append(value.rect.left)
                             top.append(value.rect.top)
                             right.append(value.rect.right)
