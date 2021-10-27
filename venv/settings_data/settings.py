@@ -1743,6 +1743,7 @@ class BattleAction(pygame.sprite.Sprite):
         self.end_action_timer = None
         self.animation_start_timer = None
         self.damage_timer = None
+        self.accuracy = 100
 
     def delete_action(self):
         self.kill()
