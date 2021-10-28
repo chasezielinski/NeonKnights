@@ -1,4 +1,5 @@
 import copy
+import math
 import random
 import numpy as np
 import pygame
@@ -704,6 +705,18 @@ BATTLE_MENUS = {
         6: (X * 80 / 100, Y * 55 / 100),
         7: (X * 80 / 100, Y * 64 / 100),
     },
+    'battle_slot_index': {
+        "player_a": 0,
+        "player_b": 1,
+        "player_c": 2,
+        "player_summon_a": 3,
+        "player_summon_b": 4,
+        "enemy_a": 5,
+        "enemy_b": 6,
+        "enemy_c": 7,
+        "enemy_d": 8,
+        "enemy_e": 9,
+    },
     'player_status_rects': {
         'player_a': {
             'hp': [X * 20 / 100, Y * 76 / 100, X * 20 / 100, Y * 7 / 100],
@@ -1269,6 +1282,123 @@ def weights_convert(idle_speed, idle_weights):
     return idle_weights
 
 
+def vector_sum(v1=None, v2=None, v3=None, v4=None, v5=None):
+    vector = []
+    if v1:
+        vector = v1
+    if v2:
+        for i in range(len(vector)):
+            vector[i] = vector[i] + v2[i]
+    if v3:
+        for i in range(len(vector)):
+            vector[i] = vector[i] + v3[i]
+    if v4:
+        for i in range(len(vector)):
+            vector[i] = vector[i] + v4[i]
+    if v5:
+        for i in range(len(vector)):
+            vector[i] = vector[i] + v5[i]
+    return vector
+
+
+def flip_sign(vector):
+    if not len(vector) == 10:
+        return vector
+    else:
+        vector[5] *= -1
+        vector[6] *= -1
+        vector[7] *= -1
+        vector[8] *= -1
+        vector[9] *= -1
+        return vector
+
+
+def normalize_ultity(vector):
+    for i in range(len(vector)):
+        if vector[i] > 1:
+            vector[i] = math.log10(vector[i]) + 1
+    return vector
+
+
+def utility_select(options):
+    n = len(options)
+    max_utility = 0
+    choices = []
+    enemy_1_choice = None
+    enemy_2_choice = None
+    enemy_3_choice = None
+    enemy_4_choice = None
+    enemy_5_choice = None
+    if n > 0:
+        for option_enemy_1 in options[0]:
+            if n > 1:
+                for option_enemy_2 in options[1]:
+                    if n > 2:
+                        for option_enemy_3 in options[2]:
+                            if n > 3:
+                                for option_enemy_4 in options[3]:
+                                    if n > 4:
+                                        for option_enemy_5 in options[3]:
+                                            if n == 4:
+                                                outcome_total = vector_sum(option_enemy_1[3], option_enemy_2[3],
+                                                                           option_enemy_3[3], option_enemy_4[3])
+                                                outcome_total = flip_sign(outcome_total)
+                                                outcome_total = normalize_ultity(outcome_total)
+                                                if sum(outcome_total) > max_utility:
+                                                    max_utility = sum(outcome_total)
+                                                    enemy_1_choice = option_enemy_1
+                                                    enemy_2_choice = option_enemy_2
+                                                    enemy_3_choice = option_enemy_3
+                                                    enemy_4_choice = option_enemy_4
+                                    else:
+                                        outcome_total = vector_sum(option_enemy_1[3], option_enemy_2[3],
+                                                                   option_enemy_3[3], option_enemy_4[3])
+                                        outcome_total = flip_sign(outcome_total)
+                                        outcome_total = normalize_ultity(outcome_total)
+                                        if sum(outcome_total) > max_utility:
+                                            max_utility = sum(outcome_total)
+                                            enemy_1_choice = option_enemy_1
+                                            enemy_2_choice = option_enemy_2
+                                            enemy_3_choice = option_enemy_3
+                                            enemy_4_choice = option_enemy_4
+                            else:
+                                outcome_total = vector_sum(option_enemy_1[3], option_enemy_2[3], option_enemy_3[3])
+                                outcome_total = flip_sign(outcome_total)
+                                outcome_total = normalize_ultity(outcome_total)
+                                if sum(outcome_total) > max_utility:
+                                    max_utility = sum(outcome_total)
+                                    enemy_1_choice = option_enemy_1
+                                    enemy_2_choice = option_enemy_2
+                                    enemy_3_choice = option_enemy_3
+                    else:
+                        outcome_total = vector_sum(option_enemy_1[3], option_enemy_2[3])
+                        outcome_total = flip_sign(outcome_total)
+                        outcome_total = normalize_ultity(outcome_total)
+                        if sum(outcome_total) > max_utility:
+                            max_utility = sum(outcome_total)
+                            enemy_1_choice = option_enemy_1
+                            enemy_2_choice = option_enemy_2
+            else:
+                outcome_total = option_enemy_1[3]
+                outcome_total = flip_sign(outcome_total)
+                outcome_total = normalize_ultity(outcome_total)
+                if sum(outcome_total) > max_utility:
+                    max_utility = sum(outcome_total)
+                    enemy_1_choice = option_enemy_1
+    if enemy_1_choice:
+        choices.append(enemy_1_choice)
+    if enemy_2_choice:
+        choices.append(enemy_2_choice)
+    if enemy_3_choice:
+        choices.append(enemy_3_choice)
+    if enemy_4_choice:
+        choices.append(enemy_4_choice)
+    if enemy_5_choice:
+        choices.append(enemy_5_choice)
+
+    return choices
+
+
 class DamageParticle:
     def __init__(self):
         self.particles = []
@@ -1306,7 +1436,8 @@ class DamageParticle:
                         b %= 255
                     new_color = (r, g, b)
                     particles_copy.append([new_rect, new_velocity, particle[2], particle[3], new_color, particle[5]])
-                else: particles_copy.append(particle)
+                else:
+                    particles_copy.append(particle)
             self.particles = particles_copy
         self.delete_particles()
 
@@ -1320,16 +1451,15 @@ class DamageParticle:
         rect = [x, y, 200, 100]
         f = settings.random_int(1090, 1150) / 1000
         l = settings.random_int(100, 120) / 100
-        if (settings.X*3/8) - x < 0:
-            velocity = (-settings.X/100 * velocity[0], (-settings.Y/720)*l * velocity[1])
+        if (settings.X * 3 / 8) - x < 0:
+            velocity = (-settings.X / 100 * velocity[0], (-settings.Y / 720) * l * velocity[1])
             force = (f, 0)
         else:
-            velocity = (settings.X/100 * velocity[0], (-settings.Y/720)*l * velocity[1])
+            velocity = (settings.X / 100 * velocity[0], (-settings.Y / 720) * l * velocity[1])
             force = (f, 0)
         color = (20, 100, 20)
         particle = [rect, velocity, force, damage, color, critical, delay]
         self.particles.append(particle)
-
 
     def delete_particles(self):
         particle_copy = [particle for particle in self.particles if particle[4] != (255, 255, 255)]
@@ -1341,6 +1471,7 @@ class DamageParticle:
 class BattleCharacter(pygame.sprite.Sprite):
     def __init__(self, parent="None"):
         super().__init__()
+        self.slot = "None"
         self.parent = parent
         self.action = None
         self.hover = False
@@ -1378,6 +1509,7 @@ class BattleCharacter(pygame.sprite.Sprite):
         self.savage = 0
         self.gentle = 0
         self.state = "Idle"
+        self.action_options = []
 
     def update(self, dt):
         pass
@@ -1403,6 +1535,24 @@ class BattleCharacter(pygame.sprite.Sprite):
             self.hp -= damage_total
             if self.hp < 0:
                 self.hp = 0
+
+    def give_options(self):
+        options = []
+        if hasattr(self, 'action'):
+            if getattr(self.action, 'name', "None") != "None":
+                return [(self.slot, "None", ["None"], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0])]
+        for action in self.action_options:
+            if action.is_usable():
+                action_outcomes = action.expected_value()
+                for i in range(len(action_outcomes)):
+                    options.append(action_outcomes[i])
+        #        self.action = eval(choice[0])(self, choice[1])
+        #        self.parent.battle_actions.add(self.action)
+        #        self.parent.battle_objects.add(self.action)
+        if options:
+            return options
+        else:
+            return [(self.slot, "None", ["None"], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0])]
 
 
 class PlayerCharacter(BattleCharacter):
@@ -1488,7 +1638,7 @@ class PlayerCharacter(BattleCharacter):
         if not hasattr(self, 'battle_action'):
             setattr(self, 'battle_action', NoActionSelected(self))
             parent.battle_actions.add(self.battle_action)
-            parent.battle_o9bjects.add(self.battle_action)
+            parent.battle_objects.add(self.battle_action)
         elif self.battle_action.turns == 0:
             if self.battle_action == "None":
                 return
@@ -1588,26 +1738,6 @@ class Slime(BattleCharacter):
             self.image = self.sprites[self.miss_frames[0]]
         self.rect = pygame.rect.Rect(self.x, self.y, self.image.get_width(), self.image.get_height())
 
-    def select_action(self):
-        values = []
-        weights = []
-        options = []
-        for action in self.action_options:
-            values.append(action.situational_value())
-        print(values)
-        for value_set in values:
-            for weight in value_set:
-                weights.append(weight[2])
-                options.append((weight[0], weight[1]))
-        choice = choose_random_weighted(options, weights)
-        print(choice)
-        print(choice[0])
-        print(choice[1])
-        print(self.slot)
-        self.action = eval(choice[0])(self, choice[1])
-        self.parent.battle_actions.add(self.action)
-        self.parent.battle_objects.add(self.action)
-
 
 class BattleOverlay(object):
     def __init__(self, parent):
@@ -1706,7 +1836,7 @@ class BattleAction(pygame.sprite.Sprite):
     def __init__(self, parent, target=None):
         super().__init__()
         if target is None:
-            target = ['none']
+            target = ['None']
         self.state = "Idle"
         self.target = target
         self.hover = False
@@ -1766,6 +1896,9 @@ class BattleAction(pygame.sprite.Sprite):
         tw(surface, self.source + ':' + self.name.rjust(5), TEXT_COLOR,
            [self.rect[0] + 26, self.rect[1] + 20, self.rect[2] - 14, self.rect[3] - 24], DETAIL_FONT)
 
+    def is_usable(self):
+        pass
+
 
 class NoActionSelected(BattleAction):
     def __init__(self, parent, target=None):
@@ -1804,9 +1937,9 @@ class SlimeBall(BattleAction):
         effect_roll = random_int(0, 100)
         miss_roll = random_int(0, 100)
         source_luck = getattr(self.parent, 'luck')
-        target_luck = getattr(self.parent.parent, 'target').luck
+        target_luck = getattr(self.parent.parent, self.target[0]).luck
         attack = getattr(self.parent, 'attack')
-        defense = getattr(self.parent.parent, 'target').defense
+        defense = getattr(self.parent.parent, self.target[0]).defense
         if self.parent.brave > 0:
             attack *= 1.5
         if self.parent.weak > 0:
@@ -1832,11 +1965,12 @@ class SlimeBall(BattleAction):
             damage = int((self.power * attack / defense) * critical * damage_roll / 100)
         self.parent.state = "Attack"
         # animation class needed
-        getattr(self.parent.parent, 'target').damage(damage, self, self.action_time/1000)
+        getattr(self.parent.parent, self.target[0]).damage(damage, self, self.action_time / 1000)
         for i, status in enumerate(self.effect):
             if effect_roll <= status[1]:
-                getattr(self.parent.parent, 'target').status(status[0], self, (self.action_time+(100*i))/1000)
-        self.end_action_timer = Timer(int(self.action_time/1000), self.action_done())
+                getattr(self.parent.parent, self.target[0]).status(status[0], self,
+                                                                   (self.action_time + (100 * i)) / 1000)
+        self.end_action_timer = Timer(int(self.action_time / 1000), self.action_done())
         self.end_action_timer.start()
 
     def action_done(self):
@@ -1854,26 +1988,27 @@ class Attack(BattleAction):
         self.name = "Attack"
         self.action_type = "Attack"
 
-    def situational_value(self):
+    def expected_value(self):
         value_set = []
-        for player in self.parent.parent.player_characters.sprites():
-            damage_low, damage_high, p_1, damage_critical, p_2 = attack_defense_calculate(self, self.parent, player,
-                                                                                          estimate=True)
-            a = self.parent.strength
-            d = player.defense
-            if player.hp <= damage_low:
-                value = 1
-                p = p_1
-            elif damage_low < player.hp < damage_high:
-                value = (damage_high-player.hp)/(damage_high-damage_low)
-            else:
-                value = 80 * damage_low/player.hp
-            value_set.append((self.name, player.slot, value, p))
+        for character in self.parent.parent.battle_characters.sprites():
+            outcome = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+            damage_low, damage_high, p_hit, critical_low, critical_high, p_critical = \
+                attack_defense_calculate(self, self.parent, character, ev=True)
+            outcome[BATTLE_MENUS['battle_slot_index'][character.slot]] = \
+                ((damage_low + damage_high) * p_hit * (1 - p_critical) / (2 * character.hp)) + \
+                ((critical_low + critical_high) * p_hit * p_critical / (2 * character.hp))
+            value_set.append((self.parent.slot, self.name, [character.slot], outcome))
         return value_set
 
+    def is_usable(self):
+        if self.parent.disabled > 0 or self.parent.stunned > 0:
+            return False
+        return True
 
-def attack_defense_calculate(action, source, target, critical_roll=None, miss_roll=None, damage_roll=None, estimate=False):
-    attack = source.attack
+
+def attack_defense_calculate(action, source, target, critical_roll=None, miss_roll=None, damage_roll=None,
+                             estimate=False, ev=False):
+    attack = source.strength
     defense = target.defense
     source_luck = source.luck
     target_luck = target.luck
@@ -1893,32 +2028,39 @@ def attack_defense_calculate(action, source, target, critical_roll=None, miss_ro
         target_luck *= 1.5
     if target.hex > 0:
         target_luck /= 1.5
-    if estimate:
+    if estimate or ev:
         low_end = (action.power * attack / defense) * 85 / 100
         high_end = (action.power * attack / defense)
-        critical = (action.power * attack / defense) * 1.5
+        critical_low = (action.power * attack / defense) * 1.5 * 85 / 100
+        critical_high = (action.power * attack / defense) * 1.5
         if target.shield > 0:
             low_end /= 2
             high_end /= 2
-            critical /= 2
+            critical_low /= 2
+            critical_high /= 2
         if target.invincible > 0:
             low_end = 0
             high_end = 0
-            critical = 0
+            critical_low = 0
+            critical_high = 0
         if target.spite > 0:
             low_end += 10
             high_end += 10
-            critical += 10
+            critical_low += 10
+            critical_high += 10
         if target.curse > 0:
             low_end *= 2
             high_end *= 2
-            critical *= 2
-        p_hit = (source_luck/target_luck) * action.accuracy / 100
-        p_critical = 1 - (0.95/((source_luck/target_luck) * source.crit_rate * action.crit_rate))
+            critical_low *= 2
+            critical_high *= 2
+        p_hit = (source_luck / target_luck) * action.accuracy / 100
+        p_critical = 1 - (0.95 / ((source_luck / target_luck) * source.crit_rate * action.crit_rate))
         if p_critical < 0:
             p_critical = 0
-        return low_end, high_end, p_hit, critical, p_critical
-
+        if ev:
+            return low_end, high_end, p_hit, critical_low, critical_high, p_critical
+        elif estimate:
+            return low_end, high_end, p_hit
     if miss_roll * source_luck / target_luck < action.accuracy:
         damage = 'miss'
     else:
