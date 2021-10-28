@@ -932,6 +932,13 @@ def event_parse(node_event, region):
 NODE_EVENT_IDS = {"Empty": {"Nothing": "Null"}}
 
 
+class ScreenTransition(object):
+    def __init__(self, size):
+        self.screen = pygame.display.set_mode(size)
+        self.color = (0, 0, 0)
+        self.alpha = 0
+
+
 class NodeEvent(object):
     def __init__(self, event_type, node_type, persist):
         #        region = persist['region_index']

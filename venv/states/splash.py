@@ -1,4 +1,5 @@
 import pygame
+import settings
 
 from base import BaseState
 
@@ -11,6 +12,7 @@ class Splash(BaseState):
         self.next_state = "MENU"
         self.time_active = 0
         self.done = False
+        self.persist["Transition"] = settings.ScreenTransition((settings.X, settings.Y))
 
     def update(self, dt):
         self.time_active += dt
