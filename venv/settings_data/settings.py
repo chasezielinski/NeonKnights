@@ -1744,6 +1744,7 @@ class BattleAction(pygame.sprite.Sprite):
         self.animation_start_timer = None
         self.damage_timer = None
         self.accuracy = 100
+        self.crit_rate = 1
 
     def delete_action(self):
         self.kill()
@@ -1780,7 +1781,6 @@ class SlimeBall(BattleAction):
         self.power = 10
         self.mp_cost = 10
         self.accuracy = 90
-        self.crit_rate = 5
         self.effect = [("frail", 100)]
         self.name = "SlimeBall"
         self.action_type = "Skill"
@@ -1857,16 +1857,18 @@ class Attack(BattleAction):
     def situational_value(self):
         value_set = []
         for player in self.parent.parent.player_characters.sprites():
-            damage_low, damage_high = attack_defense_calculate(self, self.parent, player, estimate=True)
+            damage_low, damage_high, p_1, damage_critical, p_2 = attack_defense_calculate(self, self.parent, player,
+                                                                                          estimate=True)
             a = self.parent.strength
             d = player.defense
             if player.hp <= damage_low:
-                value = 100
+                value = 1
+                p = p_1
             elif damage_low < player.hp < damage_high:
-                value = 20*(damage_high-player.hp)/(damage_high-damage_low) + 80
+                value = (damage_high-player.hp)/(damage_high-damage_low)
             else:
                 value = 80 * damage_low/player.hp
-            value_set.append((self.name, player.slot, value))
+            value_set.append((self.name, player.slot, value, p))
         return value_set
 
 
@@ -1894,25 +1896,34 @@ def attack_defense_calculate(action, source, target, critical_roll=None, miss_ro
     if estimate:
         low_end = (action.power * attack / defense) * 85 / 100
         high_end = (action.power * attack / defense)
+        critical = (action.power * attack / defense) * 1.5
         if target.shield > 0:
             low_end /= 2
             high_end /= 2
+            critical /= 2
         if target.invincible > 0:
             low_end = 0
             high_end = 0
+            critical = 0
         if target.spite > 0:
             low_end += 10
             high_end += 10
+            critical += 10
         if target.curse > 0:
             low_end *= 2
             high_end *= 2
-        return low_end, high_end
+            critical *= 2
+        p_hit = (source_luck/target_luck) * action.accuracy / 100
+        p_critical = 1 - (0.95/((source_luck/target_luck) * source.crit_rate * action.crit_rate))
+        if p_critical < 0:
+            p_critical = 0
+        return low_end, high_end, p_hit, critical, p_critical
 
     if miss_roll * source_luck / target_luck < action.accuracy:
         damage = 'miss'
     else:
         critical = 1
-        if critical_roll * source.crit_rate * target_luck / source_luck <= action.crit_rate:
+        if critical_roll * source.crit_rate * action.crit_rate * target_luck / source_luck >= 95:
             critical = 1.5 * source.crit_damage
         damage = (action.power * attack / defense) * critical * damage_roll / 100
     return damage
