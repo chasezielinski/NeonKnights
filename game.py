@@ -11,10 +11,6 @@ class Game(object):
         self.states = states
         self.state_name = start_state
         self.state = self.states[self.state_name]
-        self.nodes = pygame.sprite.Group()
-        self.region_generate = True
-        self.region_number = 0
-        self.characters = []
 
     def event_loop(self):
         for event in pygame.event.get():
@@ -46,6 +42,3 @@ class Game(object):
             self.update(dt)
             self.draw()
             pygame.display.update()
-
-    def base_character_generate(self, char_class):
-        self.characters.append(settings.PlayerCharacter(char_class))
