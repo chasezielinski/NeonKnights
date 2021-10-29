@@ -1515,8 +1515,13 @@ class BattleCharacter(pygame.sprite.Sprite):
         self.dull = 0
         self.savage = 0
         self.gentle = 0
+        self.speed = 0
         self.state = "Idle"
         self.action_options = []
+        self.attack_action = Attack(self)
+
+    #       self.defend_action = Attack(self)
+    #       self.run_action = Attack(self)
 
     def update(self, dt):
         pass
@@ -1772,60 +1777,60 @@ class BattleOverlay(object):
                     if i == self.parent.action_type_index:
                         color = SELECTED_COLOR
                     tw(surface, option, color, BATTLE_MENUS['move_top_menu_rects'][option], TEXT_FONT)
-            elif self.parent.state == "Browse":
+            elif self.parent.turn_sub_state == "Browse":
                 pygame.draw.rect(surface, (150, 150, 20), BATTLE_MENUS['turn_end_rect'], 5, 12)
                 tw(surface, "END TURN", TEXT_COLOR, BATTLE_MENUS['turn_end_rect'],
                    HEADING_FONT)
-            elif self.parent.state == "Target_Single":
+            elif self.parent.state == "Target":
                 for i, sprite in enumerate(self.parent.persist['battle manager'].battle_characters.sprites()):
                     if sprite.rect.collidepoint(pygame.mouse.get_pos()):
                         pygame.draw.rect(surface, self.reticle_color, [sprite.rect.left - 4, sprite.rect.top - 4,
                                                                        sprite.rect.width + 8, sprite.rect.height + 8],
                                          2)
-            elif self.parent.state == "Target_Team":
-                for i, sprite in enumerate(self.parent.persist['battle manager'].enemies.sprites()):
-                    if sprite.rect.collidepoint(pygame.mouse.get_pos()):
-                        left = []
-                        top = []
-                        right = []
-                        bottom = []
-                        for j, value in enumerate(self.parent.persist['battle manager'].enemies.sprites()):
-                            left.append(value.rect.left)
-                            top.append(value.rect.top)
-                            right.append(value.rect.right)
-                            bottom.append(value.rect.bottom)
-                        rect = [min(left) - 4, min(top) - 4, max(right) - min(left) + 4, max(bottom) - min(top) + 4]
-                        pygame.draw.rect(surface, self.reticle_color, rect, 2)
-                        break
-                for i, sprite in enumerate(self.parent.persist['battle manager'].heroes.sprites()):
-                    if sprite.rect.collidepoint(pygame.mouse.get_pos()):
-                        left = []
-                        top = []
-                        right = []
-                        bottom = []
-                        for j, value in enumerate(self.parent.persist['battle manager'].heroes.sprites()):
-                            left.append(value.rect.left)
-                            top.append(value.rect.top)
-                            right.append(value.rect.right)
-                            bottom.append(value.rect.bottom)
-                        rect = [min(left) - 4, min(top) - 4, max(right) - min(left) + 4, max(bottom) - min(top) + 4]
-                        pygame.draw.rect(surface, self.reticle_color, rect, 2)
-                        break
-            elif self.parent.state == "Target_All":
-                for i, sprite in enumerate(self.parent.persist['battle manager'].battle_characters.sprites()):
-                    if sprite.rect.collidepoint(pygame.mouse.get_pos()):
-                        left = []
-                        top = []
-                        right = []
-                        bottom = []
-                        for j, value in enumerate(self.parent.persist['battle manager'].battle_characters.sprites()):
-                            left.append(value.rect.left)
-                            top.append(value.rect.top)
-                            right.append(value.rect.right)
-                            bottom.append(value.rect.bottom)
-                        rect = [min(left) - 4, min(top) - 4, max(right) - min(left) + 4, max(bottom) - min(top) + 4]
-                        pygame.draw.rect(surface, self.reticle_color, rect, 2)
-                        break
+        elif self.parent.state == "Target_Team":
+            for i, sprite in enumerate(self.parent.persist['battle manager'].enemies.sprites()):
+                if sprite.rect.collidepoint(pygame.mouse.get_pos()):
+                    left = []
+                    top = []
+                    right = []
+                    bottom = []
+                    for j, value in enumerate(self.parent.persist['battle manager'].enemies.sprites()):
+                        left.append(value.rect.left)
+                        top.append(value.rect.top)
+                        right.append(value.rect.right)
+                        bottom.append(value.rect.bottom)
+                    rect = [min(left) - 4, min(top) - 4, max(right) - min(left) + 4, max(bottom) - min(top) + 4]
+                    pygame.draw.rect(surface, self.reticle_color, rect, 2)
+                    break
+            for i, sprite in enumerate(self.parent.persist['battle manager'].heroes.sprites()):
+                if sprite.rect.collidepoint(pygame.mouse.get_pos()):
+                    left = []
+                    top = []
+                    right = []
+                    bottom = []
+                    for j, value in enumerate(self.parent.persist['battle manager'].heroes.sprites()):
+                        left.append(value.rect.left)
+                        top.append(value.rect.top)
+                        right.append(value.rect.right)
+                        bottom.append(value.rect.bottom)
+                    rect = [min(left) - 4, min(top) - 4, max(right) - min(left) + 4, max(bottom) - min(top) + 4]
+                    pygame.draw.rect(surface, self.reticle_color, rect, 2)
+                    break
+        elif self.parent.state == "Target_All":
+            for i, sprite in enumerate(self.parent.persist['battle manager'].battle_characters.sprites()):
+                if sprite.rect.collidepoint(pygame.mouse.get_pos()):
+                    left = []
+                    top = []
+                    right = []
+                    bottom = []
+                    for j, value in enumerate(self.parent.persist['battle manager'].battle_characters.sprites()):
+                        left.append(value.rect.left)
+                        top.append(value.rect.top)
+                        right.append(value.rect.right)
+                        bottom.append(value.rect.bottom)
+                    rect = [min(left) - 4, min(top) - 4, max(right) - min(left) + 4, max(bottom) - min(top) + 4]
+                    pygame.draw.rect(surface, self.reticle_color, rect, 2)
+                    break
 
     def reticle_color_update(self, dt):
         self.target_time += dt * self.target_direction
@@ -1906,6 +1911,12 @@ class BattleAction(pygame.sprite.Sprite):
     def is_usable(self):
         pass
 
+    def do_action(self):
+        pass
+
+    def target_set(self, battle_character):
+        pass
+
 
 class NoActionSelected(BattleAction):
     def __init__(self, parent, target=None):
@@ -1982,6 +1993,7 @@ class SlimeBall(BattleAction):
 
     def action_done(self):
         self.parent.stop_wait()
+        self.kill()
 
 
 class Attack(BattleAction):
@@ -2011,6 +2023,18 @@ class Attack(BattleAction):
         if self.parent.disabled > 0 or self.parent.stunned > 0:
             return False
         return True
+
+    def do_action(self):
+        for target in self.target:
+            damage = attack_defense_calculate(self, self.parent, getattr(self.parent.parent, target))
+            getattr(self.parent.parent, target).damage(damage, self, delay=100)
+
+    def target_set(self, battle_character):
+        self.target = battle_character.slot
+        self.parent.battle_action.kill()
+        self.parent.battle_action = self
+        self.parent.parent.battle_actions.add(self)
+        self.parent.parent.battle_objects.add(self)
 
 
 def attack_defense_calculate(action, source, target, critical_roll=None, miss_roll=None, damage_roll=None,
