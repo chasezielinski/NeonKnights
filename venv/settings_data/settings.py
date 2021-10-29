@@ -1664,6 +1664,7 @@ class PlayerCharacter(BattleCharacter):
 class Slime(BattleCharacter):
     def __init__(self, enemy_slot, region_index, n_enemy, parent):
         super().__init__(parent)
+        self.name = "Slime" + enemy_slot[5:]
         self.hover = False
         self.slot = enemy_slot
         self.sprites = [image_load(r"C:\Users\Chase\Dropbox\Pycharm\FinalRogue\venv\resources\sprites"
@@ -1781,56 +1782,29 @@ class BattleOverlay(object):
                 pygame.draw.rect(surface, (150, 150, 20), BATTLE_MENUS['turn_end_rect'], 5, 12)
                 tw(surface, "END TURN", TEXT_COLOR, BATTLE_MENUS['turn_end_rect'],
                    HEADING_FONT)
-            elif self.parent.state == "Target":
-                for i, sprite in enumerate(self.parent.persist['battle manager'].battle_characters.sprites()):
-                    if sprite.rect.collidepoint(pygame.mouse.get_pos()):
+            elif self.parent.turn_sub_state == "Target":
+                target_type = getattr(self.parent.selected_action, 'target_type')
+                target = None
+                for sprite in self.parent.battle_characters.sprites():
+                    if getattr(sprite, 'hover', False):
+                        target = sprite
+                if target_type == "Single" and target is not None:
+                    pygame.draw.rect(surface, self.reticle_color, [target.rect.left - 4, target.rect.top - 4,
+                                                                   target.rect.width + 8, target.rect.height + 8], 2)
+                elif target_type == "Team" and target is not None:
+                    if target.slot[:5] == "enemy":
+                        for sprite in self.parent.enemy_characters.sprites():
+                            pygame.draw.rect(surface, self.reticle_color, [sprite.rect.left - 4, sprite.rect.top - 4,
+                                                                           sprite.rect.width + 8, sprite.rect.height + 8], 2)
+                    else:
+                        for sprite in self.parent.player_characters.sprites():
+                            pygame.draw.rect(surface, self.reticle_color, [sprite.rect.left - 4, sprite.rect.top - 4,
+                                                                           sprite.rect.width + 8, sprite.rect.height + 8], 2)
+
+                elif target_type == "All" and target is not None:
+                    for sprite in self.parent.battle_characters.sprites():
                         pygame.draw.rect(surface, self.reticle_color, [sprite.rect.left - 4, sprite.rect.top - 4,
-                                                                       sprite.rect.width + 8, sprite.rect.height + 8],
-                                         2)
-        elif self.parent.state == "Target_Team":
-            for i, sprite in enumerate(self.parent.persist['battle manager'].enemies.sprites()):
-                if sprite.rect.collidepoint(pygame.mouse.get_pos()):
-                    left = []
-                    top = []
-                    right = []
-                    bottom = []
-                    for j, value in enumerate(self.parent.persist['battle manager'].enemies.sprites()):
-                        left.append(value.rect.left)
-                        top.append(value.rect.top)
-                        right.append(value.rect.right)
-                        bottom.append(value.rect.bottom)
-                    rect = [min(left) - 4, min(top) - 4, max(right) - min(left) + 4, max(bottom) - min(top) + 4]
-                    pygame.draw.rect(surface, self.reticle_color, rect, 2)
-                    break
-            for i, sprite in enumerate(self.parent.persist['battle manager'].heroes.sprites()):
-                if sprite.rect.collidepoint(pygame.mouse.get_pos()):
-                    left = []
-                    top = []
-                    right = []
-                    bottom = []
-                    for j, value in enumerate(self.parent.persist['battle manager'].heroes.sprites()):
-                        left.append(value.rect.left)
-                        top.append(value.rect.top)
-                        right.append(value.rect.right)
-                        bottom.append(value.rect.bottom)
-                    rect = [min(left) - 4, min(top) - 4, max(right) - min(left) + 4, max(bottom) - min(top) + 4]
-                    pygame.draw.rect(surface, self.reticle_color, rect, 2)
-                    break
-        elif self.parent.state == "Target_All":
-            for i, sprite in enumerate(self.parent.persist['battle manager'].battle_characters.sprites()):
-                if sprite.rect.collidepoint(pygame.mouse.get_pos()):
-                    left = []
-                    top = []
-                    right = []
-                    bottom = []
-                    for j, value in enumerate(self.parent.persist['battle manager'].battle_characters.sprites()):
-                        left.append(value.rect.left)
-                        top.append(value.rect.top)
-                        right.append(value.rect.right)
-                        bottom.append(value.rect.bottom)
-                    rect = [min(left) - 4, min(top) - 4, max(right) - min(left) + 4, max(bottom) - min(top) + 4]
-                    pygame.draw.rect(surface, self.reticle_color, rect, 2)
-                    break
+                                                                       sprite.rect.width + 8, sprite.rect.height + 8], 2)
 
     def reticle_color_update(self, dt):
         self.target_time += dt * self.target_direction
@@ -1905,7 +1879,7 @@ class BattleAction(pygame.sprite.Sprite):
     def draw_text(self, surface):
         pygame.draw.rect(surface, (0, 0, 0), [self.rect[0] + 17, self.rect[1] + 10, self.rect[2] - 34, self.rect[3] -
                                               20], border_radius=5)
-        tw(surface, self.source + ':' + self.name.rjust(5), TEXT_COLOR,
+        tw(surface, self.parent.name + ':' + self.name.rjust(5), TEXT_COLOR,
            [self.rect[0] + 26, self.rect[1] + 20, self.rect[2] - 14, self.rect[3] - 24], DETAIL_FONT)
 
     def is_usable(self):
