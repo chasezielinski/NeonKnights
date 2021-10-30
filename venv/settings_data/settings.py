@@ -1292,10 +1292,12 @@ def weights_convert(idle_speed, idle_weights):
 def vector_sum(v1=None, v2=None, v3=None, v4=None, v5=None):
     vector = []
     if v1:
-        vector = v1
+        vector = copy.deepcopy(v1)
+        print(vector)
     if v2:
         for i in range(len(vector)):
             vector[i] = vector[i] + v2[i]
+        print(vector)
     if v3:
         for i in range(len(vector)):
             vector[i] = vector[i] + v3[i]
@@ -1336,6 +1338,7 @@ def utility_select(options):
     enemy_3_choice = None
     enemy_4_choice = None
     enemy_5_choice = None
+
     if n > 0:
         for option_enemy_1 in options[0]:
             if n > 1:
@@ -1519,6 +1522,7 @@ class BattleCharacter(pygame.sprite.Sprite):
         self.state = "Idle"
         self.action_options = []
         self.attack_action = Attack(self)
+        self.battle_action = None
 
     #       self.defend_action = Attack(self)
     #       self.run_action = Attack(self)
@@ -1543,6 +1547,7 @@ class BattleCharacter(pygame.sprite.Sprite):
                 damage_total += 10
             if self.curse > 0:
                 damage_total *= 2
+            damage_total = int(damage_total)
             self.parent.damage_particle.add_particles(self.rect.centerx, self.rect.centery, damage_total, delay=delay)
             self.hp -= damage_total
             if self.hp < 0:
@@ -1565,6 +1570,12 @@ class BattleCharacter(pygame.sprite.Sprite):
             return options
         else:
             return [(self.slot, "None", ["None"], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0])]
+
+    def ko(self):
+        self.kill()
+        self.parent.battle_characters_ko.add(self)
+        self.parent.battle_objects.add(self)
+        self.battle_action.kill()
 
 
 class PlayerCharacter(BattleCharacter):
@@ -1704,18 +1715,15 @@ class Slime(BattleCharacter):
                    'weights': [50, 50],
                    'target': 'random', }
         self.exp_reward = [10, 12, 14, 16, 18, 20, 22, 28][region_index]
-        self.supply_reward = random_int(
-            [(0, 1), (0, 1), (0, 1), (0, 1), (0, 2), (0, 2), (0, 2), (0, 2)][region_index][0],
-            [(0, 1), (0, 1), (0, 1), (0, 1), (0, 2), (0, 2), (0, 2), (0, 2)][region_index][1])
-        self.elixir_reward = random_int(
-            [(0, 1), (0, 1), (0, 1), (0, 1), (0, 2), (0, 2), (0, 2), (0, 2)][region_index][0],
-            [(0, 1), (0, 1), (0, 1), (0, 1), (0, 2), (0, 2), (0, 2), (0, 2)][region_index][1])
-        self.charger_reward = random_int(
-            [(0, 1), (0, 1), (0, 1), (0, 1), (0, 2), (0, 2), (0, 2), (0, 2)][region_index][0],
-            [(0, 1), (0, 1), (0, 1), (0, 1), (0, 2), (0, 2), (0, 2), (0, 2)][region_index][1])
+        self.supply_reward = random_int([0, 0, 0, 0, 0, 0, 0, 0][region_index], [1, 1, 1, 1, 2, 2, 2, 2][region_index])
+        self.elixir_reward = random_int([0, 0, 0, 0, 0, 0, 0, 0][region_index], [1, 1, 1, 1, 2, 2, 2, 2][region_index])
+        self.charger_reward = random_int([0, 0, 0, 0, 0, 0, 0, 0][region_index], [1, 1, 1, 1, 2, 2, 2, 2][region_index])
+        self.gold_reward = random_int([0, 0, 0, 0, 0, 0, 0, 0][region_index],
+                                      [10, 12, 14, 16, 18, 20, 22, 24][region_index])
         self.action_options = []
         self.action_options.append(Attack(self))
         self.action_options.append(SlimeBall(self))
+        self.action_options.append(NoActionSelected(self))
         self.item_reward = self.reward(region_index)
 
     def reward(self, region_index):
@@ -1750,6 +1758,17 @@ class Slime(BattleCharacter):
         elif self.state == "Miss":
             self.image = self.sprites[self.miss_frames[0]]
         self.rect = pygame.rect.Rect(self.x, self.y, self.image.get_width(), self.image.get_height())
+
+    def ko(self):
+        self.kill()
+        self.parent.battle_characters_ko.add(self)
+        self.parent.battle_objects.add(self)
+        self.battle_action.kill()
+        self.parent.supply_reward = self.supply_reward
+        self.parent.charger_reward = self.charger_reward
+        self.parent.elixir_reward = self.elixir_reward
+        self.parent.exp_reward = self.exp_reward
+        self.parent.gold_reward = self.gold_reward
 
 
 class BattleOverlay(object):
@@ -1795,16 +1814,58 @@ class BattleOverlay(object):
                     if target.slot[:5] == "enemy":
                         for sprite in self.parent.enemy_characters.sprites():
                             pygame.draw.rect(surface, self.reticle_color, [sprite.rect.left - 4, sprite.rect.top - 4,
-                                                                           sprite.rect.width + 8, sprite.rect.height + 8], 2)
+                                                                           sprite.rect.width + 8,
+                                                                           sprite.rect.height + 8], 2)
                     else:
                         for sprite in self.parent.player_characters.sprites():
                             pygame.draw.rect(surface, self.reticle_color, [sprite.rect.left - 4, sprite.rect.top - 4,
-                                                                           sprite.rect.width + 8, sprite.rect.height + 8], 2)
+                                                                           sprite.rect.width + 8,
+                                                                           sprite.rect.height + 8], 2)
 
                 elif target_type == "All" and target is not None:
                     for sprite in self.parent.battle_characters.sprites():
                         pygame.draw.rect(surface, self.reticle_color, [sprite.rect.left - 4, sprite.rect.top - 4,
-                                                                       sprite.rect.width + 8, sprite.rect.height + 8], 2)
+                                                                       sprite.rect.width + 8, sprite.rect.height + 8],
+                                         2)
+            elif self.parent.turn_sub_state == "Confirm":
+                pygame.draw.rect(surface, (50, 50, 50), BATTLE_MENUS['confirm_rect'], border_radius=12)
+                pygame.draw.rect(surface, (150, 150, 20), BATTLE_MENUS['confirm_rect'], 5, 12)
+                tw(surface, "End the turn?", TEXT_COLOR, BATTLE_MENUS['confirm_prompt_rect'], HEADING_FONT)
+                color = TEXT_COLOR
+                if click_check(BATTLE_MENUS['confirm_yes_rect']):
+                    color = SELECTED_COLOR
+                tw(surface, "YES", color, BATTLE_MENUS['confirm_yes_rect'], HEADING_FONT)
+                color = TEXT_COLOR
+                if click_check(BATTLE_MENUS['confirm_no_rect']):
+                    color = SELECTED_COLOR
+                tw(surface, "NO", color, BATTLE_MENUS['confirm_no_rect'], HEADING_FONT)
+        elif self.parent.turn_sub_state == "Victory_1":
+            pass
+        elif self.parent.turn_sub_state == "Victory_2":
+            pass
+        elif self.parent.turn_sub_state == "Victory_3":
+            pass
+        elif self.parent.turn_sub_state == "Victory":
+            pygame.draw.rect(surface, (20, 20, 20), [X * 30 / 100, Y * 30 / 100, X * 40 / 100, Y * 40 / 100],
+                             border_radius=12)
+            tw(surface, "VICTORY!", TEXT_COLOR, [X * 30 / 100, Y * 30 / 100, X * 40 / 100, Y * 40 / 100],
+               HEADING_FONT)
+            tw(surface, "Press enter to continue.", TEXT_COLOR, [X * 30 / 100, Y * 60 / 100, X * 20 / 100,
+                                                                 Y * 20 / 100], TEXT_FONT)
+        elif self.parent.turn_sub_state == "Defeat":
+            pygame.draw.rect(surface, (20, 20, 20), [X * 30 / 100, Y * 30 / 100, X * 40 / 100, Y * 40 / 100],
+                             border_radius=12)
+            tw(surface, "Defeat!", TEXT_COLOR, [X * 30 / 100, Y * 30 / 100, X * 40 / 100, Y * 40 / 100],
+               HEADING_FONT)
+            tw(surface, "Press enter to continue.", TEXT_COLOR, [X * 30 / 100, Y * 60 / 100, X * 20 / 100,
+                                                                 Y * 20 / 100], TEXT_FONT)
+        for sprite in self.parent.player_characters.sprites():
+            tw(surface, "hp: " + str(sprite.hp) + "/" + str(sprite.max_hp), TEXT_COLOR,
+               BATTLE_MENUS['player_status_rects'][sprite.slot]['hp'], DETAIL_FONT)
+            tw(surface, "mp: " + str(sprite.mp) + "/" + str(sprite.max_mp), TEXT_COLOR,
+               BATTLE_MENUS['player_status_rects'][sprite.slot]['mp'], DETAIL_FONT)
+            tw(surface, sprite.name, TEXT_COLOR,
+               BATTLE_MENUS['player_status_rects'][sprite.slot]['name'], TEXT_FONT)
 
     def reticle_color_update(self, dt):
         self.target_time += dt * self.target_direction
@@ -1861,6 +1922,7 @@ class BattleAction(pygame.sprite.Sprite):
         self.damage_timer = None
         self.accuracy = 100
         self.crit_rate = 1
+        self.action_time = 1000
 
     def delete_action(self):
         self.kill()
@@ -1875,6 +1937,17 @@ class BattleAction(pygame.sprite.Sprite):
             self.image = self.sprites[getattr(self, self.action_type.lower() + "_frames")[self.animation_index]]
         if self.state == "Idle":
             self.x, self.y = BATTLE_MENUS['slot_positions'][self.queue]
+        if self.end_action_timer:
+            if self.end_action_timer > 0:
+                self.end_action_timer -= dt
+                if self.end_action_timer <= 0:
+                    self.end_action_timer = None
+                    self.action_done()
+
+    def action_done(self):
+        self.parent.parent.stop_wait()
+        self.kill()
+
 
     def draw_text(self, surface):
         pygame.draw.rect(surface, (0, 0, 0), [self.rect[0] + 17, self.rect[1] + 10, self.rect[2] - 34, self.rect[3] -
@@ -1886,7 +1959,8 @@ class BattleAction(pygame.sprite.Sprite):
         pass
 
     def do_action(self):
-        pass
+        self.end_action_timer = 1000
+
 
     def target_set(self, battle_character):
         pass
@@ -1895,6 +1969,26 @@ class BattleAction(pygame.sprite.Sprite):
 class NoActionSelected(BattleAction):
     def __init__(self, parent, target=None):
         super().__init__(parent, target=None)
+
+    def expected_value(self):
+        value_set = []
+        outcome = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        value_set.append((self.parent, self, self, outcome))
+        return value_set
+
+    def is_usable(self):
+        return True
+
+    def do_action(self):
+        self.end_action_timer = 1000
+
+    def target_set(self, battle_character):
+        self.target = battle_character
+        if self.parent.battle_action:
+            self.parent.battle_action.kill()
+        self.parent.battle_action = self
+        self.parent.parent.battle_actions.add(self)
+        self.parent.parent.battle_objects.add(self)
 
 
 class SlimeBall(BattleAction):
@@ -1966,7 +2060,7 @@ class SlimeBall(BattleAction):
         self.end_action_timer.start()
 
     def action_done(self):
-        self.parent.stop_wait()
+        self.parent.parent.stop_wait()
         self.kill()
 
 
@@ -1990,7 +2084,7 @@ class Attack(BattleAction):
             outcome[BATTLE_MENUS['battle_slot_index'][character.slot]] = \
                 ((damage_low + damage_high) * p_hit * (1 - p_critical) / (2 * character.hp)) + \
                 ((critical_low + critical_high) * p_hit * p_critical / (2 * character.hp))
-            value_set.append((self.parent.slot, self.name, [character.slot], outcome))
+            value_set.append((self.parent, self, [character], outcome))
         return value_set
 
     def is_usable(self):
@@ -2000,19 +2094,23 @@ class Attack(BattleAction):
 
     def do_action(self):
         for target in self.target:
-            damage = attack_defense_calculate(self, self.parent, getattr(self.parent.parent, target))
-            getattr(self.parent.parent, target).damage(damage, self, delay=100)
+            damage = attack_defense_calculate(self, self.parent, target)
+            target.damage(damage, self, delay=100)
+        self.end_action_timer = 1000
 
     def target_set(self, battle_character):
-        self.target = battle_character.slot
-        self.parent.battle_action.kill()
+        self.target = battle_character
+        if self.parent.battle_action:
+            self.parent.battle_action.kill()
         self.parent.battle_action = self
         self.parent.parent.battle_actions.add(self)
         self.parent.parent.battle_objects.add(self)
 
 
-def attack_defense_calculate(action, source, target, critical_roll=None, miss_roll=None, damage_roll=None,
-                             estimate=False, ev=False):
+def attack_defense_calculate(action, source, target, estimate=False, ev=False):
+    critical_roll = random_int(0, 100)
+    miss_roll = random_int(0, 100)
+    damage_roll = random_int(85, 100)
     attack = source.strength
     defense = target.defense
     source_luck = source.luck
@@ -2066,7 +2164,7 @@ def attack_defense_calculate(action, source, target, critical_roll=None, miss_ro
             return low_end, high_end, p_hit, critical_low, critical_high, p_critical
         elif estimate:
             return low_end, high_end, p_hit
-    if miss_roll * source_luck / target_luck < action.accuracy:
+    if miss_roll * source_luck / target_luck > action.accuracy:
         damage = 'miss'
     else:
         critical = 1
