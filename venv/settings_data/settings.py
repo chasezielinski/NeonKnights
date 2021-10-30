@@ -1409,6 +1409,38 @@ def utility_select(options):
     return choices
 
 
+class BattleMessage:
+    def __init__(self):
+        self.timer = None
+        self.message = None
+        self.rect = [X * 2 / 100, Y * 2 / 100, X * 60 / 100, Y * 10 / 100]
+        self.state = "Idle"
+
+    def set_message(self, message, time=2000, state="Display"):
+        self.message = message
+        self.timer = time
+        self.state = state
+
+    def update(self, dt):
+        if self.state == "Display" and self.timer:
+            self.timer -= dt
+            if self.timer <= 0:
+                self.state = "Idle"
+                self.message = None
+                self.timer = None
+
+    def draw(self, surface):
+        if self.state == "Display" or self.state == "Persist":
+            pygame.draw.rect(surface, (150, 150, 150), self.rect, border_radius=8)
+            tw(surface, self.message, TEXT_COLOR, [self.rect[0] + 5, self.rect[1] + 2, self.rect[2] -
+                                                   10, self.rect[3] - 4], TEXT_FONT)
+
+    def clear_message(self):
+        self.state = "Idle"
+        self.message = None
+        self.timer = None
+
+
 class DamageParticle:
     def __init__(self):
         self.particles = []
