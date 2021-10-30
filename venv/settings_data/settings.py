@@ -1476,10 +1476,22 @@ class VictoryDisplay:
                [X*6/100, Y*38/100, X*40/100, Y*8/100], HEADING_FONT)
         if self.state == "Exp" or self.state == "Exp_Animate" or self.state == "Done":
             for i, player in enumerate(self.parent.player_characters.sprites()):
-                tw(surface, player.name, TEXT_COLOR, [X*6/100, Y*6/100 + (i * Y*30/100), X*40/100, Y*8/100], HEADING_FONT)
+                surface.blit(REGION_STATIC_SPRITES[player.current_class + "Icon"], (X * 6 / 100, (Y * 14 / 100) + i * Y * 30 / 100))
+                tw(surface, player.name, TEXT_COLOR,
+                   [X * 6 / 100, Y * 6 / 100 + (i * Y * 30 / 100), X * 40 / 100, Y * 8 / 100], HEADING_FONT)
                 exp_bar = (EXPERIENCE_CURVE[player.level-1]-player.experience_to_level)/EXPERIENCE_CURVE[player.level-1]
                 if self.state == "Exp":
-                    pass
+                    start_exp = player.exp - int(self.parent.exp_reward / len(self.parent.player_characters.sprites()))
+                    current_exp = start_exp
+                    i = 0
+                    for j, value in enumerate(EXPERIENCE_CURVE):
+                        if current_exp < sum(EXPERIENCE_CURVE[:j + 1]):
+                            i = j
+                            break
+                    bar_progress = current_exp / (EXPERIENCE_CURVE[i])
+                    pygame.draw.rect(surface, (150, 150, 50),
+                                     [X * 20 / 100, Y * 20 / 100 + (i * Y * 30 / 100), bar_progress * (X * 50 / 100),
+                                      Y * 10 / 100], border_radius=8)
                 elif self.state == "Exp_Animate":
                     animate_exp = (self.timer / self.exp_animation_time)
                     start_exp = player.exp - int(self.parent.exp_reward/len(self.parent.player_characters.sprites()))
@@ -1491,9 +1503,21 @@ class VictoryDisplay:
                             i = j
                             break
                     bar_progress = current_exp / (EXPERIENCE_CURVE[i])
-                    pygame.draw.rect(surface, (150, 150, 50), [X*20/100, Y*20/100 + (i*Y*30/100), bar_progress*(X*50/100), Y*10/100])
+                    pygame.draw.rect(surface, (150, 150, 50), [X*20/100, Y*20/100 + (i*Y*30/100), bar_progress*(X*50/100), Y*10/100], border_radius=8)
                 elif self.state == "Done":
-                    pass
+                    finish_exp = player.exp
+                    current_exp = finish_exp
+                    i = 0
+                    for j, value in enumerate(EXPERIENCE_CURVE):
+                        if current_exp < sum(EXPERIENCE_CURVE[:j + 1]):
+                            i = j
+                            break
+                    bar_progress = current_exp / (EXPERIENCE_CURVE[i])
+                    pygame.draw.rect(surface, (150, 150, 50),
+                                     [X * 20 / 100, Y * 20 / 100 + (i * Y * 30 / 100), bar_progress * (X * 50 / 100),
+                                      Y * 10 / 100], border_radius=8)
+                pygame.draw.rect(surface, (0, 0, 0), [X * 20 / 100, Y * 20 / 100 + (i * Y * 30 / 100), (X * 50 / 100),
+                                  Y * 10 / 100], 5, border_radius=8)
 
     def handle_action(self):
         if self.state == "Blank" or self.state == "Gold" or self.state == "Supply" or self.state == "Elixir" or \
