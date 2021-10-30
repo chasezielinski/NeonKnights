@@ -44,12 +44,12 @@ EXPERIENCE_CURVE = [100, 210, 320, 430, 540, 650, 760, 870, 980, 1090, 1200, 131
 BASE_STATS = {
     "FIGHTER_BASE_STATS": {'FIGHTER_BASE_HP': 100,
                            'FIGHTER_BASE_MP': 10,
-                           'FIGHTER_BASE_STRENGTH': 10,
+                           'FIGHTER_BASE_STRENGTH': 20,
                            'FIGHTER_BASE_DEFENSE': 10,
                            'FIGHTER_BASE_MAGIC': 10,
                            'FIGHTER_BASE_SPIRIT': 10,
                            'FIGHTER_BASE_SPEED': 10,
-                           'FIGHTER_BASE_LUCK': 10,
+                           'FIGHTER_BASE_LUCK': 10000,
                            'FIGHTER_BASE_ATTACK_TYPE': "Attack",
                            'FIGHTER_BASE_EQUIPMENT_OPTIONS': ["Weapon", "Helm", "Armor", "Boots", "Shield"],
                            'FIGHTER_BASE_TECHNIQUES': ["Bash", "Strike", "Impale", "Dash", "Fortify", "Magic Strike",
@@ -2164,7 +2164,7 @@ def attack_defense_calculate(action, source, target, estimate=False, ev=False):
             return low_end, high_end, p_hit, critical_low, critical_high, p_critical
         elif estimate:
             return low_end, high_end, p_hit
-    if miss_roll * source_luck / target_luck > action.accuracy:
+    if miss_roll * target_luck / source_luck > action.accuracy:
         damage = 'miss'
     else:
         critical = 1
