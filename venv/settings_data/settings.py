@@ -44,7 +44,7 @@ EXPERIENCE_CURVE = [100, 210, 320, 430, 540, 650, 760, 870, 980, 1090, 1200, 131
 BASE_STATS = {
     "FIGHTER_BASE_STATS": {'FIGHTER_BASE_HP': 100,
                            'FIGHTER_BASE_MP': 10,
-                           'FIGHTER_BASE_STRENGTH': 20,
+                           'FIGHTER_BASE_STRENGTH': 100,
                            'FIGHTER_BASE_DEFENSE': 10,
                            'FIGHTER_BASE_MAGIC': 10,
                            'FIGHTER_BASE_SPIRIT': 10,
@@ -501,11 +501,11 @@ REGION_STATIC_SPRITES = {
         r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Region\Charge Icon.png"),
     "FighterIcon": image_load(
         r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Region\Fighter Icon 64.png"),
-    'adept icon': image_load(
+    'AdeptIcon': image_load(
         r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Region\Fighter Icon 64.png"),
-    'artificer icon': image_load(
+    'ArtificerIcon': image_load(
         r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Region\Fighter Icon 64.png"),
-    'rogue icon': image_load(
+    'RogueIcon': image_load(
         r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Region\Fighter Icon 64.png")
 }
 
@@ -518,7 +518,8 @@ REGION_MENUS = {
         'portal_rect': [X * 1 / 100, Y * 2 / 100, X * 14 / 100, Y * 9 / 100],
         'portal_text': [X * 4 / 100, Y * 5 / 100, X * 8 / 100, Y * 1 / 16],
         'portal_prompt_rect': [X * 83 / 100, Y * 70 / 100, X * 17 / 100, Y * 30 / 100],
-        'portal_prompt': 'Select a destination point and click "CONSTRUCT PORTAL to confirm. Cost: 2 Elixirs, 2 Chargers',
+        'portal_prompt': 'Select a destination point and click "CONSTRUCT PORTAL to confirm. Cost: 2 Elixirs, '
+                         '2 Chargers',
         'resources': {
             'background 1 rect': [X * 30 / 100, Y * 1 / 100, X * 52 / 100, Y * 11 / 100],
             'background 2 rect': [X * 31 / 100, Y * 2 / 100, X * 50 / 100, Y * 9 / 100],
@@ -1409,6 +1410,106 @@ def utility_select(options):
     return choices
 
 
+class VictoryDisplay:
+    def __init__(self, parent):
+        self.parent = parent
+        self.bg_rect_1 = [X*2/100, Y*2/100, X*80/100, Y*80/100]
+        self.bg_rect_2 = [X*4/100, Y*4/100, X*76/100, Y*76/100]
+        self.timer = 0
+        self.state = "Blank"
+        self.exp_animation_time = 4000
+
+    def update(self, dt):
+        self.timer += dt
+        if self.state == "Blank":
+            if self.timer >= 1000:
+                self.timer = 0
+                self.state = "Gold"
+        elif self.state == "Gold":
+            if self.timer >= 500:
+                self.timer = 0
+                self.state = "Supply"
+        elif self.state == "Supply":
+            if self.timer >= 500:
+                self.timer = 0
+                self.state = "Elixir"
+        elif self.state == "Elixir":
+            if self.timer >= 500:
+                self.timer = 0
+                self.state = "Charger"
+        elif self.state == "Charger":
+            if self.timer >= 500:
+                self.timer = 0
+                self.state = "Item"
+        elif self.state == "Item":
+            pass
+        elif self.state == "Exp":
+            if self.timer >= 500:
+                self.timer = 0
+                self.state = "Exp_Animate"
+        elif self.state == "Exp_Animate":
+            if self.timer >= self.exp_animation_time:
+                self.timer = 0
+                self.state = "Done"
+        elif self.state == "Done":
+            pass
+
+    def draw(self, surface):
+        pygame.draw.rect(surface, (150, 150, 150), self.bg_rect_1, border_radius=12)
+        pygame.draw.rect(surface, (50, 50, 50), self.bg_rect_2, border_radius=12)
+
+        if self.state == "Gold" or self.state == "Supply" or self.state == "Elixir" or self.state == "Charger" or \
+                self.state == "Item":
+            tw(surface, "Gold:" + str(self.parent.gold_reward).rjust(15), TEXT_COLOR,
+               [X*6/100, Y*6/100, X*40/100, Y*8/100], HEADING_FONT)
+        if self.state == "Supply" or self.state == "Elixir" or self.state == "Charger" or self.state == "Item":
+            tw(surface, "Supply:" + str(self.parent.supply_reward).rjust(13), TEXT_COLOR,
+               [X*6/100, Y*14/100, X*40/100, Y*8/100], HEADING_FONT)
+        if self.state == "Elixir" or self.state == "Charger" or self.state == "Item":
+            tw(surface, "Elixir:" + str(self.parent.elixir_reward).rjust(13), TEXT_COLOR,
+               [X*6/100, Y*22/100, X*40/100, Y*8/100], HEADING_FONT)
+        if self.state == "Charger" or self.state == "Item":
+            tw(surface, "Charger:" + str(self.parent.charger_reward).rjust(12), TEXT_COLOR,
+               [X*6/100, Y*30/100, X*40/100, Y*8/100], HEADING_FONT)
+        if self.state == "Item":
+            tw(surface, "Item:", TEXT_COLOR,
+               [X*6/100, Y*38/100, X*40/100, Y*8/100], HEADING_FONT)
+        if self.state == "Exp" or self.state == "Exp_Animate" or self.state == "Done":
+            for i, player in enumerate(self.parent.player_characters.sprites()):
+                tw(surface, player.name, TEXT_COLOR, [X*6/100, Y*6/100 + (i * Y*30/100), X*40/100, Y*8/100], HEADING_FONT)
+                exp_bar = (EXPERIENCE_CURVE[player.level-1]-player.experience_to_level)/EXPERIENCE_CURVE[player.level-1]
+                if self.state == "Exp":
+                    pass
+                elif self.state == "Exp_Animate":
+                    animate_exp = (self.timer / self.exp_animation_time)
+                    start_exp = player.exp - int(self.parent.exp_reward/len(self.parent.player_characters.sprites()))
+                    finish_exp = player.exp
+                    current_exp = start_exp + (animate_exp * (finish_exp - start_exp))
+                    i = 0
+                    for j, value in enumerate(EXPERIENCE_CURVE):
+                        if current_exp < sum(EXPERIENCE_CURVE[:j+1]):
+                            i = j
+                            break
+                    bar_progress = current_exp / (EXPERIENCE_CURVE[i])
+                    pygame.draw.rect(surface, (150, 150, 50), [X*20/100, Y*20/100 + (i*Y*30/100), bar_progress*(X*50/100), Y*10/100])
+                elif self.state == "Done":
+                    pass
+
+    def handle_action(self):
+        if self.state == "Blank" or self.state == "Gold" or self.state == "Supply" or self.state == "Elixir" or \
+                self.state == "Charger":
+            self.state = "Item"
+        elif self.state == "Item":
+            self.state = "Exp"
+            self.timer = 0
+        elif self.state == "Exp":
+            self.state = "Done"
+        elif self.state == "Exp_Animate":
+            self.state = "Done"
+        elif self.state == "Done":
+            self.parent.state = "Clean_Up"
+
+
 class BattleMessage:
     def __init__(self):
         self.timer = None
@@ -1796,11 +1897,11 @@ class Slime(BattleCharacter):
         self.parent.battle_characters_ko.add(self)
         self.parent.battle_objects.add(self)
         self.battle_action.kill()
-        self.parent.supply_reward = self.supply_reward
-        self.parent.charger_reward = self.charger_reward
-        self.parent.elixir_reward = self.elixir_reward
-        self.parent.exp_reward = self.exp_reward
-        self.parent.gold_reward = self.gold_reward
+        self.parent.supply_reward += self.supply_reward
+        self.parent.charger_reward += self.charger_reward
+        self.parent.elixir_reward += self.elixir_reward
+        self.parent.exp_reward += self.exp_reward
+        self.parent.gold_reward += self.gold_reward
 
 
 class BattleOverlay(object):
