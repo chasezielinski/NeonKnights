@@ -41,6 +41,9 @@ MAX_NAME_LENGTH = 20
 # Player Characters
 BASE_CLASSES = ["Fighter", "Adept", "Rogue", "Artificer"]
 EXPERIENCE_CURVE = [100, 210, 320, 430, 540, 650, 760, 870, 980, 1090, 1200, 1310, 1420, 1530]
+EXPERIENCE_CURVE_TOTAL = [100, 310, 630, 1060, 1600, 2250, 3010, 3880, 4860, 5950, 7150, 8460, 9880, 11410]
+for i in range(len(EXPERIENCE_CURVE)):
+    EXPERIENCE_CURVE_TOTAL.append(sum(EXPERIENCE_CURVE[:i+1]))
 BASE_STATS = {
     "FIGHTER_BASE_STATS": {'FIGHTER_BASE_HP': 100,
                            'FIGHTER_BASE_MP': 10,
@@ -1483,12 +1486,12 @@ class VictoryDisplay:
                 if self.state == "Exp":
                     start_exp = player.exp - int(self.parent.exp_reward / len(self.parent.player_characters.sprites()))
                     current_exp = start_exp
-                    i = 0
+                    k = 0
                     for j, value in enumerate(EXPERIENCE_CURVE):
                         if current_exp < sum(EXPERIENCE_CURVE[:j + 1]):
-                            i = j
+                            k = j
                             break
-                    bar_progress = current_exp / (EXPERIENCE_CURVE[i])
+                    bar_progress = current_exp / (EXPERIENCE_CURVE[k])
                     pygame.draw.rect(surface, (150, 150, 50),
                                      [X * 20 / 100, Y * 20 / 100 + (i * Y * 30 / 100), bar_progress * (X * 50 / 100),
                                       Y * 10 / 100], border_radius=8)
@@ -1497,22 +1500,36 @@ class VictoryDisplay:
                     start_exp = player.exp - int(self.parent.exp_reward/len(self.parent.player_characters.sprites()))
                     finish_exp = player.exp
                     current_exp = start_exp + (animate_exp * (finish_exp - start_exp))
-                    i = 0
-                    for j, value in enumerate(EXPERIENCE_CURVE):
-                        if current_exp < sum(EXPERIENCE_CURVE[:j+1]):
-                            i = j
+                    k = 0
+                    for j, value in enumerate(EXPERIENCE_CURVE_TOTAL):
+                        if current_exp < EXPERIENCE_CURVE_TOTAL[j]:
+                            k = j
                             break
-                    bar_progress = current_exp / (EXPERIENCE_CURVE[i])
+                    else:
+                        k = len(EXPERIENCE_CURVE_TOTAL)
+                    if k == 0:
+                        bar_progress = current_exp / EXPERIENCE_CURVE_TOTAL[0]
+                    elif k == len(EXPERIENCE_CURVE_TOTAL):
+                        bar_progress = 1
+                    else:
+                        bar_progress = (current_exp - EXPERIENCE_CURVE_TOTAL[k-1]) / (EXPERIENCE_CURVE_TOTAL[k] - EXPERIENCE_CURVE_TOTAL[k-1])
                     pygame.draw.rect(surface, (150, 150, 50), [X*20/100, Y*20/100 + (i*Y*30/100), bar_progress*(X*50/100), Y*10/100], border_radius=8)
                 elif self.state == "Done":
                     finish_exp = player.exp
                     current_exp = finish_exp
-                    i = 0
-                    for j, value in enumerate(EXPERIENCE_CURVE):
-                        if current_exp < sum(EXPERIENCE_CURVE[:j + 1]):
-                            i = j
+                    k = 0
+                    for j, value in enumerate(EXPERIENCE_CURVE_TOTAL):
+                        if current_exp < EXPERIENCE_CURVE_TOTAL[j]:
+                            k = j
                             break
-                    bar_progress = current_exp / (EXPERIENCE_CURVE[i])
+                    else:
+                        k = len(EXPERIENCE_CURVE_TOTAL)
+                    if k == 0:
+                        bar_progress = current_exp / EXPERIENCE_CURVE_TOTAL[0]
+                    elif k == len(EXPERIENCE_CURVE_TOTAL):
+                        bar_progress = 1
+                    else:
+                        bar_progress = (current_exp - EXPERIENCE_CURVE_TOTAL[k-1]) / (EXPERIENCE_CURVE_TOTAL[k] - EXPERIENCE_CURVE_TOTAL[k-1])
                     pygame.draw.rect(surface, (150, 150, 50),
                                      [X * 20 / 100, Y * 20 / 100 + (i * Y * 30 / 100), bar_progress * (X * 50 / 100),
                                       Y * 10 / 100], border_radius=8)
@@ -1531,7 +1548,7 @@ class VictoryDisplay:
         elif self.state == "Exp_Animate":
             self.state = "Done"
         elif self.state == "Done":
-            self.parent.state = "Clean_Up"
+            self.parent.handle_action("Clean_Up")
 
 
 class BattleMessage:
@@ -1871,7 +1888,7 @@ class Slime(BattleCharacter):
                    'actions': [["Attack", "Attack"], ["Skill", "Slime Ball"]],
                    'weights': [50, 50],
                    'target': 'random', }
-        self.exp_reward = [10, 12, 14, 16, 18, 20, 22, 28][region_index]
+        self.exp_reward = [200, 12, 14, 16, 18, 20, 22, 28][region_index]
         self.supply_reward = random_int([0, 0, 0, 0, 0, 0, 0, 0][region_index], [1, 1, 1, 1, 2, 2, 2, 2][region_index])
         self.elixir_reward = random_int([0, 0, 0, 0, 0, 0, 0, 0][region_index], [1, 1, 1, 1, 2, 2, 2, 2][region_index])
         self.charger_reward = random_int([0, 0, 0, 0, 0, 0, 0, 0][region_index], [1, 1, 1, 1, 2, 2, 2, 2][region_index])
