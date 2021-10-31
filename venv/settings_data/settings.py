@@ -1487,14 +1487,27 @@ class VictoryDisplay:
                     start_exp = player.exp - int(self.parent.exp_reward / len(self.parent.player_characters.sprites()))
                     current_exp = start_exp
                     k = 0
-                    for j, value in enumerate(EXPERIENCE_CURVE):
-                        if current_exp < sum(EXPERIENCE_CURVE[:j + 1]):
+                    for j, value in enumerate(EXPERIENCE_CURVE_TOTAL):
+                        if current_exp < EXPERIENCE_CURVE_TOTAL[j]:
                             k = j
                             break
-                    bar_progress = current_exp / (EXPERIENCE_CURVE[k])
+                    else:
+                        k = len(EXPERIENCE_CURVE_TOTAL)
+                    if k == 0:
+                        bar_progress = current_exp / EXPERIENCE_CURVE_TOTAL[0]
+                    elif k == len(EXPERIENCE_CURVE_TOTAL):
+                        bar_progress = 1
+                    else:
+                        bar_progress = (current_exp - EXPERIENCE_CURVE_TOTAL[k-1]) / (EXPERIENCE_CURVE_TOTAL[k] - EXPERIENCE_CURVE_TOTAL[k-1])
+                    if k < len(EXPERIENCE_CURVE_TOTAL):
+                        to_next = str(int(EXPERIENCE_CURVE_TOTAL[k] - current_exp))
+                    else:
+                        to_next = "0"
+                    tw(surface, "level: " + str(k+1), TEXT_COLOR, [X*5/100, Y*22/100 + (i*Y*30/100), X * 20/100, Y*10/100], TEXT_FONT)
+                    tw(surface, "next: " + to_next, TEXT_COLOR, [X*72/100, Y*22/100 + (i*Y*30/100), X * 20/100, Y*10/100], TEXT_FONT)
                     pygame.draw.rect(surface, (150, 150, 50),
                                      [X * 20 / 100, Y * 20 / 100 + (i * Y * 30 / 100), bar_progress * (X * 50 / 100),
-                                      Y * 10 / 100], border_radius=8)
+                                      Y * 10 / 100], border_radius=4)
                 elif self.state == "Exp_Animate":
                     animate_exp = (self.timer / self.exp_animation_time)
                     start_exp = player.exp - int(self.parent.exp_reward/len(self.parent.player_characters.sprites()))
@@ -1513,7 +1526,13 @@ class VictoryDisplay:
                         bar_progress = 1
                     else:
                         bar_progress = (current_exp - EXPERIENCE_CURVE_TOTAL[k-1]) / (EXPERIENCE_CURVE_TOTAL[k] - EXPERIENCE_CURVE_TOTAL[k-1])
-                    pygame.draw.rect(surface, (150, 150, 50), [X*20/100, Y*20/100 + (i*Y*30/100), bar_progress*(X*50/100), Y*10/100], border_radius=8)
+                    if k < len(EXPERIENCE_CURVE_TOTAL):
+                        to_next = str(int(EXPERIENCE_CURVE_TOTAL[k] - current_exp))
+                    else:
+                        to_next = "0"
+                    tw(surface, "level: " + str(k+1), TEXT_COLOR, [X*5/100, Y*22/100 + (i*Y*30/100), X * 20/100, Y*10/100], TEXT_FONT)
+                    tw(surface, "next: " + to_next, TEXT_COLOR, [X*72/100, Y*22/100 + (i*Y*30/100), X * 20/100, Y*10/100], TEXT_FONT)
+                    pygame.draw.rect(surface, (150, 150, 50), [X*20/100, Y*20/100 + (i*Y*30/100), bar_progress*(X*50/100), Y*10/100], border_radius=4)
                 elif self.state == "Done":
                     finish_exp = player.exp
                     current_exp = finish_exp
@@ -1530,11 +1549,17 @@ class VictoryDisplay:
                         bar_progress = 1
                     else:
                         bar_progress = (current_exp - EXPERIENCE_CURVE_TOTAL[k-1]) / (EXPERIENCE_CURVE_TOTAL[k] - EXPERIENCE_CURVE_TOTAL[k-1])
+                    if k < len(EXPERIENCE_CURVE_TOTAL):
+                        to_next = str(int(EXPERIENCE_CURVE_TOTAL[k] - current_exp))
+                    else:
+                        to_next = "0"
+                    tw(surface, "level: " + str(k+1), TEXT_COLOR, [X*5/100, Y*22/100 + (i*Y*30/100), X * 20/100, Y*10/100], TEXT_FONT)
+                    tw(surface, "next: " + to_next, TEXT_COLOR, [X*72/100, Y*22/100 + (i*Y*30/100), X * 20/100, Y*10/100], TEXT_FONT)
                     pygame.draw.rect(surface, (150, 150, 50),
                                      [X * 20 / 100, Y * 20 / 100 + (i * Y * 30 / 100), bar_progress * (X * 50 / 100),
-                                      Y * 10 / 100], border_radius=8)
-                pygame.draw.rect(surface, (0, 0, 0), [X * 20 / 100, Y * 20 / 100 + (i * Y * 30 / 100), (X * 50 / 100),
-                                  Y * 10 / 100], 5, border_radius=8)
+                                      Y * 10 / 100], border_radius=4)
+                pygame.draw.rect(surface, (0, 0, 0), [X * 19.5 / 100, Y * 19 / 100 + (i * Y * 30 / 100), (X * 51 / 100),
+                                  Y * 12 / 100], 8, border_radius=8)
 
     def handle_action(self):
         if self.state == "Blank" or self.state == "Gold" or self.state == "Supply" or self.state == "Elixir" or \
