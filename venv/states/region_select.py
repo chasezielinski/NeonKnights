@@ -10,47 +10,49 @@ class RegionSelect(BaseState):
         self.active_index = 0
         self.index = -1
         self.next_state = "REGION"
-        self.options = ["a", "b", "c"]
+        self.options = []
 
     def startup(self, persistent):
         self.persist = persistent
-
-    def get_text_position(self, text, index):
-        center = (self.screen_rect.center[0], self.screen_rect.center[1] + (index * 50))
-        return text.get_rect(center=center)
+        self.options.append(self.persist['region_type'])
+        while len(self.options) < 4:
+            choice = settings.choose_random(settings.REGION_BIOMES)
+            if choice not in self.options:
+                self.options.append(choice)
+        self.options = self.options[1:]
 
     def handle_action(self, action):
         if action == "return":
-            if self.active_index == 0:
-                self.done = True
-                self.next_state = "CHARACTER_SELECT"
-            if self.active_index == 1:
-                self.done = True
-                self.next_state = "MAP_BOUNDS"
-            elif self.active_index == 2:
-                self.quit = True
+            if self.index == 0 or self.index == 1 or self.index == 2:
+                settings.SOUND_EFFECTS["Menu"]["Confirm_1"].play()
+                self.go_to_region()
         elif action == "mouse_move":
-            for i in range(len(self.options)):
-                if settings.click_check(settings.MAIN_MENU_RECTS["options"][i]):
-                    self.active_index = i
-                    break
-                else:
-                    self.active_index = -1
+            if settings.click_check([75, 20, 330, 680]):
+                if self.index != 0:
+                    settings.SOUND_EFFECTS["Menu"]["Toggle_2"].play()
+                self.index = 0
+            elif settings.click_check([475, 20, 330, 680]):
+                if self.index != 1:
+                    settings.SOUND_EFFECTS["Menu"]["Toggle_2"].play()
+                self.index = 1
+            elif settings.click_check([875, 20, 330, 680]):
+                if self.index != 2:
+                    settings.SOUND_EFFECTS["Menu"]["Toggle_2"].play()
+                self.index = 2
+            else:
+                self.index = -1
         elif action == "click":
-            for i in range(len(self.options)):
-                if settings.click_check(settings.MAIN_MENU_RECTS["options"][i]):
-                    self.active_index = i
-                    self.handle_action("return")
-                else:
-                    self.active_index = -1
+            if self.index == 0 or self.index == 1 or self.index == 2:
+                settings.SOUND_EFFECTS["Menu"]["Confirm_1"].play()
+                self.go_to_region()
         elif action == "right":
             settings.SOUND_EFFECTS["Menu"]["Toggle_2"].play()
-            self.active_index +=1
-            self.active_index %= len(self.options)
+            self.index +=1
+            self.index %= len(self.options)
         elif action == "left":
             settings.SOUND_EFFECTS["Menu"]["Toggle_2"].play()
-            self.active_index -=1
-            self.active_index %= len(self.options)
+            self.index -=1
+            self.index %= len(self.options)
 
     def get_event(self, event):
         if event.type == pygame.QUIT:
@@ -61,7 +63,6 @@ class RegionSelect(BaseState):
             elif event.key == pygame.K_RIGHT:
                 self.handle_action("right")
             elif event.key == pygame.K_RETURN:
-                settings.SOUND_EFFECTS["Menu"]["Confirm_1"].play()
                 self.handle_action("return")
         elif event.type == pygame.MOUSEBUTTONDOWN:
             if event.button == 1:
@@ -69,10 +70,36 @@ class RegionSelect(BaseState):
         elif event.type == pygame.MOUSEMOTION:
             self.handle_action("mouse_move")
 
+    def go_to_region(self):
+        self.persist['region_type'] = self.options[self.index]
+        self.done = True
+
     def draw(self, surface):
         surface.fill(pygame.Color("black"))
-        for index, option in enumerate(self.options):
-            color = settings.TEXT_COLOR
-            if index == self.active_index:
-                color = settings.SELECTED_COLOR
-            settings.tw(surface, option, color, settings.MAIN_MENU_RECTS["options"][index], settings.HEADING_FONT)
+        rect_color = (50, 50, 50)
+        text_color = settings.TEXT_COLOR
+        if self.index == 0:
+            rect_color = (80, 80, 80)
+            text_color = settings.SELECTED_COLOR
+        pygame.draw.rect(surface, rect_color, [75, 20, 330, 680], border_radius=4)
+        surface.blit(settings.REGION_CARDS[self.options[0]], (80, 120))
+        settings.tw(surface, self.options[0].rjust(15 - len(self.options[0])), text_color,
+                    [80, 60, 300, 50], settings.HEADING_FONT)
+        rect_color = (50, 50, 50)
+        text_color = settings.TEXT_COLOR
+        if self.index == 1:
+            rect_color = (80, 80, 80)
+            text_color = settings.SELECTED_COLOR
+        pygame.draw.rect(surface, rect_color, [475, 20, 330, 680], border_radius=4)
+        surface.blit(settings.REGION_CARDS[self.options[1]], (480, 60))
+        settings.tw(surface, self.options[1].rjust(15 - len(self.options[1])), text_color,
+                    [480, 600, 300, 50], settings.HEADING_FONT)
+        rect_color = (50, 50, 50)
+        text_color = settings.TEXT_COLOR
+        if self.index == 2:
+            rect_color = (80, 80, 80)
+            text_color = settings.SELECTED_COLOR
+        pygame.draw.rect(surface, rect_color, [875, 20, 330, 680], border_radius=4)
+        surface.blit(settings.REGION_CARDS[self.options[2]], (880, 180))
+        settings.tw(surface, self.options[2].rjust(15 - len(self.options[2])), text_color,
+                    [880, 80, 300, 50], settings.HEADING_FONT)
