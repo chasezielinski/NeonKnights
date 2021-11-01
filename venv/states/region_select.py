@@ -72,6 +72,7 @@ class RegionSelect(BaseState):
 
     def go_to_region(self):
         self.persist['region_type'] = self.options[self.index]
+        self.persist['region_generate'] = True
         self.done = True
 
     def draw(self, surface):
