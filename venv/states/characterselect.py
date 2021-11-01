@@ -464,7 +464,7 @@ class CharacterSelect(BaseState):
                                                    self.artificer_image.get_height())
 
         if self.state == "Start":
-            self.next_state = "REGION"
+            self.next_state = "REGION_SELECT"
             # setup persist dictionary
             self.persist['region_generate'] = True
             self.persist['region_index'] = 0
@@ -474,7 +474,7 @@ class CharacterSelect(BaseState):
             self.persist['chargers'] = 5
             self.persist['elixirs'] = 5
             self.persist['gold'] = 1000
-            self.persist['region_type'] = "Desert"
+            self.persist['region_type'] = "None"
             self.persist['inventory'] = []
             self.persist['inventory manager'] = InventoryManager(self)
             settings.character_initial(self.persist, 'player_a', self.options[self.active_index])

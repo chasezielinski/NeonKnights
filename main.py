@@ -10,6 +10,7 @@ from characterselect import CharacterSelect
 from region import Region
 from battle2 import Battle
 from map_bounds import MapBounds
+from region_select import RegionSelect
 
 # initialize the game
 # create the screen
@@ -24,6 +25,7 @@ states = {
     "REGION": Region(),
     "BATTLE": Battle(),
     "MAP_BOUNDS": MapBounds(),
+    "REGION_SELECT": RegionSelect(),
     #    "GAMEPLAY": Gameplay(),
     #    "GAME_OVER": GameOver(),
     #    "PAUSE": Pause(),

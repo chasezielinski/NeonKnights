@@ -43,7 +43,7 @@ BASE_CLASSES = ["Fighter", "Adept", "Rogue", "Artificer"]
 EXPERIENCE_CURVE = [100, 210, 320, 430, 540, 650, 760, 870, 980, 1090, 1200, 1310, 1420, 1530]
 EXPERIENCE_CURVE_TOTAL = [100, 310, 630, 1060, 1600, 2250, 3010, 3880, 4860, 5950, 7150, 8460, 9880, 11410]
 for i in range(len(EXPERIENCE_CURVE)):
-    EXPERIENCE_CURVE_TOTAL.append(sum(EXPERIENCE_CURVE[:i+1]))
+    EXPERIENCE_CURVE_TOTAL.append(sum(EXPERIENCE_CURVE[:i + 1]))
 BASE_STATS = {
     "FIGHTER_BASE_STATS": {'FIGHTER_BASE_HP': 100,
                            'FIGHTER_BASE_MP': 10,
@@ -473,8 +473,16 @@ CHARACTER_SELECT_MENU = {
 
 # Regions
 
-REGION_BIOMES = ["Desert", "Forest", "Valley", "Grasslands", "Badlands", "Tundra",
-                 "Savannah", "Rainforest", "Steppe", "Taiga"]
+REGION_BIOMES = ["Desert", "Grasslands", "Valley"]  # , "Forest", "Savannah", "Badlands", "Tundra",
+# "Rainforest", "Steppe", "Taiga"]
+REGION_CARDS = {
+    "Desert": image_load(
+        r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Region\Cards\Desert_Card_480p_1.png"),
+    "Grasslands": image_load(
+        r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Region\Cards\Grasslands_Card_480p_1.png"),
+    "Valley": image_load(
+        r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Region\Cards\Valley_Card_480p_1.png"),
+}
 
 REGION_SHAPES = ["Land-Locked", "Coastal", "Archipelago", "Island", "Plateau",
                  "Lakeside", "Canyon", "River"]
@@ -1416,8 +1424,8 @@ def utility_select(options):
 class VictoryDisplay:
     def __init__(self, parent):
         self.parent = parent
-        self.bg_rect_1 = [X*2/100, Y*2/100, X*80/100, Y*80/100]
-        self.bg_rect_2 = [X*4/100, Y*4/100, X*76/100, Y*76/100]
+        self.bg_rect_1 = [X * 2 / 100, Y * 2 / 100, X * 80 / 100, Y * 80 / 100]
+        self.bg_rect_2 = [X * 4 / 100, Y * 4 / 100, X * 76 / 100, Y * 76 / 100]
         self.timer = 0
         self.state = "Blank"
         self.exp_animation_time = 4000
@@ -1464,25 +1472,27 @@ class VictoryDisplay:
         if self.state == "Gold" or self.state == "Supply" or self.state == "Elixir" or self.state == "Charger" or \
                 self.state == "Item":
             tw(surface, "Gold:" + str(self.parent.gold_reward).rjust(15), TEXT_COLOR,
-               [X*6/100, Y*6/100, X*40/100, Y*8/100], HEADING_FONT)
+               [X * 6 / 100, Y * 6 / 100, X * 40 / 100, Y * 8 / 100], HEADING_FONT)
         if self.state == "Supply" or self.state == "Elixir" or self.state == "Charger" or self.state == "Item":
             tw(surface, "Supply:" + str(self.parent.supply_reward).rjust(13), TEXT_COLOR,
-               [X*6/100, Y*14/100, X*40/100, Y*8/100], HEADING_FONT)
+               [X * 6 / 100, Y * 14 / 100, X * 40 / 100, Y * 8 / 100], HEADING_FONT)
         if self.state == "Elixir" or self.state == "Charger" or self.state == "Item":
             tw(surface, "Elixir:" + str(self.parent.elixir_reward).rjust(13), TEXT_COLOR,
-               [X*6/100, Y*22/100, X*40/100, Y*8/100], HEADING_FONT)
+               [X * 6 / 100, Y * 22 / 100, X * 40 / 100, Y * 8 / 100], HEADING_FONT)
         if self.state == "Charger" or self.state == "Item":
             tw(surface, "Charger:" + str(self.parent.charger_reward).rjust(12), TEXT_COLOR,
-               [X*6/100, Y*30/100, X*40/100, Y*8/100], HEADING_FONT)
+               [X * 6 / 100, Y * 30 / 100, X * 40 / 100, Y * 8 / 100], HEADING_FONT)
         if self.state == "Item":
             tw(surface, "Item:", TEXT_COLOR,
-               [X*6/100, Y*38/100, X*40/100, Y*8/100], HEADING_FONT)
+               [X * 6 / 100, Y * 38 / 100, X * 40 / 100, Y * 8 / 100], HEADING_FONT)
         if self.state == "Exp" or self.state == "Exp_Animate" or self.state == "Done":
             for i, player in enumerate(self.parent.player_characters.sprites()):
-                surface.blit(REGION_STATIC_SPRITES[player.current_class + "Icon"], (X * 6 / 100, (Y * 14 / 100) + i * Y * 30 / 100))
+                surface.blit(REGION_STATIC_SPRITES[player.current_class + "Icon"],
+                             (X * 6 / 100, (Y * 14 / 100) + i * Y * 30 / 100))
                 tw(surface, player.name, TEXT_COLOR,
                    [X * 6 / 100, Y * 6 / 100 + (i * Y * 30 / 100), X * 40 / 100, Y * 8 / 100], HEADING_FONT)
-                exp_bar = (EXPERIENCE_CURVE[player.level-1]-player.experience_to_level)/EXPERIENCE_CURVE[player.level-1]
+                exp_bar = (EXPERIENCE_CURVE[player.level - 1] - player.experience_to_level) / EXPERIENCE_CURVE[
+                    player.level - 1]
                 if self.state == "Exp":
                     start_exp = player.exp - int(self.parent.exp_reward / len(self.parent.player_characters.sprites()))
                     current_exp = start_exp
@@ -1498,19 +1508,22 @@ class VictoryDisplay:
                     elif k == len(EXPERIENCE_CURVE_TOTAL):
                         bar_progress = 1
                     else:
-                        bar_progress = (current_exp - EXPERIENCE_CURVE_TOTAL[k-1]) / (EXPERIENCE_CURVE_TOTAL[k] - EXPERIENCE_CURVE_TOTAL[k-1])
+                        bar_progress = (current_exp - EXPERIENCE_CURVE_TOTAL[k - 1]) / (
+                                EXPERIENCE_CURVE_TOTAL[k] - EXPERIENCE_CURVE_TOTAL[k - 1])
                     if k < len(EXPERIENCE_CURVE_TOTAL):
                         to_next = str(int(EXPERIENCE_CURVE_TOTAL[k] - current_exp))
                     else:
                         to_next = "0"
-                    tw(surface, "level: " + str(k+1), TEXT_COLOR, [X*5/100, Y*22/100 + (i*Y*30/100), X * 20/100, Y*10/100], TEXT_FONT)
-                    tw(surface, "next: " + to_next, TEXT_COLOR, [X*72/100, Y*22/100 + (i*Y*30/100), X * 20/100, Y*10/100], TEXT_FONT)
+                    tw(surface, "level: " + str(k + 1), TEXT_COLOR,
+                       [X * 5 / 100, Y * 22 / 100 + (i * Y * 30 / 100), X * 20 / 100, Y * 10 / 100], TEXT_FONT)
+                    tw(surface, "next: " + to_next, TEXT_COLOR,
+                       [X * 72 / 100, Y * 22 / 100 + (i * Y * 30 / 100), X * 20 / 100, Y * 10 / 100], TEXT_FONT)
                     pygame.draw.rect(surface, (150, 150, 50),
                                      [X * 20 / 100, Y * 20 / 100 + (i * Y * 30 / 100), bar_progress * (X * 50 / 100),
                                       Y * 10 / 100], border_radius=4)
                 elif self.state == "Exp_Animate":
                     animate_exp = (self.timer / self.exp_animation_time)
-                    start_exp = player.exp - int(self.parent.exp_reward/len(self.parent.player_characters.sprites()))
+                    start_exp = player.exp - int(self.parent.exp_reward / len(self.parent.player_characters.sprites()))
                     finish_exp = player.exp
                     current_exp = start_exp + (animate_exp * (finish_exp - start_exp))
                     k = 0
@@ -1525,14 +1538,19 @@ class VictoryDisplay:
                     elif k == len(EXPERIENCE_CURVE_TOTAL):
                         bar_progress = 1
                     else:
-                        bar_progress = (current_exp - EXPERIENCE_CURVE_TOTAL[k-1]) / (EXPERIENCE_CURVE_TOTAL[k] - EXPERIENCE_CURVE_TOTAL[k-1])
+                        bar_progress = (current_exp - EXPERIENCE_CURVE_TOTAL[k - 1]) / (
+                                EXPERIENCE_CURVE_TOTAL[k] - EXPERIENCE_CURVE_TOTAL[k - 1])
                     if k < len(EXPERIENCE_CURVE_TOTAL):
                         to_next = str(int(EXPERIENCE_CURVE_TOTAL[k] - current_exp))
                     else:
                         to_next = "0"
-                    tw(surface, "level: " + str(k+1), TEXT_COLOR, [X*5/100, Y*22/100 + (i*Y*30/100), X * 20/100, Y*10/100], TEXT_FONT)
-                    tw(surface, "next: " + to_next, TEXT_COLOR, [X*72/100, Y*22/100 + (i*Y*30/100), X * 20/100, Y*10/100], TEXT_FONT)
-                    pygame.draw.rect(surface, (150, 150, 50), [X*20/100, Y*20/100 + (i*Y*30/100), bar_progress*(X*50/100), Y*10/100], border_radius=4)
+                    tw(surface, "level: " + str(k + 1), TEXT_COLOR,
+                       [X * 5 / 100, Y * 22 / 100 + (i * Y * 30 / 100), X * 20 / 100, Y * 10 / 100], TEXT_FONT)
+                    tw(surface, "next: " + to_next, TEXT_COLOR,
+                       [X * 72 / 100, Y * 22 / 100 + (i * Y * 30 / 100), X * 20 / 100, Y * 10 / 100], TEXT_FONT)
+                    pygame.draw.rect(surface, (150, 150, 50),
+                                     [X * 20 / 100, Y * 20 / 100 + (i * Y * 30 / 100), bar_progress * (X * 50 / 100),
+                                      Y * 10 / 100], border_radius=4)
                 elif self.state == "Done":
                     finish_exp = player.exp
                     current_exp = finish_exp
@@ -1548,18 +1566,21 @@ class VictoryDisplay:
                     elif k == len(EXPERIENCE_CURVE_TOTAL):
                         bar_progress = 1
                     else:
-                        bar_progress = (current_exp - EXPERIENCE_CURVE_TOTAL[k-1]) / (EXPERIENCE_CURVE_TOTAL[k] - EXPERIENCE_CURVE_TOTAL[k-1])
+                        bar_progress = (current_exp - EXPERIENCE_CURVE_TOTAL[k - 1]) / (
+                                EXPERIENCE_CURVE_TOTAL[k] - EXPERIENCE_CURVE_TOTAL[k - 1])
                     if k < len(EXPERIENCE_CURVE_TOTAL):
                         to_next = str(int(EXPERIENCE_CURVE_TOTAL[k] - current_exp))
                     else:
                         to_next = "0"
-                    tw(surface, "level: " + str(k+1), TEXT_COLOR, [X*5/100, Y*22/100 + (i*Y*30/100), X * 20/100, Y*10/100], TEXT_FONT)
-                    tw(surface, "next: " + to_next, TEXT_COLOR, [X*72/100, Y*22/100 + (i*Y*30/100), X * 20/100, Y*10/100], TEXT_FONT)
+                    tw(surface, "level: " + str(k + 1), TEXT_COLOR,
+                       [X * 5 / 100, Y * 22 / 100 + (i * Y * 30 / 100), X * 20 / 100, Y * 10 / 100], TEXT_FONT)
+                    tw(surface, "next: " + to_next, TEXT_COLOR,
+                       [X * 72 / 100, Y * 22 / 100 + (i * Y * 30 / 100), X * 20 / 100, Y * 10 / 100], TEXT_FONT)
                     pygame.draw.rect(surface, (150, 150, 50),
                                      [X * 20 / 100, Y * 20 / 100 + (i * Y * 30 / 100), bar_progress * (X * 50 / 100),
                                       Y * 10 / 100], border_radius=4)
                 pygame.draw.rect(surface, (0, 0, 0), [X * 19.5 / 100, Y * 19 / 100 + (i * Y * 30 / 100), (X * 51 / 100),
-                                  Y * 12 / 100], 8, border_radius=8)
+                                                      Y * 12 / 100], 8, border_radius=8)
 
     def handle_action(self):
         if self.state == "Blank" or self.state == "Gold" or self.state == "Supply" or self.state == "Elixir" or \
@@ -2147,7 +2168,6 @@ class BattleAction(pygame.sprite.Sprite):
         self.parent.parent.stop_wait()
         self.kill()
 
-
     def draw_text(self, surface):
         pygame.draw.rect(surface, (0, 0, 0), [self.rect[0] + 17, self.rect[1] + 10, self.rect[2] - 34, self.rect[3] -
                                               20], border_radius=5)
@@ -2159,7 +2179,6 @@ class BattleAction(pygame.sprite.Sprite):
 
     def do_action(self):
         self.end_action_timer = 1000
-
 
     def target_set(self, battle_character):
         pass
