@@ -33,10 +33,10 @@ class Node(pygame.sprite.Sprite):
         self.seen = False
         self.x = x
         self.y = y
-        if state == 0:
-            self.state = "Exit"
-        elif state == 1:
+        if state == 1:
             self.state = "Explored"
+        elif state == 0:
+            self.state = "Exit"
         else:
             self.state = "Unexplored"
         self.type = node_type
@@ -205,7 +205,7 @@ class Region(BaseState):
                 for node in self.persist['nodes'][self.persist['current_position']].neighbors:
                     if self.persist['nodes'][node].selected:
                         self.persist['current_position'] = node
-                        self.handle_action("travel")
+                        self.travel()
                         break
                 if self.persist['party_abilities'].fly and self.persist['party_abilities'].fly_charges > 0:
                     for value in self.persist['nodes']:
@@ -219,35 +219,12 @@ class Region(BaseState):
                     for value in self.persist['nodes']:
                         if value.selected:
                             self.state = "Alt_Travel_Confirm"
-            if action == "travel":
-                self.persist['nodes'][self.persist['current_position']].selected = False
-                #  Conserve Supplies **************************************************************************
-                if self.persist['party_abilities'].conserve_supplies and settings.random_int(0, 100) < 50:
-                    pass
-                else:
-                    if self.persist['supplies'] > 0:
-                        self.persist['supplies'] -= 1
-                        self.party_regen()
-                    else:
-                        for player in self.persist['characters']:
-                            self.persist['characters'][player].hp -= int(
-                                0.1 * self.persist['characters'][player].max_hp)
-                            if self.persist['characters'][player].hp < 0:
-                                self.persist['characters'][player].hp = 0
-                if self.persist['nodes'][self.persist['current_position']].state == "Unexplored":
-                    self.persist['nodes'][self.persist['current_position']].state = "Explored"
-                    self.node_event()
-                    print(self.persist['nodes'][self.persist['current_position']].type)
-                    print(self.persist['nodes'][self.persist['current_position']].event)
-                    self.state = "Event"
-            elif action == "tab":
+            if action == "tab":
                 self.state = "Equip_menu"
             elif action == "click":
                 print(pygame.mouse.get_pos())
-                for node in self.persist['nodes']:
-                    print(node.index, node.x, node.y)
                 if settings.click_check(settings.REGION_MENUS['browser']['travel_rect']):
-                    self.handle_action("t")
+                    self.travel()
                 else:
                     pos = pygame.mouse.get_pos()
                     for node in self.persist['node_group']:
@@ -266,6 +243,9 @@ class Region(BaseState):
                         if hasattr(self.persist['nodes'][self.persist['current_position']], 'event'):
                             if self.persist['nodes'][self.persist['current_position']].event == "Shop":
                                 self.state = "Shop"
+                    if hasattr(self.persist['nodes'][self.persist['current_position']], 'event'):
+                        if self.persist['nodes'][self.persist['current_position']].event == "Exit":
+                            self.state = "Exit"
                 if self.persist['chargers'] > 2 and self.persist['elixirs'] > 2 and self.persist[
                     'party_abilities'].create_portal:
                     if settings.click_check(settings.REGION_MENUS['browser']['portal_rect']):
@@ -572,6 +552,28 @@ class Region(BaseState):
         self.character_stat_update()
         self.character_ability_update()
 
+    def travel(self):
+        self.persist['nodes'][self.persist['current_position']].selected = False
+        #  Conserve Supplies **************************************************************************
+        if self.persist['party_abilities'].conserve_supplies and settings.random_int(0, 100) < 50:
+            pass
+        else:
+            if self.persist['supplies'] > 0:
+                self.persist['supplies'] -= 1
+                self.party_regen()
+            else:
+                for player in self.persist['characters']:
+                    self.persist['characters'][player].hp -= int(
+                        0.1 * self.persist['characters'][player].max_hp)
+                    if self.persist['characters'][player].hp < 0:
+                        self.persist['characters'][player].hp = 0
+        if self.persist['nodes'][self.persist['current_position']].state == "Unexplored":
+            self.persist['nodes'][self.persist['current_position']].state = "Explored"
+            self.node_event()
+            print(self.persist['nodes'][self.persist['current_position']].type)
+            print(self.persist['nodes'][self.persist['current_position']].event)
+            self.state = "Event"
+
     def update(self, dt):
         if self.state == "Browse":
             self.persist['node_group'].update(dt)
@@ -849,6 +851,13 @@ class Region(BaseState):
                                          int(settings.X / 128), border_radius=int(settings.X / 64))
                         settings.tw(surface, "SHOP", (150, 150, 50), settings.REGION_MENUS['browser'] \
                             ['shop_toggle_text'], settings.TEXT_FONT)
+            elif hasattr(self.persist['nodes'][self.persist['current_position']], 'event'):
+                if self.persist['nodes'][self.persist['current_position']].event == "Boss":
+                    pygame.draw.rect(surface, (150, 50, 100), settings.REGION_MENUS['browser']['shop_toggle_rect'],
+                                     int(settings.X / 128), border_radius=int(settings.X / 64))
+                    settings.tw(surface, "EXIT", (150, 50, 100), settings.REGION_MENUS['browser'] \
+                        ['shop_toggle_text'], settings.TEXT_FONT)
+
             travel = False
             for value in self.persist['nodes'][self.persist['current_position']].neighbors:
                 if self.persist['nodes'][value].selected:
