@@ -5,11 +5,13 @@ import network_generator
 import pygame
 import settings
 from base import BaseState
+import pytweening as pt
 
 
 class Node(pygame.sprite.Sprite):
-    def __init__(self, x, y, neighbors, edges, state, node_type):
+    def __init__(self, parent, x, y, neighbors, edges, state, node_type):
         pygame.sprite.Sprite.__init__(self)
+        self.parent = parent
         self.index = state
         self.seen = False
         self.x = x
@@ -148,7 +150,7 @@ class Node(pygame.sprite.Sprite):
 
     def click(self):
         self.selected = False
-        if settings.click_check(pygame.mouse.get_pos()):
+        if self.rect.collidepoint(pygame.mouse.get_pos()) and self.parent.persist['current_position'] != self.index:
             self.selected = True
 
 
@@ -174,12 +176,40 @@ class Party(pygame.sprite.Sprite):
                                 self.image.get_height())
 
 
+class TravelButton(object):
+    def __init__(self, parent):
+        self.x = 200
+        self.y = 200
+        self.bg_rect = []
+        self.border_rect = []
+        self.text_rect = []
+        self.state = "Dormant"
+        self.hover = False
+        self.parent = parent
+        self.tween = pt.easeInOutExpo()
+
+    def draw(self, surface):
+        pass
+
+    def update(self):
+        if self.state == "Dormant":
+            pass
+        elif self.state == "Active":
+            pass
+
+    def click(self):
+        if settings.click_check(self.bg_rect):
+            self.parent.travel()
+
+
 class Region(BaseState):
     def __init__(self):
         super(Region, self).__init__()
         self.next_state = "BATTLE"
         self.nodes = pygame.sprite.Group()
         self.party = pygame.sprite.Group()
+        self.buttons = []
+        self.state = "Browse"
         self.state_options = ["Browse", "Event", "Equip_menu", "Skill_tree_menu", "Options_menu", "Shop",
                               "Alt_Travel_Confirm"]
         self.overlay_image = pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\FinalRogue\venv\resources\sprites"
@@ -192,7 +222,55 @@ class Region(BaseState):
             self.region_generate()
 
     def handle_action(self, action):
-        pass
+        if self.state == "Browse":
+            if action == "click":
+                for node in self.nodes.sprites():
+                    node.click()
+
+        elif self.state == "Event":
+            pass
+
+        elif self.state == "Equip":
+            pass
+
+        elif self.state == "Skill_Tree":
+            pass
+
+        elif self.state == "Options":
+            pass
+
+        elif self.state == "Inventory":
+            pass
+
+    def get_event(self, event):
+        if event.type == pygame.QUIT:
+            self.quit = True
+        elif event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_UP:
+                self.handle_action("up")
+            elif event.key == pygame.K_DOWN:
+                self.handle_action("down")
+            elif event.key == pygame.K_RIGHT:
+                self.handle_action("right")
+            elif event.key == pygame.K_LEFT:
+                self.handle_action("left")
+            elif event.key == pygame.K_RETURN:
+                self.handle_action("return")
+            elif event.key == pygame.K_t:
+                self.handle_action("t")
+            elif event.key == pygame.K_y:
+                self.handle_action("y")
+            elif event.key == pygame.K_TAB:
+                self.handle_action("tab")
+            elif event.key == pygame.K_BACKSPACE:
+                self.handle_action("backspace")
+            elif event.key == pygame.K_ESCAPE:
+                self.handle_action("backspace")
+        elif event.type == pygame.MOUSEBUTTONDOWN:
+            if event.button == 1:
+                self.handle_action("click")
+        elif event.type == pygame.MOUSEMOTION:
+            self.handle_action("mouse_move")
 
     def update(self, dt):
         self.nodes.update(dt)
@@ -247,12 +325,12 @@ class Region(BaseState):
             valid = valid_path
         for i, value in enumerate(node_list):
             if i == 0:
-                self.nodes.add(Node(value[0], value[1], neighbors_dict[i], edge_dict[i], i, "Boss"))
+                self.nodes.add(Node(self, value[0], value[1], neighbors_dict[i], edge_dict[i], i, "Boss"))
             elif i == 1:
-                self.nodes.add(Node(value[0], value[1], neighbors_dict[i], edge_dict[i], i, "Region Entry"))
+                self.nodes.add(Node(self, value[0], value[1], neighbors_dict[i], edge_dict[i], i, "Region Entry"))
             else:
                 node_type = settings.node_assign_2(self)
-                self.nodes.add(Node(value[0], value[1], neighbors_dict[i], edge_dict[i], i, node_type))
+                self.nodes.add(Node(self, value[0], value[1], neighbors_dict[i], edge_dict[i], i, node_type))
         self.party.add(Party(self))
         self.persist['current_position'] = 1
         self.persist['region_generate'] = False
