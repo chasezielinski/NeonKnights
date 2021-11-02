@@ -487,6 +487,50 @@ REGION_CARDS = {
 REGION_SHAPES = ["Land-Locked", "Coastal", "Archipelago", "Island", "Plateau",
                  "Lakeside", "Canyon", "River"]
 
+REGION_LAYOUTS = {
+    # num_nodes=30, knn=4, node_space=100, space_probability=100,
+    # node_space_ll=0, node_space_ul=350, min_edge_angle=15
+    'Badlands':
+        {
+            "Badlands_1":
+                {
+                    'Image': image_load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Region\BGs"
+                                        r"\Badlands_720_BG_2.png"),
+                    'Start': [176, 424, 312, 592],
+                    'End': [904, 496, 1024, 528],
+                    'Shapes': [[(120, 224), (432, 264), (592, 184), (760, 176), (1048, 280), (1048, 680), (848, 680),
+                                (776, 624), (712, 368), (560, 360), (328, 600), (120, 608)]],
+                    'Positive': True,
+                },
+        },
+    'Desert':
+        {
+            "Desert_1":
+                {
+                    'Image': image_load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Region\BGs"
+                                        r"\Desert_720_BG_1.png"),
+                    'Start': [120, 264, 296, 440],
+                    'End': [856, 344, 1032, 488],
+                    'Shapes': [[(120, 96), (950, 96), (950, 504), (912, 528), (824, 432), (816, 288), (720, 232),
+                                (536, 288), (480, 472), (376, 512), (120, 440)],
+                               [(120, 512), (336, 600), (552, 528), (640, 392), (728, 432), (856, 584), (950, 580),
+                                (950, 580), (120, 580)],
+                               [(552, 424), (560, 344), (696, 280), (776, 320), (768, 350), (704, 300), (616, 300)]],
+                    'Positive': True,
+                },
+            "Desert_2":
+                {
+                    'Image': image_load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Region\BGs"
+                                        r"\Desert_720_BG_2.png"),
+                    'Start': [124, 94, 266, 418],
+                    'End': [956, 244, 1022, 506],
+                    'Shapes': [[(122, 92), (966, 90), (680, 369), (650, 588), (602, 606), (420, 476), (124, 428)],
+                               [(792, 472), (1026, 164), (1032, 540), (904, 446), (790, 508)]],
+                    'Positive': True,
+                },
+        }
+}
+
 NODE_TYPES = [["Empty", "Town", "Dungeon", "Lone Building", "Encounter"], [30, 15, 10, 10, 40]]
 
 NODE_EVENT_TYPES = {"Empty": [["Nothing", "Investigate", "Region Entry"], [60, 40, 0]],
@@ -2518,53 +2562,10 @@ armor_dict = {
     }
 }
 boots_dict = {
-    "Leather Boots": {
-        "tier": ["common", "rare"],
-        "tier mod": {"common": 0, "rare": 2},
-        "defense": [1, 2, 3],
-        "speed": [1, 3, 5]
-    }
+"Leather Boots": {
+"tier": ["common", "rare"],
+"tier mod": {"common": 0, "rare": 2},
+"defense": [1, 2, 3],
+"speed": [1, 3, 5]
 }
-REGION_LAYOUTS = {
-    # num_nodes=30, knn=4, node_space=100, space_probability=100,
-    # node_space_ll=0, node_space_ul=350, min_edge_angle=15
-    'Badlands':
-        {
-            "Badlands_1":
-                {
-                    'Image': image_load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Region\BGs"
-                                        r"\Badlands_720_BG_2.png"),
-                    'Start': [176, 424, 312, 592],
-                    'End': [904, 496, 1024, 528],
-                    'Shapes': [[(120, 224), (432, 264), (592, 184), (760, 176), (1048, 280), (1048, 680), (848, 680),
-                                (776, 624), (712, 368), (560, 360), (328, 600), (120, 608)]],
-                    'Positive': True,
-                },
-        },
-    'Desert':
-        {
-            "Desert_1":
-                {
-                    'Image': image_load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Region\BGs"
-                                        r"\Desert_720_BG_1.png"),
-                    'Start': [120, 264, 296, 440],
-                    'End': [856, 344, 1032, 488],
-                    'Shapes': [[(120, 96), (950, 96), (950, 504), (912, 528), (824, 432), (816, 288), (720, 232),
-                                (536, 288), (480, 472), (376, 512), (120, 440)],
-                               [(120, 512), (336, 600), (552, 528), (640, 392), (728, 432), (856, 584), (950, 580),
-                                (950, 580), (120, 580)],
-                               [(552, 424), (560, 344), (696, 280), (776, 320), (768, 350), (704, 300), (616, 300)]],
-                    'Positive': True,
-                },
-            "Desert_2":
-                {
-                    'Image': image_load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Region\BGs"
-                                        r"\Desert_720_BG_2.png"),
-                    'Start': [124, 94, 266, 418],
-                    'End': [956, 244, 1022, 506],
-                    'Shapes': [[(122, 92), (966, 90), (680, 369), (650, 588), (602, 606), (420, 476), (124, 428)],
-                               [(792, 472), (1026, 164), (1032, 540), (904, 446), (790, 508)]],
-                    'Positive': True,
-                },
-        }
 }

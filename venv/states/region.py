@@ -1131,34 +1131,34 @@ class Region(BaseState):
         region_options = []
         for option in settings.REGION_LAYOUTS[self.persist['region_type']]:
             region_options.append(option)
-        self.persist['region_layout'] = region_type = settings.choose_random(region_options)
+        self.persist['region_layout'] = region_layout = settings.choose_random(region_options)
         num_nodes = 30
-        if 'num_nodes' in settings.REGION_LAYOUTS[self.persist['region_type']][region_type]:
-            num_nodes = settings.REGION_LAYOUTS[self.persist['region_type']][region_type]['num_nodes']
+        if 'num_nodes' in settings.REGION_LAYOUTS[self.persist['region_type']][region_layout]:
+            num_nodes = settings.REGION_LAYOUTS[self.persist['region_type']][region_layout]['num_nodes']
         knn = 4
-        if 'knn' in settings.REGION_LAYOUTS[self.persist['region_type']][region_type]:
-            knn = settings.REGION_LAYOUTS[self.persist['region_type']][region_type]['knn']
+        if 'knn' in settings.REGION_LAYOUTS[self.persist['region_type']][region_layout]:
+            knn = settings.REGION_LAYOUTS[self.persist['region_type']][region_layout]['knn']
         node_space = 100
-        if 'node_space' in settings.REGION_LAYOUTS[self.persist['region_type']][region_type]:
-            node_space = settings.REGION_LAYOUTS[self.persist['region_type']][region_type]['node_space']
+        if 'node_space' in settings.REGION_LAYOUTS[self.persist['region_type']][region_layout]:
+            node_space = settings.REGION_LAYOUTS[self.persist['region_type']][region_layout]['node_space']
         space_probability = 100
-        if 'space_probability' in settings.REGION_LAYOUTS[self.persist['region_type']][region_type]:
-            space_probability = settings.REGION_LAYOUTS[self.persist['region_type']][region_type]['space_probability']
+        if 'space_probability' in settings.REGION_LAYOUTS[self.persist['region_type']][region_layout]:
+            space_probability = settings.REGION_LAYOUTS[self.persist['region_type']][region_layout]['space_probability']
         node_space_ll = 0
-        if 'node_space_ll' in settings.REGION_LAYOUTS[self.persist['region_type']][region_type]:
-            node_space_ll = settings.REGION_LAYOUTS[self.persist['region_type']][region_type]['node_space_ll']
+        if 'node_space_ll' in settings.REGION_LAYOUTS[self.persist['region_type']][region_layout]:
+            node_space_ll = settings.REGION_LAYOUTS[self.persist['region_type']][region_layout]['node_space_ll']
         node_space_ul = 350
-        if 'node_space_ul' in settings.REGION_LAYOUTS[self.persist['region_type']][region_type]:
-            node_space_ul = settings.REGION_LAYOUTS[self.persist['region_type']][region_type]['node_space_ul']
+        if 'node_space_ul' in settings.REGION_LAYOUTS[self.persist['region_type']][region_layout]:
+            node_space_ul = settings.REGION_LAYOUTS[self.persist['region_type']][region_layout]['node_space_ul']
         min_edge_angle = 15
-        if 'min_edge_angle' in settings.REGION_LAYOUTS[self.persist['region_type']][region_type]:
-            min_edge_angle = settings.REGION_LAYOUTS[self.persist['region_type']][region_type]['min_edge_angle']
+        if 'min_edge_angle' in settings.REGION_LAYOUTS[self.persist['region_type']][region_layout]:
+            min_edge_angle = settings.REGION_LAYOUTS[self.persist['region_type']][region_layout]['min_edge_angle']
         while not valid:
             node_list, edge_list, neighbors_dict, edge_dict, valid_path = network_generator.network_gen(
-                X=settings.X, Y=settings.Y, shapes=settings.REGION_LAYOUTS[self.persist['region_type']][region_type]['Shapes'],
-                start_rect=settings.REGION_LAYOUTS[self.persist['region_type']][region_type]['Start'],
-                end_rect=settings.REGION_LAYOUTS[self.persist['region_type']][region_type]['End'],
-                positive=settings.REGION_LAYOUTS[self.persist['region_type']][region_type]['Positive'],
+                X=settings.X, Y=settings.Y, shapes=settings.REGION_LAYOUTS[self.persist['region_type']][region_layout]['Shapes'],
+                start_rect=settings.REGION_LAYOUTS[self.persist['region_type']][region_layout]['Start'],
+                end_rect=settings.REGION_LAYOUTS[self.persist['region_type']][region_layout]['End'],
+                positive=settings.REGION_LAYOUTS[self.persist['region_type']][region_layout]['Positive'],
                 num_nodes=num_nodes, knn=knn, node_space=node_space, space_probability=space_probability,
                 node_space_ll=node_space_ll, node_space_ul=node_space_ul, min_edge_angle=min_edge_angle)
             valid = valid_path
