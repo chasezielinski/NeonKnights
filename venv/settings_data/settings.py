@@ -533,6 +533,8 @@ REGION_LAYOUTS = {
 
 NODE_TYPES = [["Empty", "Town", "Dungeon", "Lone Building", "Encounter"], [30, 15, 10, 10, 40]]
 
+NODE_TYPES_2 = [["Shop", "Dungeon", "Encounter", "Event", "Empty"], [5, 5, 40, 20, 30]]
+
 NODE_EVENT_TYPES = {"Empty": [["Nothing", "Investigate", "Region Entry"], [60, 40, 0]],
                     "Town": [["Shop", "Tavern", "Academy"], [45, 45, 10]],
                     "Dungeon": [["Cave", "Fortress"], [50, 50]],
@@ -958,6 +960,21 @@ def node_assign(persist):
                                 weights=NODE_EVENT_TYPES[node_type[0]][1])
     event_id = event_assign(node_type, event_type, persist)
     return node_type[0], event_type[0], event_id[0]
+
+
+def node_assign_2(parent):
+    shops = 0
+    n = 0
+    n_max = len(parent.nodes.sprites())
+    for node in parent.nodes.sprites():
+        n += 1
+        if node.type == "Shop":
+            shops += 1
+    if shops < 3 and random_int(0, 100) > (100 - (1.5 * n)):
+        node_type = "Shop"
+    else:
+        node_type = random.choices(NODE_TYPES_2[0], weights=NODE_TYPES_2[1])
+    return node_type[0]
 
 
 def ccw(A, B, C):

@@ -8,7 +8,7 @@ from base import BaseState
 
 
 class Node(pygame.sprite.Sprite):
-    def __init__(self, x, y, neighbors, edges, state, node_type, event_type):
+    def __init__(self, x, y, neighbors, edges, state, node_type):
         pygame.sprite.Sprite.__init__(self)
         self.index = state
         self.seen = False
@@ -153,8 +153,9 @@ class Node(pygame.sprite.Sprite):
 
 
 class Party(pygame.sprite.Sprite):
-    def __init__(self):
+    def __init__(self, parent):
         pygame.sprite.Sprite.__init__(self)
+        self.parent = parent
         self.x = 2 * settings.X
         self.y = 2 * settings.Y
         self.image = pygame.image.load(
@@ -162,11 +163,13 @@ class Party(pygame.sprite.Sprite):
         self.rect = pygame.Rect(self.x, self.y, self.image.get_width(), self.image.get_height())
         self.image.set_colorkey((255, 55, 202))
 
-    def draw(self, surface):
-        self.draw(surface)
-
-    def update(self, x, y):
-        self.rect = pygame.Rect(x - (self.image.get_width() / 4), y - (self.image.get_height() / 2),
+    def update(self, dt):
+        for sprite in self.parent.nodes.sprites():
+            if self.parent.persist['current_position'] == sprite.index:
+                self.x = sprite.x
+                self.y = sprite.y
+                break
+        self.rect = pygame.Rect(self.x - (self.image.get_width() / 4), self.y - (self.image.get_height() / 2),
                                 self.image.get_width(),
                                 self.image.get_height())
 
@@ -193,10 +196,12 @@ class Region(BaseState):
 
     def update(self, dt):
         self.nodes.update(dt)
+        self.party.update(dt)
 
     def draw(self, surface):
-        surface.fill(0,0,0)
+        surface.fill(pygame.Color("black"))
         self.nodes.draw(surface)
+        self.party.draw(surface)
         surface.blit(self.overlay_image, (0,0))
 
     def region_generate(self):
@@ -246,8 +251,8 @@ class Region(BaseState):
             elif i == 1:
                 self.nodes.add(Node(value[0], value[1], neighbors_dict[i], edge_dict[i], i, "Region Entry"))
             else:
-                node_type = settings.node_assign2(self.persist)
+                node_type = settings.node_assign_2(self)
                 self.nodes.add(Node(value[0], value[1], neighbors_dict[i], edge_dict[i], i, node_type))
-        self.party.add(Party())
+        self.party.add(Party(self))
         self.persist['current_position'] = 1
         self.persist['region_generate'] = False

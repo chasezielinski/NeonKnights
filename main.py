@@ -7,7 +7,7 @@ from splash import Splash
 # from states.battle_pause import Pause
 from game import Game
 from characterselect import CharacterSelect
-from region import Region
+from region_2 import Region
 from battle2 import Battle
 from map_bounds import MapBounds
 from region_select import RegionSelect
