@@ -178,24 +178,44 @@ class Party(pygame.sprite.Sprite):
 
 class TravelButton(object):
     def __init__(self, parent):
-        self.x = 200
-        self.y = 200
-        self.bg_rect = []
-        self.border_rect = []
-        self.text_rect = []
-        self.state = "Dormant"
-        self.hover = False
+        self.bg_rect = settings.REGION_MENUS['browser']['travel_rect']
+        self.border_rect = settings.REGION_MENUS['browser']['travel_rect']
+        self.text_rect = settings.REGION_MENUS['browser']['travel_text']
+        self.state = "Active"
+        self.hover = True
         self.parent = parent
-        self.tween = pt.easeInOutExpo()
+        self.speed = 500
+        self.time = 0
+        self.dir = 1
+        self.dim_color = (50, 50, 0)
+        self.flash_color = (255, 255, 255)
+        self.text_color = (150, 150, 0)
+        self.color = (0, 0, 0)
 
     def draw(self, surface):
-        pass
+        pygame.draw.rect(surface, self.color, self.bg_rect, border_radius=8)
+        settings.tw(surface, "TRAVEL", self.text_color, self.text_rect, settings.TEXT_FONT)
+        pygame.draw.rect(surface, (0, 0, 0), self.bg_rect, 8, border_radius=8)
 
-    def update(self):
+    def update(self, dt):
+        self.time += self.dir * dt
+        if self.time > 500:
+            self.time = 500
+            self.dir *= -1
+        elif self.time < 0:
+            self.time = 0
+            self.dir *= -1
+        step = pt.easeInOutCubic(self.time/self.speed)
+        color = (int(((self.flash_color[0] - self.dim_color[0]) * step) + self.dim_color[0]),
+                 int(((self.flash_color[1] - self.dim_color[1]) * step) + self.dim_color[1]),
+                 int(((self.flash_color[2] - self.dim_color[2]) * step) + self.dim_color[2]))
         if self.state == "Dormant":
-            pass
+            self.color = (50, 50, 50)
         elif self.state == "Active":
-            pass
+            if self.hover:
+                self.color = (200, 200, 200)
+            else:
+                self.color = color
 
     def click(self):
         if settings.click_check(self.bg_rect):
@@ -208,7 +228,7 @@ class Region(BaseState):
         self.next_state = "BATTLE"
         self.nodes = pygame.sprite.Group()
         self.party = pygame.sprite.Group()
-        self.buttons = []
+        self.buttons = [TravelButton(self)]
         self.state = "Browse"
         self.state_options = ["Browse", "Event", "Equip_menu", "Skill_tree_menu", "Options_menu", "Shop",
                               "Alt_Travel_Confirm"]
@@ -275,12 +295,16 @@ class Region(BaseState):
     def update(self, dt):
         self.nodes.update(dt)
         self.party.update(dt)
+        for button in self.buttons:
+            button.update(dt)
 
     def draw(self, surface):
         surface.fill(pygame.Color("black"))
         self.nodes.draw(surface)
         self.party.draw(surface)
         surface.blit(self.overlay_image, (0,0))
+        for button in self.buttons:
+            button.draw(surface)
 
     def region_generate(self):
         valid = False
