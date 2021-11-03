@@ -242,7 +242,7 @@ class TravelButton(object):
         elif self.time < 0:
             self.time = 0
             self.dir *= -1
-        step = pt.easeInOutCubic(self.time/self.speed)
+        step = pt.easeInOutCubic(self.time / self.speed)
         color = (int(((self.flash_color[0] - self.dim_color[0]) * step) + self.dim_color[0]),
                  int(((self.flash_color[1] - self.dim_color[1]) * step) + self.dim_color[1]),
                  int(((self.flash_color[2] - self.dim_color[2]) * step) + self.dim_color[2]))
@@ -301,6 +301,42 @@ class Resources(object):
         pass
 
 
+class StatusBar(object):
+    def __init__(self, parent):
+        self.parent = parent
+        self.party_population = 0
+        self.offset = 17.5
+        self.X = settings.X
+        self.Y = settings.Y
+        self.icon_pos = (self.X * 83 / 100, self.Y * 13 / 100)
+        self.icon_bg_rect = [self.X * 82.5 / 100, self.Y * 12.5 / 100, self.X * 6 / 100, self.Y * 10 / 100]
+        self.status_bg_rect = [self.X * 89 / 100, self.Y * 12.5 / 100, self.X * 10 / 100, self.Y * 10 / 100]
+        self.hp_rect = [self.X * 91.75 / 100, self.Y * 13 / 100, self.X * 7 / 100, self.Y * 4 / 100]
+        self.hp_data_rect = [self.X * 89 / 100, self.Y * 13 / 100, self.X * 8 / 100, self.Y * 4 / 100]
+        self.mp_rect = [self.X * 91.75 / 100, self.Y * 18 / 100, self.X * 7 / 100, self.Y * 4 / 100]
+        self.mp_data_rect = [self.X * 89 / 100, self.Y * 18 / 100, self.X * 8 / 100, self.Y * 4 / 100]
+        self.equip_button = [self.X * 82.5 / 100, self.Y * 23.5 / 100, self.X * 8 / 100, self.Y * 5 / 100]
+        self.status_button = [self.X * 91 / 100, self.Y * 23.5 / 100, self.X * 8 / 100, self.Y * 5 / 100]
+        self.color = (150, 150, 150)
+
+    def update(self, dt):
+        self.party_population = len(self.parent.persist['characters'])
+
+    def draw(self, surface):
+        for i, player in enumerate(self.parent.persist['characters']):
+            pygame.draw.rect(surface, self.color, [self.icon_bg_rect[0], self.icon_bg_rect[1] + (i * self.offset),
+                                                   self.icon_bg_rect[2], self.icon_bg_rect[3]], border_radius=6)
+            pygame.draw.rect(surface, self.color, [self.status_bg_rect[0], self.status_bg_rect[1] + (i * self.offset),
+                                                   self.status_bg_rect[2], self.status_bg_rect[3]], border_radius=6)
+            pygame.draw.rect(surface, self.color, [self.equip_button[0], self.equip_button[1] + (i * self.offset),
+                                                   self.equip_button[2], self.equip_button[3]], border_radius=6)
+            pygame.draw.rect(surface, self.color, [self.status_button[0], self.status_button[1] + (i * self.offset),
+                                                   self.status_button[2], self.status_button[3]], border_radius=6)
+
+    def click(self):
+        pass
+
+
 class Background(object):
     def __init__(self, parent, image):
         self.pos = (0, 0)
@@ -321,7 +357,7 @@ class Region(BaseState):
         self.nodes = pygame.sprite.Group()
         self.selected_node = None
         self.party = Party(self)
-        self.buttons = [TravelButton(self), Resources(self)]
+        self.buttons = [TravelButton(self), Resources(self), StatusBar(self)]
         self.paths = []
         self.background = None
         self.state = "Browse"
@@ -335,7 +371,8 @@ class Region(BaseState):
         self.persist = persistent
         if self.persist['region_generate']:
             self.region_generate()
-        self.background = Background(self, settings.REGION_LAYOUTS[self.persist['region_type']][self.persist['region_layout']]["Image"])
+        self.background = Background(self, settings.REGION_LAYOUTS[self.persist['region_type']][
+            self.persist['region_layout']]["Image"])
 
     def handle_action(self, action):
         if self.state == "Browse":
@@ -408,7 +445,7 @@ class Region(BaseState):
             path.draw(surface)
         self.nodes.draw(surface)
         self.party.draw(surface)
-        surface.blit(self.overlay_image, (0,0))
+        surface.blit(self.overlay_image, (0, 0))
         for button in self.buttons:
             button.draw(surface)
         if self.state == "Event":

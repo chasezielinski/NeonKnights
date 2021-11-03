@@ -39,12 +39,12 @@ class Battle(BaseState):
     def startup(self, persistent):
         self.persist = persistent
         # point Battle to player character sprite objects and add them to proper Groups
-        for player in self.persist['characters'].keys():
-            setattr(self, player, self.persist['characters'][player])
-            setattr(getattr(self, player), 'parent', self)
-            self.battle_characters.add(getattr(self, player))
-            self.player_characters.add(getattr(self, player))
-            self.battle_objects.add(getattr(self, player))
+        for player in self.persist['characters']:
+            setattr(self, player.slot, player)
+            setattr(getattr(self, player.slot), 'parent', self)
+            self.battle_characters.add(getattr(self, player.slot))
+            self.player_characters.add(getattr(self, player.slot))
+            self.battle_objects.add(getattr(self, player.slot))
         # construct each enemy sprite object and add them to proper Groups
         for i, enemy in enumerate(self.persist['enemies']):
             slot = self.enemy_slots[i]

@@ -468,8 +468,8 @@ class CharacterSelect(BaseState):
             # setup persist dictionary
             self.persist['region_generate'] = True
             self.persist['region_index'] = 0
-            self.persist['characters'] = {}
-            self.persist['characters']['player_a'] = PlayerCharacter(self.options[self.active_index], 'player_a', name=self.name_entry)
+            self.persist['characters'] = []
+            self.persist['characters'].append(PlayerCharacter(self.options[self.active_index], 'player_a', name=self.name_entry))
             self.persist['supplies'] = 10
             self.persist['chargers'] = 5
             self.persist['elixirs'] = 5
@@ -477,7 +477,7 @@ class CharacterSelect(BaseState):
             self.persist['region_type'] = "None"
             self.persist['inventory'] = []
             self.persist['inventory manager'] = InventoryManager(self)
-            settings.character_initial(self.persist, 'player_a', self.options[self.active_index])
+            settings.character_initial(self.persist['characters'][0], self.options[self.active_index])
             self.persist['equip menu indices'] = settings.REGION_MENUS['equip menu']['equip menu indices']
             self.persist['party_abilities'] = PartyAbilityManager()
             self.done = True

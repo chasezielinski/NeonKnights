@@ -96,11 +96,11 @@ BASE_STATS = {
 }
 
 
-def character_initial(persist, char, char_class):
+def character_initial(char, char_class):
     if char_class == "Fighter":
-        persist['characters'][char].equipment["Weapon"] = Weapon("Coder Sword", 1)
-        persist['characters'][char].equipment["Armor"] = Armor("Iron Plate", "common", '1')
-        persist['characters'][char].equipment["Boots"] = Boots("Leather Boots", "common", '1')
+        char.equipment["Weapon"] = Weapon("Coder Sword", 1)
+        char.equipment["Armor"] = Armor("Iron Plate", "common", '1')
+        char.equipment["Boots"] = Boots("Leather Boots", "common", '1')
 
 
 # Character Select
