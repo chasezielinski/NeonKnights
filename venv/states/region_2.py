@@ -17,6 +17,7 @@ class Node(pygame.sprite.Sprite):
         self.x = x
         self.y = y
         self.type = node_type
+        self.travel = False
         if state == 1:
             self.state = "Explored"
         elif state == 0:
@@ -141,6 +142,8 @@ class Node(pygame.sprite.Sprite):
             else:
                 self.animation_index = 0
             self.image = self.images_exit[math.floor(self.animation_index)]
+        if self.index in self.parent.party.node.neighbors:
+            self.travel = True
 
     def cleanup(self):
         self.kill()
@@ -164,16 +167,14 @@ class Party(pygame.sprite.Sprite):
             r"C:\Users\Chase\Dropbox\Pycharm\FinalRogue\venv\resources\sprites\Region\D20_Party.png")
         self.rect = pygame.Rect(self.x, self.y, self.image.get_width(), self.image.get_height())
         self.image.set_colorkey((255, 55, 202))
+        self.node = None
 
     def update(self, dt):
-        for sprite in self.parent.nodes.sprites():
-            if self.parent.persist['current_position'] == sprite.index:
-                self.x = sprite.x
-                self.y = sprite.y
-                break
-        self.rect = pygame.Rect(self.x - (self.image.get_width() / 4), self.y - (self.image.get_height() / 2),
-                                self.image.get_width(),
-                                self.image.get_height())
+        self.x = self.node.x - (self.image.get_width() / 4)
+        self.y = self.node.y - (self.image.get_height() / 2)
+
+    def draw(self, surface):
+        surface.blit(self.image, (self.x, self.y))
 
 
 class TravelButton(object):
@@ -209,6 +210,15 @@ class TravelButton(object):
         color = (int(((self.flash_color[0] - self.dim_color[0]) * step) + self.dim_color[0]),
                  int(((self.flash_color[1] - self.dim_color[1]) * step) + self.dim_color[1]),
                  int(((self.flash_color[2] - self.dim_color[2]) * step) + self.dim_color[2]))
+        for node in self.parent.nodes.sprites():
+            if node.selected and node.travel:
+                self.state = "Active"
+                break
+            else:
+                self.state = "Dormant"
+            self.hover = False
+        if settings.click_check(self.bg_rect):
+            self.hover = True
         if self.state == "Dormant":
             self.color = (50, 50, 50)
         elif self.state == "Active":
@@ -222,13 +232,60 @@ class TravelButton(object):
             self.parent.travel()
 
 
+class Resources(object):
+    def __init__(self, parent):
+        self.parent = parent
+
+    def draw(self, surface):
+        pygame.draw.rect(surface, (150, 150, 150),
+                         settings.REGION_MENUS['browser']['resources']['background 1 rect'], border_radius=6)
+        pygame.draw.rect(surface, (0, 0, 0), settings.REGION_MENUS['browser']['resources']['background 2 rect'],
+                         border_radius=6)
+        surface.blit(settings.REGION_STATIC_SPRITES['supplies icon'],
+                     settings.REGION_MENUS['browser']['resources']['supplies icon pos'])
+        surface.blit(settings.REGION_STATIC_SPRITES['elixir icon'],
+                     settings.REGION_MENUS['browser']['resources']['elixir icon pos'])
+        surface.blit(settings.REGION_STATIC_SPRITES['coin icon'],
+                     settings.REGION_MENUS['browser']['resources']['coin icon pos'])
+        surface.blit(settings.REGION_STATIC_SPRITES['charge icon'],
+                     settings.REGION_MENUS['browser']['resources']['charge icon pos'])
+        settings.tw(surface, str(self.parent.persist['gold']), (20, 150, 150), settings.REGION_MENUS
+        ['browser']['resources']['coin data rect'], settings.HEADING_FONT)
+        settings.tw(surface, str(self.parent.persist['supplies']), (20, 150, 150), settings.REGION_MENUS
+        ['browser']['resources']['supplies data rect'], settings.HEADING_FONT)
+        settings.tw(surface, str(self.parent.persist['chargers']), (20, 150, 150), settings.REGION_MENUS
+        ['browser']['resources']['charge data rect'], settings.HEADING_FONT)
+        settings.tw(surface, str(self.parent.persist['elixirs']), (20, 150, 150), settings.REGION_MENUS
+        ['browser']['resources']['elixir data rect'], settings.HEADING_FONT)
+
+    def update(self, dt):
+        pass
+
+    def click(self):
+        pass
+
+
+class Background(object):
+    def __init__(self, parent, image):
+        self.pos = (0, 0)
+        self.parent = parent
+        self.image = image
+
+    def draw(self, surface):
+        surface.blit(self.image, self.pos)
+
+    def update(self, dt):
+        pass
+
+
 class Region(BaseState):
     def __init__(self):
         super(Region, self).__init__()
         self.next_state = "BATTLE"
         self.nodes = pygame.sprite.Group()
-        self.party = pygame.sprite.Group()
-        self.buttons = [TravelButton(self)]
+        self.party = Party(self)
+        self.buttons = [TravelButton(self), Resources(self)]
+        self.background = None
         self.state = "Browse"
         self.state_options = ["Browse", "Event", "Equip_menu", "Skill_tree_menu", "Options_menu", "Shop",
                               "Alt_Travel_Confirm"]
@@ -240,6 +297,7 @@ class Region(BaseState):
         self.persist = persistent
         if self.persist['region_generate']:
             self.region_generate()
+        self.background = Background(self, settings.REGION_LAYOUTS[self.persist['region_type']][self.persist['region_layout']]["Image"])
 
     def handle_action(self, action):
         if self.state == "Browse":
@@ -300,6 +358,7 @@ class Region(BaseState):
 
     def draw(self, surface):
         surface.fill(pygame.Color("black"))
+        self.background.draw(surface)
         self.nodes.draw(surface)
         self.party.draw(surface)
         surface.blit(self.overlay_image, (0,0))
@@ -350,11 +409,12 @@ class Region(BaseState):
         for i, value in enumerate(node_list):
             if i == 0:
                 self.nodes.add(Node(self, value[0], value[1], neighbors_dict[i], edge_dict[i], i, "Boss"))
+                print(neighbors_dict[i])
             elif i == 1:
-                self.nodes.add(Node(self, value[0], value[1], neighbors_dict[i], edge_dict[i], i, "Region Entry"))
+                self.party.node = Node(self, value[0], value[1], neighbors_dict[i], edge_dict[i], i, "Region Entry")
+                self.nodes.add(self.party.node)
             else:
                 node_type = settings.node_assign_2(self)
                 self.nodes.add(Node(self, value[0], value[1], neighbors_dict[i], edge_dict[i], i, node_type))
-        self.party.add(Party(self))
         self.persist['current_position'] = 1
         self.persist['region_generate'] = False

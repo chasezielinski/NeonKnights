@@ -533,7 +533,125 @@ REGION_LAYOUTS = {
 
 NODE_TYPES = [["Empty", "Town", "Dungeon", "Lone Building", "Encounter"], [30, 15, 10, 10, 40]]
 
-NODE_TYPES_2 = [["Shop", "Dungeon", "Encounter", "Event", "Empty"], [5, 5, 40, 20, 30]]
+NODE_TYPES_2 = [["Shop", "Dungeon", "Encounter", "Event", "Empty"], [1, 2, 40, 27, 30]]
+
+
+class Shop(object):
+    def __init__(self):
+        pass
+
+    def update(self, dt):
+        pass
+
+    def draw(self, surface):
+        pass
+
+    def handle_action(self, action):
+        pass
+
+
+class Event(object):
+    def __init__(self, parent, prompt, option_1, option_2=None, option_3=None, option_4=None, enemies=None,
+                 supply_reward=None, gold_reward=None, elixir_reward=None, charger_reward=None, item_reward=None):
+        self.parent = parent
+        self.state = "Prompt"
+        self.enemies = enemies
+        self.prompt = prompt
+        self.options = [option_1, option_2, option_3, option_4]
+        self.option_index = -1
+        self.bg_1_rect = [X * 17 / 100, Y * 7 / 100, X * 60 / 100, Y * 88 / 100]
+        self.bg_2_rect = [X * 17 / 100, Y * 8 / 100, X * 59 / 100, Y * 86 / 100]
+        self.prompt_rect = [X * 18 / 100, Y * 9 / 100, X * 57 / 100, Y * 84 / 100]
+        self.option_rect = [X * 18 / 100, Y * 55 / 100, X * 57 / 100, Y * 5 / 100]
+        self.option_offset = 5
+        self.supply_reward = supply_reward
+        self.gold_reward = gold_reward
+        self.elixir_reward = elixir_reward
+        self.charger_reward = charger_reward
+        self.item_reward = item_reward
+
+    def update(self, dt):
+        if self.state == "Prompt":
+            for i, option in enumerate(self.options):
+                if option is not None:
+                    if click_check([self.option_rect[0], self.option_rect[1] + (i * Y * 5 / 100),
+                                    self.option_rect[2], self.option_rect[3]]):
+                        self.option_index = i
+
+    def draw(self, surface):
+        pygame.draw.rect(surface, (150, 150, 150), self.bg_1_rect, border_radius=8)
+        pygame.draw.rect(surface, (0, 0, 0), self.bg_2_rect, border_radius=8)
+        if self.state == "Prompt":
+            tw(surface, self.prompt, TEXT_COLOR, self.prompt_rect, TEXT_FONT)
+            for i, option in enumerate(self.options):
+                color = TEXT_COLOR
+                if i == self.option_index:
+                    color = SELECTED_COLOR
+                if option is not None:
+                    tw(surface, "1. " + option[0], color, [self.option_rect[0], self.option_rect[1] + (i * Y * 5 / 100),
+                                                           self.option_rect[2], self.option_rect[3]], TEXT_FONT)
+
+    def handle_action(self, action):
+        if action == "click":
+            pass
+        if action == "return":
+            if self.options[self.option_index] is not None:
+                outcome = choose_random_weighted(self.options[self.option_index][1], self.options[self.option_index][2])[0]
+                if "state" in outcome.keys():
+                    setattr(self, "state", outcome["state"])
+                if "prompt" in outcome.keys():
+                    setattr(self, "prompt", outcome["prompt"])
+                if "options" in outcome.keys():
+                    setattr(self, "options", outcome["options"])
+
+    def battle(self):
+        self.parent.parent.persist['enemies'] = self.enemies
+        self.parent.parent.state = "Browse"
+        self.parent.parent.next_state = "BATTLE"
+        self.parent.parent.done = True
+
+
+class Dungeon(object):
+    def __init__(self):
+        pass
+
+    def update(self, dt):
+        pass
+
+    def draw(self, surface):
+        pass
+
+    def handle_action(self, action):
+        pass
+
+
+class Event(object):
+    def __init__(self):
+        pass
+
+    def update(self, dt):
+        pass
+
+    def draw(self, surface):
+        pass
+
+    def handle_action(self, action):
+        pass
+
+
+class Empty(object):
+    def __init__(self):
+        pass
+
+    def update(self, dt):
+        pass
+
+    def draw(self, surface):
+        pass
+
+    def handle_action(self, action):
+        pass
+
 
 NODE_EVENT_TYPES = {"Empty": [["Nothing", "Investigate", "Region Entry"], [60, 40, 0]],
                     "Town": [["Shop", "Tavern", "Academy"], [45, 45, 10]],
@@ -2579,10 +2697,10 @@ armor_dict = {
     }
 }
 boots_dict = {
-"Leather Boots": {
-"tier": ["common", "rare"],
-"tier mod": {"common": 0, "rare": 2},
-"defense": [1, 2, 3],
-"speed": [1, 3, 5]
-}
+    "Leather Boots": {
+        "tier": ["common", "rare"],
+        "tier mod": {"common": 0, "rare": 2},
+        "defense": [1, 2, 3],
+        "speed": [1, 3, 5]
+    }
 }

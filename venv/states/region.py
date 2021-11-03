@@ -651,7 +651,7 @@ class Region(BaseState):
             surface.blit(settings.REGION_LAYOUTS[self.persist['region_type']][self.persist['region_layout']]["Image"],
                          (0, 0))
 
-        # PATH VISION **********************************************************************************************************
+        # PATH VISION ****************************************************************************************
 
         if self.persist['party_abilities'].path_vision:
             if self.persist['party_abilities'].static_path:
@@ -689,10 +689,10 @@ class Region(BaseState):
                                              self.persist['nodes'][value[1]].x + 16, self.persist['nodes'][value[1]].y +
                                              16), 3)
 
-        # Node Group ***********************************************************************************************************
+        # Node Group ***********************************************************************************
         self.persist['node_group'].draw(surface)
 
-        # Node Labels **********************************************************************************************************
+        # Node Labels ******************************************************************************************
         for node in self.persist['nodes']:
             if node.index in self.persist['nodes'][self.persist['current_position']].neighbors:
                 node.seen = True
