@@ -9,7 +9,7 @@ import pytweening as pt
 
 
 class Node(pygame.sprite.Sprite):
-    def __init__(self, parent, x, y, neighbors, edges, state, node_type):
+    def __init__(self, parent, x, y, neighbors, edges, state, node_type, node_event=None):
         pygame.sprite.Sprite.__init__(self)
         self.parent = parent
         self.index = state
@@ -24,7 +24,7 @@ class Node(pygame.sprite.Sprite):
             self.state = "Exit"
         else:
             self.state = "Unexplored"
-        self.event = None
+        self.event = node_event
         self.selected = False
         self.hover = False
         self.neighbors = neighbors
@@ -144,6 +144,11 @@ class Node(pygame.sprite.Sprite):
             self.image = self.images_exit[math.floor(self.animation_index)]
         if self.index in self.parent.party.node.neighbors:
             self.travel = True
+        else:
+            self.travel = False
+        self.hover = False
+        if self.rect.collidepoint(pygame.mouse.get_pos()):
+            self.hover = True
 
     def cleanup(self):
         self.kill()
@@ -155,6 +160,37 @@ class Node(pygame.sprite.Sprite):
         self.selected = False
         if self.rect.collidepoint(pygame.mouse.get_pos()) and self.parent.persist['current_position'] != self.index:
             self.selected = True
+            self.parent.selected_node = self
+
+
+class Path(object):
+    def __init__(self, parent, node_1, node_2):
+        self.parent = parent
+        self.node_1 = node_1
+        self.node_2 = node_2
+        self.hover = False
+        self.state = "Hidden"
+
+    def update(self, dt):
+        if self.parent.persist['party_abilities'].path_vision:
+            self.state = "Visible"
+        else:
+            self.state = "Hidden"
+            if self.node_1.state == "Explored" or self.node_2.state == "Explored":
+                self.state = "Visible"
+
+        self.hover = False
+        if self.node_1.hover or self.node_2.hover:
+            self.hover = True
+
+    def draw(self, surface):
+        if self.state == "Visible":
+            if self.hover:
+                pygame.draw.aaline(surface, (0, 0, 0), (self.node_1.x + 16, self.node_1.y + 16),
+                                   (self.node_2.x + 16, self.node_2.y + 16), 8)
+            else:
+                pygame.draw.aaline(surface, (100, 100, 100), (self.node_1.x + 16, self.node_1.y + 16),
+                                   (self.node_2.x + 16, self.node_2.y + 16), 5)
 
 
 class Party(pygame.sprite.Sprite):
@@ -283,8 +319,10 @@ class Region(BaseState):
         super(Region, self).__init__()
         self.next_state = "BATTLE"
         self.nodes = pygame.sprite.Group()
+        self.selected_node = None
         self.party = Party(self)
         self.buttons = [TravelButton(self), Resources(self)]
+        self.paths = []
         self.background = None
         self.state = "Browse"
         self.state_options = ["Browse", "Event", "Equip_menu", "Skill_tree_menu", "Options_menu", "Shop",
@@ -302,11 +340,14 @@ class Region(BaseState):
     def handle_action(self, action):
         if self.state == "Browse":
             if action == "click":
+                for button in self.buttons:
+                    button.click()
                 for node in self.nodes.sprites():
                     node.click()
 
         elif self.state == "Event":
-            pass
+            if self.state == "Event":
+                self.party.node.event.handle_action(action)
 
         elif self.state == "Equip":
             pass
@@ -353,17 +394,25 @@ class Region(BaseState):
     def update(self, dt):
         self.nodes.update(dt)
         self.party.update(dt)
+        for path in self.paths:
+            path.update(dt)
         for button in self.buttons:
             button.update(dt)
+        if self.state == "Event":
+            self.party.node.event.update(dt)
 
     def draw(self, surface):
         surface.fill(pygame.Color("black"))
         self.background.draw(surface)
+        for path in self.paths:
+            path.draw(surface)
         self.nodes.draw(surface)
         self.party.draw(surface)
         surface.blit(self.overlay_image, (0,0))
         for button in self.buttons:
             button.draw(surface)
+        if self.state == "Event":
+            self.party.node.event.draw(surface)
 
     def region_generate(self):
         valid = False
@@ -396,6 +445,7 @@ class Region(BaseState):
         min_edge_angle = 15
         if 'min_edge_angle' in settings.REGION_LAYOUTS[self.persist['region_type']][region_layout]:
             min_edge_angle = settings.REGION_LAYOUTS[self.persist['region_type']][region_layout]['min_edge_angle']
+        node_list, edge_list, neighbors_dict, edge_dict, valid_path = None, None, None, None, None
         while not valid:
             node_list, edge_list, neighbors_dict, edge_dict, valid_path = network_generator.network_gen(
                 X=settings.X, Y=settings.Y,
@@ -409,12 +459,36 @@ class Region(BaseState):
         for i, value in enumerate(node_list):
             if i == 0:
                 self.nodes.add(Node(self, value[0], value[1], neighbors_dict[i], edge_dict[i], i, "Boss"))
-                print(neighbors_dict[i])
             elif i == 1:
                 self.party.node = Node(self, value[0], value[1], neighbors_dict[i], edge_dict[i], i, "Region Entry")
                 self.nodes.add(self.party.node)
             else:
                 node_type = settings.node_assign_2(self)
                 self.nodes.add(Node(self, value[0], value[1], neighbors_dict[i], edge_dict[i], i, node_type))
+        for node in self.nodes.sprites():
+            node.event = settings.event_caller(self, node)
         self.persist['current_position'] = 1
         self.persist['region_generate'] = False
+        for key in edge_dict.keys():
+            for pair in edge_dict[key]:
+                node_1 = None
+                node_2 = None
+                for node in self.nodes.sprites():
+                    if node.index == key:
+                        node_1 = node
+                    if pair[1] == node.index:
+                        node_2 = node
+                    if node_2 is not None and node_1 is not None:
+                        break
+                if node_2 is not None and node_1 is not None:
+                    self.paths.append(Path(self, node_1, node_2))
+
+    def travel(self):
+        if self.selected_node.travel and self.selected_node.selected and self.party.node.index in \
+                self.selected_node.neighbors:
+            self.party.node = self.selected_node
+            self.selected_node.selected = False
+            self.selected_node = None
+            if self.party.node.state == "Unexplored":
+                self.state = "Event"
+                self.party.node.state = "Explored"

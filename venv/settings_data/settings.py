@@ -536,6 +536,20 @@ NODE_TYPES = [["Empty", "Town", "Dungeon", "Lone Building", "Encounter"], [30, 1
 NODE_TYPES_2 = [["Shop", "Dungeon", "Encounter", "Event", "Empty"], [1, 2, 40, 27, 30]]
 
 
+class EmptyNode(object):
+    def __init__(self, parent):
+        self.parent = parent
+
+    def handle_action(self, action):
+        pass
+
+    def update(self, dt):
+        self.parent.parent.state = "Browse"
+
+    def draw(self, surface):
+        pass
+
+
 class Shop(object):
     def __init__(self):
         pass
@@ -551,58 +565,85 @@ class Shop(object):
 
 
 class Event(object):
-    def __init__(self, parent, prompt, option_1, option_2=None, option_3=None, option_4=None, enemies=None,
-                 supply_reward=None, gold_reward=None, elixir_reward=None, charger_reward=None, item_reward=None):
+    def __init__(self, parent, parameter_dictionary):
         self.parent = parent
         self.state = "Prompt"
-        self.enemies = enemies
-        self.prompt = prompt
-        self.options = [option_1, option_2, option_3, option_4]
         self.option_index = -1
         self.bg_1_rect = [X * 17 / 100, Y * 7 / 100, X * 60 / 100, Y * 88 / 100]
         self.bg_2_rect = [X * 17 / 100, Y * 8 / 100, X * 59 / 100, Y * 86 / 100]
         self.prompt_rect = [X * 18 / 100, Y * 9 / 100, X * 57 / 100, Y * 84 / 100]
         self.option_rect = [X * 18 / 100, Y * 55 / 100, X * 57 / 100, Y * 5 / 100]
         self.option_offset = 5
-        self.supply_reward = supply_reward
-        self.gold_reward = gold_reward
-        self.elixir_reward = elixir_reward
-        self.charger_reward = charger_reward
-        self.item_reward = item_reward
+        self.timer = 0
+        self.next_state = "Prompt"
+        self.enemies = None
+        self.prompt = None
+        self.options = None
+        self.supply_reward = None
+        self.gold_reward = None
+        self.elixir_reward = None
+        self.charger_reward = None
+        self.item_reward = None
+        for key in parameter_dictionary.keys():
+            setattr(self, key, parameter_dictionary[key])
 
     def update(self, dt):
+        if self.timer > 0:
+            self.timer -= dt
+            if self.timer < 0:
+                self.timer = 0
         if self.state == "Prompt":
-            for i, option in enumerate(self.options):
-                if option is not None:
-                    if click_check([self.option_rect[0], self.option_rect[1] + (i * Y * 5 / 100),
-                                    self.option_rect[2], self.option_rect[3]]):
-                        self.option_index = i
+            for index, option in enumerate(self.options):
+                if click_check([self.option_rect[0], self.option_rect[1] + (index * Y * 5 / 100),
+                                self.option_rect[2], self.option_rect[3]]):
+                    self.option_index = index
+                else:
+                    self.option_index = -1
+        elif self.state == "Delay":
+            if self.timer == 0:
+                self.state = self.next_state
+        elif self.state == "Reward":
+            self.reward()
+        elif self.state == "Exit":
+            self.parent.parent.state = "Browse"
+        elif self.state == "Battle":
+            self.battle()
 
     def draw(self, surface):
         pygame.draw.rect(surface, (150, 150, 150), self.bg_1_rect, border_radius=8)
         pygame.draw.rect(surface, (0, 0, 0), self.bg_2_rect, border_radius=8)
         if self.state == "Prompt":
             tw(surface, self.prompt, TEXT_COLOR, self.prompt_rect, TEXT_FONT)
-            for i, option in enumerate(self.options):
+            for index, option in enumerate(self.options):
                 color = TEXT_COLOR
-                if i == self.option_index:
+                if click_check([self.option_rect[0], self.option_rect[1] + (index * Y * 5 / 100),
+                                self.option_rect[2], self.option_rect[3]]):
                     color = SELECTED_COLOR
-                if option is not None:
-                    tw(surface, "1. " + option[0], color, [self.option_rect[0], self.option_rect[1] + (i * Y * 5 / 100),
-                                                           self.option_rect[2], self.option_rect[3]], TEXT_FONT)
+                tw(surface, "1. " + option[0], color, [self.option_rect[0], self.option_rect[1] + (index * Y * 5 / 100),
+                                                       self.option_rect[2], self.option_rect[3]], TEXT_FONT)
 
     def handle_action(self, action):
         if action == "click":
-            pass
+            if self.state == "Prompt":
+                for index, option in enumerate(self.options):
+                    if click_check([self.option_rect[0], self.option_rect[1] + (index * Y * 5 / 100),
+                                    self.option_rect[2], self.option_rect[3]]):
+                        outcome = choose_random_weighted(self.options[index][1], self.options[index][2])
+                        if "state" in outcome.keys():
+                            setattr(self, "state", outcome["state"])
+                        if "prompt" in outcome.keys():
+                            setattr(self, "prompt", outcome["prompt"])
+                        if "options" in outcome.keys():
+                            setattr(self, "options", outcome["options"])
+
         if action == "return":
-            if self.options[self.option_index] is not None:
-                outcome = choose_random_weighted(self.options[self.option_index][1], self.options[self.option_index][2])[0]
-                if "state" in outcome.keys():
-                    setattr(self, "state", outcome["state"])
-                if "prompt" in outcome.keys():
-                    setattr(self, "prompt", outcome["prompt"])
-                if "options" in outcome.keys():
-                    setattr(self, "options", outcome["options"])
+            outcome = choose_random_weighted(self.options[self.option_index][1], self.options[self.option_index][2])
+            if "state" in outcome.keys():
+                setattr(self, "state", outcome["state"])
+            if "prompt" in outcome.keys():
+                setattr(self, "prompt", outcome["prompt"])
+            if "options" in outcome.keys():
+                setattr(self, "options", outcome["options"])
 
     def battle(self):
         self.parent.parent.persist['enemies'] = self.enemies
@@ -610,22 +651,30 @@ class Event(object):
         self.parent.parent.next_state = "BATTLE"
         self.parent.parent.done = True
 
+    def reward(self):
+        if self.gold_reward is not None:
+            self.parent.parent.persist['gold'] += self.gold_reward
+        if self.charger_reward is not None:
+            self.parent.parent.persist['chargers'] += self.charger_reward
+        if self.elixir_reward is not None:
+            self.parent.parent.persist['elixirs'] += self.elixir_reward
+        if self.supply_reward is not None:
+            self.parent.parent.persist['supplies'] += self.supply_reward
+        if self.item_reward is not None:
+            if isinstance(self.item_reward, list):
+                for item in self.item_reward:
+                    self.parent.parent.persist['inventory'].append(item)
+            else:
+                self.parent.parent.persist['inventory'].append(self.item_reward)
+        self.exit()
+
+    def exit(self):
+        self.timer = 250
+        self.state = "Delay"
+        self.next_state = "Exit"
+
 
 class Dungeon(object):
-    def __init__(self):
-        pass
-
-    def update(self, dt):
-        pass
-
-    def draw(self, surface):
-        pass
-
-    def handle_action(self, action):
-        pass
-
-
-class Event(object):
     def __init__(self):
         pass
 
@@ -652,6 +701,41 @@ class Empty(object):
     def handle_action(self, action):
         pass
 
+
+def event_caller(parent, node):
+    region_index = parent.persist['region_index']
+    region_type = parent.persist['region_type']
+    if node.type == "Encounter":
+        parameter_dictionary = choose_random_weighted(encounter_dictionary["All"] + encounter_dictionary[region_type],
+                                                      encounter_dictionary["All_Weights"] + encounter_dictionary[
+                                                          region_type + "_Weights"])
+        return Event(node, parameter_dictionary)
+    elif node.type == "Event":
+        return EmptyNode(node)
+    elif node.type == "Dungeon":
+        return EmptyNode(node)
+    elif node.type == "Shop":
+        return EmptyNode(node)
+    elif node.type == "Empty":
+        return EmptyNode(node)
+    else:
+        return EmptyNode(node)
+    # prompt, option_1, option_2 = None, option_3 = None, option_4 = None, enemies = None,
+    # supply_reward = None, gold_reward = None, elixir_reward = None, charger_reward = None, item_reward = None
+
+
+encounter_dictionary = {
+    "All": [
+        {"prompt": "A pair of aggressive slime monsters try to block your path.",
+         "options": [["Prepare to fight.", [{"state": "Battle"}], [1]],
+                     ["Try to run around them.", [{"prompt": "The slimes cut you off and block your escape.",
+                                                   "options": [["Prepare to fight.", [{"state": "Battle"}], [1]]]},
+                                                  {"prompt": "You manage to run by and escape.",
+                                                   "options": [["Continue on.", [{"state": "Exit"}], [1]]]}], [1, 1]]],
+         "enemies": ["Slime", "Slime"]}],
+    "All_Weights": [1],
+    "Desert": [],
+    "Desert_Weights": [], }
 
 NODE_EVENT_TYPES = {"Empty": [["Nothing", "Investigate", "Region Entry"], [60, 40, 0]],
                     "Town": [["Shop", "Tavern", "Academy"], [45, 45, 10]],
@@ -1230,8 +1314,8 @@ class PartyAbilityManager(object):
         self.create_portal = True  # create an edge using many resources
         self.less_empty_nodes = True  # less empty nodes spawn
         self.no_empty_nodes = True  # no empty nodes spawn
-        self.path_vision = True  # see all paths in region
-        self.static_path = True  # false = paths only visible when hovering over node
+        self.path_vision = False  # see all paths in region
+        self.static_path = False  # false = paths only visible when hovering over node
         self.region_revealed = True  # all region info revealed
         self.locate_shops = True  # see all shops in region
         self.locate_encounter = True  # see all encounters in region

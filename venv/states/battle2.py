@@ -48,7 +48,7 @@ class Battle(BaseState):
         # construct each enemy sprite object and add them to proper Groups
         for i, enemy in enumerate(self.persist['enemies']):
             slot = self.enemy_slots[i]
-            population = len(self.persist['nodes'][self.persist['current_position']].event_data.battle)
+            population = len(self.persist['enemies'])
             setattr(self, slot, eval("settings." + enemy)(slot, self.persist['region_index'], population, self))
             self.battle_characters.add(getattr(self, slot))
             self.enemy_characters.add(getattr(self, slot))
