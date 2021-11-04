@@ -1306,6 +1306,26 @@ def random_name():
     return names.get_last_name()
 
 
+class EquipMenu(object):
+    def __init__(self, parent):
+        self.parent = parent
+        self.bg_1_rect = [X * 8/100, Y * 11/100, X * 76/100, Y * 85/100]
+        self.bg_2_rect = [X * 8.5/100, Y * 12/100, X * 75/100, Y * 83/100]
+
+    def update(self, dt):
+        pass
+
+    def handle_action(self, action):
+        if action == "click":
+            if not click_check(self.bg_1_rect):
+                self.parent.state = "Browse"
+
+    def draw(self, surface):
+        pygame.draw.rect(surface, (50, 50, 50), self.bg_1_rect, border_radius=int(X/128))
+        pygame.draw.rect(surface, (0, 0, 0), self.bg_2_rect, border_radius=int(X/128))
+
+
+
 class PartyAbilityManager(object):
     def __init__(self):
         self.charger_travel = True  # can use charges instead of supplies **** NOT WORKING ****

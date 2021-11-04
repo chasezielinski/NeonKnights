@@ -316,7 +316,7 @@ class StatusBar(object):
         self.mp_rect = [self.X * 91.75 / 100, self.Y * 18 / 100, self.X * 7 / 100, self.Y * 4 / 100]
         self.mp_data_rect = [self.X * 89 / 100, self.Y * 18 / 100, self.X * 8 / 100, self.Y * 4 / 100]
         self.equip_button = [self.X * 82.5 / 100, self.Y * 23.5 / 100, self.X * 8 / 100, self.Y * 5 / 100]
-        self.status_button = [self.X * 91 / 100, self.Y * 23.5 / 100, self.X * 8 / 100, self.Y * 5 / 100]
+        self.skills_button = [self.X * 91 / 100, self.Y * 23.5 / 100, self.X * 8 / 100, self.Y * 5 / 100]
         self.color = (150, 150, 150)
 
     def update(self, dt):
@@ -324,17 +324,58 @@ class StatusBar(object):
 
     def draw(self, surface):
         for i, player in enumerate(self.parent.persist['characters']):
-            pygame.draw.rect(surface, self.color, [self.icon_bg_rect[0], self.icon_bg_rect[1] + (i * self.offset),
-                                                   self.icon_bg_rect[2], self.icon_bg_rect[3]], border_radius=6)
-            pygame.draw.rect(surface, self.color, [self.status_bg_rect[0], self.status_bg_rect[1] + (i * self.offset),
-                                                   self.status_bg_rect[2], self.status_bg_rect[3]], border_radius=6)
-            pygame.draw.rect(surface, self.color, [self.equip_button[0], self.equip_button[1] + (i * self.offset),
-                                                   self.equip_button[2], self.equip_button[3]], border_radius=6)
-            pygame.draw.rect(surface, self.color, [self.status_button[0], self.status_button[1] + (i * self.offset),
-                                                   self.status_button[2], self.status_button[3]], border_radius=6)
+            pygame.draw.rect(surface, self.color,
+                             [self.icon_bg_rect[0], self.icon_bg_rect[1] + (i * self.Y * self.offset),
+                              self.icon_bg_rect[2], self.icon_bg_rect[3]], border_radius=6)
+            pygame.draw.rect(surface, self.color,
+                             [self.status_bg_rect[0], self.status_bg_rect[1] + (i * self.Y * self.offset),
+                              self.status_bg_rect[2], self.status_bg_rect[3]], border_radius=6)
+            pygame.draw.rect(surface, self.color,
+                             [self.equip_button[0], self.equip_button[1] + (i * self.Y * self.offset),
+                              self.equip_button[2], self.equip_button[3]], border_radius=6)
+            pygame.draw.rect(surface, self.color,
+                             [self.skills_button[0], self.skills_button[1] + (i * self.Y * self.offset),
+                              self.skills_button[2], self.skills_button[3]], border_radius=6)
+            surface.blit(settings.REGION_STATIC_SPRITES[player.current_class + "Icon"],
+                         (self.icon_pos[0], self.icon_pos[1] + (i * self.Y * self.offset)))
+            pygame.draw.rect(surface, (150, 0, 0),
+                             [self.hp_rect[0], self.hp_rect[1] + (i * self.Y * self.offset), self.hp_rect[2],
+                              self.hp_rect[3]])
+            pygame.draw.rect(surface, (0, 150, 0),
+                             [self.hp_rect[0] + (self.hp_rect[0] * (1 - player.hp / player.max_hp)),
+                              self.hp_rect[1] + (i * self.Y * self.offset),
+                              (self.hp_rect[2] * player.hp / player.max_hp), self.hp_rect[3]])
+            pygame.draw.rect(surface, (0, 0, 0), self.hp_rect, 4)
+            pygame.draw.rect(surface, (150, 0, 0),
+                             [self.mp_rect[0], self.mp_rect[1] + (i * self.Y * self.offset), self.mp_rect[2],
+                              self.mp_rect[3]])
+            pygame.draw.rect(surface, (0, 150, 0),
+                             [self.mp_rect[0] + (self.mp_rect[0] * (1 - player.mp / player.max_mp)),
+                              self.mp_rect[1] + (i * self.Y * self.offset),
+                              (self.mp_rect[2] * player.mp / player.max_mp), self.mp_rect[3]])
+            pygame.draw.rect(surface, (0, 0, 0), self.mp_rect, 4)
+            settings.tw(surface, 'hp', (0, 0, 0),
+                        [self.hp_data_rect[0], self.hp_data_rect[1] + (i * self.Y * self.offset), self.hp_data_rect[2],
+                         self.hp_data_rect[3]], settings.TEXT_FONT)
+            settings.tw(surface, 'mp', (0, 0, 0),
+                        [self.mp_data_rect[0], self.mp_data_rect[1] + (i * self.Y * self.offset), self.mp_data_rect[2],
+                         self.mp_data_rect[3]], settings.TEXT_FONT)
+            settings.tw(surface, 'equip', (0, 0, 0),
+                        [self.equip_button[0], self.equip_button[1] + (i * self.Y * self.offset), self.equip_button[2],
+                         self.equip_button[3]], settings.TEXT_FONT)
+            settings.tw(surface, 'skills', (0, 0, 0),
+                        [self.skills_button[0], self.skills_button[1] + (i * self.Y * self.offset),
+                         self.skills_button[2], self.skills_button[3]], settings.TEXT_FONT)
 
     def click(self):
-        pass
+        for i, player in enumerate(self.parent.persist['characters']):
+            if settings.click_check([self.equip_button[0], self.equip_button[1] + (i * self.Y * self.offset), 
+                                     self.equip_button[2], self.equip_button[3]]):
+                self.parent.state = "Equip"
+            if settings.click_check([self.skills_button[0], self.skills_button[1] + (i * self.Y * self.offset),
+                                     self.skills_button[2], self.skills_button[3]]):
+                self.parent.state = "Equip"
+                
 
 
 class Background(object):
@@ -358,6 +399,7 @@ class Region(BaseState):
         self.selected_node = None
         self.party = Party(self)
         self.buttons = [TravelButton(self), Resources(self), StatusBar(self)]
+        self.equip_menu = settings.EquipMenu(self)
         self.paths = []
         self.background = None
         self.state = "Browse"
@@ -381,13 +423,16 @@ class Region(BaseState):
                     button.click()
                 for node in self.nodes.sprites():
                     node.click()
+            elif action == "mouse_move":
+                pos = (int(pygame.mouse.get_pos()[0]*100/1280), int(pygame.mouse.get_pos()[1]*100/720))
+                print(pos)
 
         elif self.state == "Event":
             if self.state == "Event":
                 self.party.node.event.handle_action(action)
 
         elif self.state == "Equip":
-            pass
+            self.equip_menu.handle_action(action)
 
         elif self.state == "Skill_Tree":
             pass
@@ -437,6 +482,8 @@ class Region(BaseState):
             button.update(dt)
         if self.state == "Event":
             self.party.node.event.update(dt)
+        elif self.state == "Equip":
+            self.equip_menu.update(dt)
 
     def draw(self, surface):
         surface.fill(pygame.Color("black"))
@@ -450,6 +497,8 @@ class Region(BaseState):
             button.draw(surface)
         if self.state == "Event":
             self.party.node.event.draw(surface)
+        elif self.state == "Equip":
+            self.equip_menu.draw(surface)
 
     def region_generate(self):
         valid = False
