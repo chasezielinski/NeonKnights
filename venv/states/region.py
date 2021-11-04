@@ -1247,8 +1247,6 @@ class Region(BaseState):
         stats = ['max_hp', 'max_mp', 'strength', 'magic', 'defense', 'spirit', 'speed', 'luck', 'crit_rate',
                  'crit_damage']
         potential = {}
-        potential_value = 0
-        current_value = 0
         if self.equipment_menu_horizontal_index == "Inventory" and self.persist['inventory'] and len(self.persist['inventory']) > self.equipment_inventory_selection_index >= 0:
             slot = self.persist['inventory'][self.equipment_inventory_selection_index].slot
             for value in stats:

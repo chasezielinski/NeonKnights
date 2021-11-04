@@ -1308,23 +1308,178 @@ def random_name():
 
 class EquipMenu(object):
     def __init__(self, parent):
+        self.scroll_index = 0
+        self.inventory_selection_index = -1
+        self.equip_selection_index = -1
+        self.menu_horizontal_index = "None"
         self.parent = parent
+        self.player_index = 0
         self.bg_1_rect = [X * 8/100, Y * 11/100, X * 76/100, Y * 85/100]
         self.bg_2_rect = [X * 8.5/100, Y * 12/100, X * 75/100, Y * 83/100]
+        self.slot_rects = REGION_MENUS['equip menu']['Top_Slot_Rect']
+        self.equip_rects = REGION_MENUS['equip menu']['Top_Equip_Rect']
+        self.inventory_rects = REGION_MENUS['equip menu']['inventory rects']
 
     def update(self, dt):
         pass
 
     def handle_action(self, action):
-        if action == "click":
+        if action == "mouse_move":
+            for n, equip_slot in enumerate(self.parent.persist['characters'][self.player_index].equipment_options):
+                if click_check(self.equip_rects[n]):
+                    self.equip_selection_index = n
+                    self.menu_horizontal_index = "Equip"
+                    break
+            else:
+                self.equip_selection_index = -1
+        elif action == "click":
             if not click_check(self.bg_1_rect):
                 self.parent.state = "Browse"
 
     def draw(self, surface):
         pygame.draw.rect(surface, (50, 50, 50), self.bg_1_rect, border_radius=int(X/128))
         pygame.draw.rect(surface, (0, 0, 0), self.bg_2_rect, border_radius=int(X/128))
-
-
+        for n, equip_slot in enumerate(self.parent.persist['characters'][self.player_index].equipment_options):
+            tw(surface, equip_slot, TEXT_COLOR, self.slot_rects[n], TEXT_FONT)
+            if equip_slot in self.parent.persist['characters'][self.player_index].equipment.keys():
+                text = self.parent.persist['characters'][self.player_index].equipment[
+                    equip_slot].name
+            else:
+                text = '-'
+            if self.equip_selection_index == n and self.menu_horizontal_index == "Equip":
+                color = SELECTED_COLOR
+            else:
+                color = TEXT_COLOR
+            tw(surface, text, color, self.equip_rects[n], TEXT_FONT)
+        for i, item in enumerate(self.parent.persist['inventory']):
+            color = TEXT_COLOR
+            if not item.equipment:
+                color = (50, 50, 50)
+                if self.inventory_selection_index == i and self.menu_horizontal_index == "Inventory":
+                    color = (100, 100, 100)
+            elif self.inventory_selection_index == i and self.menu_horizontal_index == "Inventory":
+                color = SELECTED_COLOR
+            if 7 >= i - self.scroll_index >= 0:
+                tw(surface, item.name, color, self.inventory_rects[i - self.scroll_index], TEXT_FONT)
+        if len(self.parent.persist['inventory']) < 8:
+            for j in range(len(self.parent.persist['inventory']), 8):
+                color = (50, 50, 50)
+                if self.inventory_selection_index == j and self.menu_horizontal_index == "Inventory":
+                    color = (100, 100, 100)
+                tw(surface, '-'.center(12), color, self.inventory_rects[j], TEXT_FONT)
+        potential = self.potential_stat()
+        for key, value in enumerate(settings.REGION_MENUS['equip menu']['Stat_Rects']):
+            stat = getattr(self.parent.persist['characters'][self.inventory_selection_index], value)
+            if value == 'hp':
+                stat2 = getattr(self.parent.persist['characters'][self.inventory_selection_index], 'max_hp')
+                settings.tw(surface, value + ':' + str(stat).rjust(10 - len(value)) + '/' + str(stat2),
+                            settings.TEXT_COLOR,
+                            settings.REGION_MENUS['equip menu']['Stat_Rects'][value], settings.TEXT_FONT)
+            elif value == 'mp':
+                stat2 = getattr(self.parent.persist['characters'][self.inventory_selection_index], 'max_mp')
+                settings.tw(surface, value + ':' + str(stat).rjust(11 - len(value)) + '/' + str(stat2),
+                            settings.TEXT_COLOR,
+                            settings.REGION_MENUS['equip menu']['Stat_Rects'][value], settings.TEXT_FONT)
+            else:
+                settings.tw(surface, value + ':' + str(stat).rjust(14 - len(value)), settings.TEXT_COLOR,
+                            settings.REGION_MENUS['equip menu']['Stat_Rects'][value], settings.TEXT_FONT)
+                if value in potential.keys():
+                    if value == 'defense' or value == 'spirit' or value == 'luck':
+                        if potential[value] < 0:
+                            settings.tw(surface, str(potential[value]).rjust(24 - len(value)), (150, 0, 0),
+                                        settings.REGION_MENUS['equip menu']['Stat_Rects'][value], settings.TEXT_FONT)
+                        else:
+                            settings.tw(surface, ('+' + str(potential[value])).rjust(24
+                                                                                     - len(value)), (0, 150, 0),
+                                        settings.REGION_MENUS['equip menu']['Stat_Rects'][value], settings.TEXT_FONT)
+                    elif value == 'magic' or value == 'speed':
+                        if potential[value] < 0:
+                            settings.tw(surface, str(potential[value]).rjust(22 - len(value)), (150, 0, 0),
+                                        settings.REGION_MENUS['equip menu']['Stat_Rects'][value],
+                                        settings.TEXT_FONT)
+                        else:
+                            settings.tw(surface, ('+' + str(potential[value])).rjust(22
+                                                                                     - len(value)), (0, 150, 0),
+                                        settings.REGION_MENUS['equip menu']['Stat_Rects'][value],
+                                        settings.TEXT_FONT)
+                    elif value == 'strength':
+                        if potential[value] < 0:
+                            settings.tw(surface, str(potential[value]).rjust(25 - len(value)), (150, 0, 0),
+                                        settings.REGION_MENUS['equip menu']['Stat_Rects'][value],
+                                        settings.TEXT_FONT)
+                        else:
+                            settings.tw(surface, ('+' + str(potential[value])).rjust(25
+                                                                                     - len(value)), (0, 150, 0),
+                                        settings.REGION_MENUS['equip menu']['Stat_Rects'][value],
+                                        settings.TEXT_FONT)
+                            
+    def potential_stat(self):
+        stats = ['max_hp', 'max_mp', 'strength', 'magic', 'defense', 'spirit', 'speed', 'luck', 'crit_rate',
+                 'crit_damage']
+        potential = {}
+        if self.menu_horizontal_index == "Inventory" and self.parent.persist['inventory'] and len(self.parent.persist['inventory']) > self.inventory_selection_index >= 0:
+            slot = self.parent.persist['inventory'][self.inventory_selection_index].slot
+            for value in stats:
+                if value != 'strength':
+                    if hasattr(self.parent.persist['inventory'][self.inventory_selection_index], value):
+                        potential_value = getattr(self.parent.persist['inventory'][self.inventory_selection_index], value)
+                    else:
+                        potential_value = 0
+                    if slot in self.parent.persist['characters'][self.player_index].equipment.keys():
+                        if hasattr(self.parent.persist['characters'][self.player_index].equipment[slot], value):
+                            current_value = getattr(self.parent.persist['characters'][self.player_index].equipment[slot], value)
+                        else:
+                            current_value = 0
+                    else:
+                        current_value = 0
+                    if potential_value - current_value != 0:
+                        potential[value] = potential_value - current_value
+                else:
+                    if hasattr(self.parent.persist['inventory'][self.inventory_selection_index], 'attack'):
+                        potential_value = getattr(self.parent.persist['inventory'][self.inventory_selection_index], 'attack')
+                    else:
+                        potential_value = 0
+                    if slot in self.parent.persist['characters'][self.player_index].equipment.keys():
+                        if hasattr(self.parent.persist['characters'][self.player_index].equipment[slot], value):
+                            current_value = getattr(self.parent.persist['characters'][self.player_index].equipment[slot], value)
+                        else:
+                            current_value = 0
+                    else:
+                        current_value = 0
+                    if potential_value - current_value != 0:
+                        potential[value] = potential_value - current_value
+        elif self.menu_horizontal_index == "Equip":
+            if len(self.parent.persist['characters'][self.player_index].equipment_options) - 1 >= \
+                    self.equip_selection_index >= 0:
+                slot = self.parent.persist['characters'][self.player_index].equipment_options[self.equip_selection_index]
+                for value in stats:
+                    if value != 'strength':
+                        potential_value = 0
+                        if slot in self.parent.persist['characters'][self.player_index].equipment.keys():
+                            if hasattr(self.parent.persist['characters'][self.player_index].equipment[slot], value):
+                                current_value = getattr(
+                                    self.parent.persist['characters'][self.player_index].equipment[slot], value)
+                            else:
+                                current_value = 0
+                        else:
+                            current_value = 0
+                        if potential_value - current_value != 0:
+                            potential[value] = potential_value - current_value
+                    else:
+                        potential_value = 0
+                        if slot in self.parent.persist['characters'][self.player_index].equipment.keys():
+                            if hasattr(self.parent.persist['characters'][self.player_index].equipment[slot],
+                                       'attack'):
+                                current_value = getattr(
+                                    self.parent.persist['characters'][self.player_index].equipment[slot], 'attack')
+                            else:
+                                current_value = 0
+                        else:
+                            current_value = 0
+                        if potential_value - current_value != 0:
+                            potential[value] = potential_value - current_value
+        return potential
+    
 
 class PartyAbilityManager(object):
     def __init__(self):
