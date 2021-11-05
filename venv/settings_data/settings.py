@@ -1306,6 +1306,45 @@ def random_name():
     return names.get_last_name()
 
 
+def character_stat_update(persist):
+    stats = ['max_hp', 'max_mp', 'strength', 'magic', 'defense', 'spirit', 'speed', 'luck', 'crit_rate',
+             'crit_damage']
+    for player in persist['characters']:
+        for value in stats:
+            if value == 'max_hp':
+                setattr(player, value, player.base_hp)
+            elif value == 'max_mp':
+                setattr(player, value, player.base_mp)
+            else:
+                setattr(player, value, getattr(player, 'base_' + value))
+        for slot in player.equipment.keys():
+            for value in stats:
+                if hasattr(player.equipment[slot], value):
+                    new_value = getattr(player.equipment[slot], value) + getattr(player, value)
+                    setattr(player, value, new_value)
+                if value == 'strength':
+                    if hasattr(player.equipment[slot], 'attack'):
+                        player.strength += player.equipment[slot].attack
+
+
+def character_ability_update(persist):
+    for player in persist['characters']:
+        setattr(player, 'techniques',
+                getattr(player, 'base_' + 'techniques'))
+        for slot in player.equipment.keys():
+            if hasattr(player.equipment[slot], 'techniques'):
+                for value in player.equipment[slot].techniques:
+                    if value not in player.techniques:
+                        player.techniques.append(value)
+    for player in persist['characters']:
+        setattr(player, 'attack_type',
+                getattr(player, 'base_' + 'attack_type'))
+        for slot in player.equipment.keys():
+            if hasattr(player.equipment[slot], 'attack_type'):
+                setattr(player, 'attack_type',
+                        getattr(player.equipment[slot], 'attack_type'))
+
+
 class EquipMenu(object):
     def __init__(self, parent):
         self.scroll_index = 0
@@ -1314,8 +1353,8 @@ class EquipMenu(object):
         self.menu_horizontal_index = "None"
         self.parent = parent
         self.player_index = 0
-        self.bg_1_rect = [X * 8/100, Y * 11/100, X * 76/100, Y * 85/100]
-        self.bg_2_rect = [X * 8.5/100, Y * 12/100, X * 75/100, Y * 83/100]
+        self.bg_1_rect = [X * 8 / 100, Y * 11 / 100, X * 76 / 100, Y * 85 / 100]
+        self.bg_2_rect = [X * 8.5 / 100, Y * 12 / 100, X * 75 / 100, Y * 83 / 100]
         self.slot_rects = REGION_MENUS['equip menu']['Top_Slot_Rect']
         self.equip_rects = REGION_MENUS['equip menu']['Top_Equip_Rect']
         self.inventory_rects = REGION_MENUS['equip menu']['inventory rects']
@@ -1337,8 +1376,8 @@ class EquipMenu(object):
                 self.parent.state = "Browse"
 
     def draw(self, surface):
-        pygame.draw.rect(surface, (50, 50, 50), self.bg_1_rect, border_radius=int(X/128))
-        pygame.draw.rect(surface, (0, 0, 0), self.bg_2_rect, border_radius=int(X/128))
+        pygame.draw.rect(surface, (50, 50, 50), self.bg_1_rect, border_radius=int(X / 128))
+        pygame.draw.rect(surface, (0, 0, 0), self.bg_2_rect, border_radius=int(X / 128))
         for n, equip_slot in enumerate(self.parent.persist['characters'][self.player_index].equipment_options):
             tw(surface, equip_slot, TEXT_COLOR, self.slot_rects[n], TEXT_FONT)
             if equip_slot in self.parent.persist['characters'][self.player_index].equipment.keys():
@@ -1412,22 +1451,25 @@ class EquipMenu(object):
                                                                                      - len(value)), (0, 150, 0),
                                         settings.REGION_MENUS['equip menu']['Stat_Rects'][value],
                                         settings.TEXT_FONT)
-                            
+
     def potential_stat(self):
         stats = ['max_hp', 'max_mp', 'strength', 'magic', 'defense', 'spirit', 'speed', 'luck', 'crit_rate',
                  'crit_damage']
         potential = {}
-        if self.menu_horizontal_index == "Inventory" and self.parent.persist['inventory'] and len(self.parent.persist['inventory']) > self.inventory_selection_index >= 0:
+        if self.menu_horizontal_index == "Inventory" and self.parent.persist['inventory'] and len(
+                self.parent.persist['inventory']) > self.inventory_selection_index >= 0:
             slot = self.parent.persist['inventory'][self.inventory_selection_index].slot
             for value in stats:
                 if value != 'strength':
                     if hasattr(self.parent.persist['inventory'][self.inventory_selection_index], value):
-                        potential_value = getattr(self.parent.persist['inventory'][self.inventory_selection_index], value)
+                        potential_value = getattr(self.parent.persist['inventory'][self.inventory_selection_index],
+                                                  value)
                     else:
                         potential_value = 0
                     if slot in self.parent.persist['characters'][self.player_index].equipment.keys():
                         if hasattr(self.parent.persist['characters'][self.player_index].equipment[slot], value):
-                            current_value = getattr(self.parent.persist['characters'][self.player_index].equipment[slot], value)
+                            current_value = getattr(
+                                self.parent.persist['characters'][self.player_index].equipment[slot], value)
                         else:
                             current_value = 0
                     else:
@@ -1436,12 +1478,14 @@ class EquipMenu(object):
                         potential[value] = potential_value - current_value
                 else:
                     if hasattr(self.parent.persist['inventory'][self.inventory_selection_index], 'attack'):
-                        potential_value = getattr(self.parent.persist['inventory'][self.inventory_selection_index], 'attack')
+                        potential_value = getattr(self.parent.persist['inventory'][self.inventory_selection_index],
+                                                  'attack')
                     else:
                         potential_value = 0
                     if slot in self.parent.persist['characters'][self.player_index].equipment.keys():
                         if hasattr(self.parent.persist['characters'][self.player_index].equipment[slot], value):
-                            current_value = getattr(self.parent.persist['characters'][self.player_index].equipment[slot], value)
+                            current_value = getattr(
+                                self.parent.persist['characters'][self.player_index].equipment[slot], value)
                         else:
                             current_value = 0
                     else:
@@ -1451,7 +1495,8 @@ class EquipMenu(object):
         elif self.menu_horizontal_index == "Equip":
             if len(self.parent.persist['characters'][self.player_index].equipment_options) - 1 >= \
                     self.equip_selection_index >= 0:
-                slot = self.parent.persist['characters'][self.player_index].equipment_options[self.equip_selection_index]
+                slot = self.parent.persist['characters'][self.player_index].equipment_options[
+                    self.equip_selection_index]
                 for value in stats:
                     if value != 'strength':
                         potential_value = 0
@@ -1479,7 +1524,30 @@ class EquipMenu(object):
                         if potential_value - current_value != 0:
                             potential[value] = potential_value - current_value
         return potential
-    
+
+    def equip_unequip(self):
+        if self.menu_horizontal_index == "Equip":
+            slot = self.parent.persist['characters'][self.player_index].equipment_options[self.equip_selection_index]
+            if slot in self.parent.persist['characters'][self.player_index].equipment.keys():
+                self.parent.persist['inventory'].append(
+                    copy.deepcopy(self.parent.persist['characters'][self.player_index].equipment[slot]))
+                del (self.parent.persist['characters'][self.player_index].equipment[slot])
+
+        elif self.menu_horizontal_index == "Inventory" and 0 <= self.inventory_selection_index <= len(
+                self.parent.persist['inventory']) - 1:
+            if hasattr(self.parent.persist['inventory'][self.inventory_selection_index], 'slot'):
+                slot = self.parent.persist['inventory'][self.inventory_selection_index].slot
+                if slot in self.parent.persist['characters'][self.player_index].equipment_options:
+                    if slot in self.parent.persist['characters'][self.player_index].equipment:
+                        self.parent.persist['inventory'].append(
+                            copy.deepcopy(self.parent.persist['characters'][self.player_index].equipment[slot]))
+                        del (self.parent.persist['characters'][self.player_index].equipment[slot])
+                    self.parent.persist['characters'][self.player_index].equipment[slot] = copy.deepcopy(
+                        self.parent.persist['inventory'][self.inventory_selection_index])
+                    del self.parent.persist['inventory'][self.inventory_selection_index]
+        settings.character_stat_update(self.parent.persist)
+        settings.character_ability_update(self.parent.persist)
+
 
 class PartyAbilityManager(object):
     def __init__(self):
