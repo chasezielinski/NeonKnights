@@ -863,14 +863,14 @@ REGION_MENUS = {
             7: [X * 30 / 100, Y * 55 / 100, X * 20 / 100, Y * 5 / 100],
             8: [X * 30 / 100, Y * 60 / 100, X * 20 / 100, Y * 5 / 100], },
         'Stat_Rects': {
-            'hp': [X * 10 / 100, Y * 60 / 100, X * 35 / 100, Y * 5 / 100],
-            'mp': [X * 10 / 100, Y * 65 / 100, X * 35 / 100, Y * 5 / 100],
-            'strength': [X * 10 / 100, Y * 70 / 100, X * 50 / 100, Y * 5 / 100],
-            'magic': [X * 10 / 100, Y * 75 / 100, X * 35 / 100, Y * 5 / 100],
-            'defense': [X * 34 / 100, Y * 70 / 100, X * 35 / 100, Y * 5 / 100],
-            'spirit': [X * 34 / 100, Y * 75 / 100, X * 35 / 100, Y * 5 / 100],
-            'speed': [X * 10 / 100, Y * 80 / 100, X * 35 / 100, Y * 5 / 100],
-            'luck': [X * 34 / 100, Y * 80 / 100, X * 35 / 100, Y * 5 / 100],
+            'hp': [X * 10 / 100, Y * 65 / 100, X * 35 / 100, Y * 5 / 100],
+            'mp': [X * 10 / 100, Y * 70 / 100, X * 35 / 100, Y * 5 / 100],
+            'strength': [X * 10 / 100, Y * 75 / 100, X * 50 / 100, Y * 5 / 100],
+            'magic': [X * 10 / 100, Y * 80 / 100, X * 35 / 100, Y * 5 / 100],
+            'defense': [X * 30 / 100, Y * 75 / 100, X * 35 / 100, Y * 5 / 100],
+            'spirit': [X * 30 / 100, Y * 80 / 100, X * 35 / 100, Y * 5 / 100],
+            'speed': [X * 10 / 100, Y * 85 / 100, X * 35 / 100, Y * 5 / 100],
+            'luck': [X * 30 / 100, Y * 85 / 100, X * 35 / 100, Y * 5 / 100],
         },
         'inventory rects': {0: [X * 60 / 100, Y * 20 / 100, X * 20 / 100, Y * 5 / 100],
                             1: [X * 60 / 100, Y * 25 / 100, X * 20 / 100, Y * 5 / 100],
@@ -1351,6 +1351,8 @@ class EquipMenu(object):
         self.inventory_selection_index = -1
         self.equip_selection_index = -1
         self.menu_horizontal_index = "None"
+        self.relative_index = 0
+        self.display_index = 0
         self.parent = parent
         self.player_index = 0
         self.bg_1_rect = [X * 8 / 100, Y * 11 / 100, X * 76 / 100, Y * 85 / 100]
@@ -1364,6 +1366,8 @@ class EquipMenu(object):
 
     def handle_action(self, action):
         if action == "mouse_move":
+            pos = (int(pygame.mouse.get_pos()[0]*100/1280), int(pygame.mouse.get_pos()[1]*100/720))
+            print(pos)
             for n, equip_slot in enumerate(self.parent.persist['characters'][self.player_index].equipment_options):
                 if click_check(self.equip_rects[n]):
                     self.equip_selection_index = n
@@ -1371,9 +1375,22 @@ class EquipMenu(object):
                     break
             else:
                 self.equip_selection_index = -1
+                self.menu_horizontal_index = "None"
+            for key in REGION_MENUS['equip menu']['inventory rects'].keys():
+                if click_check(REGION_MENUS['equip menu']['inventory rects'][key]):
+                    self.inventory_selection_index = key + self.display_index
+                    self.relative_index = key
+                    self.menu_horizontal_index = "Inventory"
+                    break
+                else:
+                    self.inventory_selection_index = -1
         elif action == "click":
+            self.equip_unequip()
             if not click_check(self.bg_1_rect):
                 self.parent.state = "Browse"
+#            for n, equip_slot in enumerate(self.parent.persist['characters'][self.player_index].equipment_options):
+#                if click_check(self.equip_rects[n]):
+#                    self.equip_unequip()
 
     def draw(self, surface):
         pygame.draw.rect(surface, (50, 50, 50), self.bg_1_rect, border_radius=int(X / 128))
@@ -1408,46 +1425,46 @@ class EquipMenu(object):
                 tw(surface, '-'.center(12), color, self.inventory_rects[j], TEXT_FONT)
         potential = self.potential_stat()
         for key, value in enumerate(settings.REGION_MENUS['equip menu']['Stat_Rects']):
-            stat = getattr(self.parent.persist['characters'][self.inventory_selection_index], value)
+            stat = getattr(self.parent.persist['characters'][self.player_index], value)
             if value == 'hp':
-                stat2 = getattr(self.parent.persist['characters'][self.inventory_selection_index], 'max_hp')
-                settings.tw(surface, value + ':' + str(stat).rjust(10 - len(value)) + '/' + str(stat2),
+                stat2 = getattr(self.parent.persist['characters'][self.player_index], 'max_hp')
+                settings.tw(surface, value + ':' + str(stat).rjust(8 - len(value)) + '/' + str(stat2),
                             settings.TEXT_COLOR,
                             settings.REGION_MENUS['equip menu']['Stat_Rects'][value], settings.TEXT_FONT)
             elif value == 'mp':
-                stat2 = getattr(self.parent.persist['characters'][self.inventory_selection_index], 'max_mp')
-                settings.tw(surface, value + ':' + str(stat).rjust(11 - len(value)) + '/' + str(stat2),
+                stat2 = getattr(self.parent.persist['characters'][self.player_index], 'max_mp')
+                settings.tw(surface, value + ':' + str(stat).rjust(9 - len(value)) + '/' + str(stat2),
                             settings.TEXT_COLOR,
                             settings.REGION_MENUS['equip menu']['Stat_Rects'][value], settings.TEXT_FONT)
             else:
-                settings.tw(surface, value + ':' + str(stat).rjust(14 - len(value)), settings.TEXT_COLOR,
+                settings.tw(surface, value + ':' + str(stat).rjust(12 - len(value)), settings.TEXT_COLOR,
                             settings.REGION_MENUS['equip menu']['Stat_Rects'][value], settings.TEXT_FONT)
                 if value in potential.keys():
                     if value == 'defense' or value == 'spirit' or value == 'luck':
                         if potential[value] < 0:
-                            settings.tw(surface, str(potential[value]).rjust(24 - len(value)), (150, 0, 0),
+                            settings.tw(surface, str(potential[value]).rjust(22 - len(value)), (150, 0, 0),
                                         settings.REGION_MENUS['equip menu']['Stat_Rects'][value], settings.TEXT_FONT)
                         else:
-                            settings.tw(surface, ('+' + str(potential[value])).rjust(24
+                            settings.tw(surface, ('+' + str(potential[value])).rjust(22
                                                                                      - len(value)), (0, 150, 0),
                                         settings.REGION_MENUS['equip menu']['Stat_Rects'][value], settings.TEXT_FONT)
                     elif value == 'magic' or value == 'speed':
                         if potential[value] < 0:
-                            settings.tw(surface, str(potential[value]).rjust(22 - len(value)), (150, 0, 0),
+                            settings.tw(surface, str(potential[value]).rjust(20 - len(value)), (150, 0, 0),
                                         settings.REGION_MENUS['equip menu']['Stat_Rects'][value],
                                         settings.TEXT_FONT)
                         else:
-                            settings.tw(surface, ('+' + str(potential[value])).rjust(22
+                            settings.tw(surface, ('+' + str(potential[value])).rjust(20
                                                                                      - len(value)), (0, 150, 0),
                                         settings.REGION_MENUS['equip menu']['Stat_Rects'][value],
                                         settings.TEXT_FONT)
                     elif value == 'strength':
                         if potential[value] < 0:
-                            settings.tw(surface, str(potential[value]).rjust(25 - len(value)), (150, 0, 0),
+                            settings.tw(surface, str(potential[value]).rjust(23 - len(value)), (150, 0, 0),
                                         settings.REGION_MENUS['equip menu']['Stat_Rects'][value],
                                         settings.TEXT_FONT)
                         else:
-                            settings.tw(surface, ('+' + str(potential[value])).rjust(25
+                            settings.tw(surface, ('+' + str(potential[value])).rjust(23
                                                                                      - len(value)), (0, 150, 0),
                                         settings.REGION_MENUS['equip menu']['Stat_Rects'][value],
                                         settings.TEXT_FONT)
