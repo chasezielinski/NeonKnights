@@ -384,6 +384,10 @@ class Battle(BaseState):
         elif event.type == pygame.MOUSEBUTTONDOWN:
             if event.button == 1:
                 self.handle_action("click")
+            elif event.button == 4:
+                self.handle_action("wheel_up")
+            elif event.button == 5:
+                self.handle_action("wheel_down")
         elif event.type == pygame.MOUSEMOTION:
             self.handle_action("mouse_move")
 
