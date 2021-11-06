@@ -164,12 +164,10 @@ class Battle(BaseState):
                                     if not getattr(self, self.player_index).perplexed > 0 \
                                             and not getattr(self, self.player_index).stunned > 0:
                                         for item in self.persist['inventory']:
-                                            if item.is_usable():
+                                            if settings.BattleConsumable.__instancecheck__(item):
                                                 self.turn_sub_state = "Item"
                                                 check = False
                                                 break
-                                        else:
-                                            pass
                             elif option == "Attack":
                                 if hasattr(getattr(self, self.player_index), 'attack_action') \
                                         and not getattr(self, self.player_index).disabled > 0 \
@@ -200,8 +198,7 @@ class Battle(BaseState):
                     self.turn_sub_state = "Move_Select"
 
             elif self.turn_sub_state == "Item":
-                if action == "backspace":
-                    self.turn_sub_state = "Move_Select"
+                self.battle_overlay.handle_action(action)
 
             elif self.turn_sub_state == "Target":
                 if action == "click":

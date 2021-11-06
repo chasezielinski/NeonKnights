@@ -1409,7 +1409,7 @@ class EquipMenu(object):
             tw(surface, text, color, self.equip_rects[n], TEXT_FONT)
         for i, item in enumerate(self.parent.persist['inventory']):
             color = TEXT_COLOR
-            if not item.equipment:
+            if not hasattr(item, 'equipment'):
                 color = (50, 50, 50)
                 if self.inventory_selection_index == i and self.menu_horizontal_index == "Inventory":
                     color = (100, 100, 100)
@@ -1475,40 +1475,41 @@ class EquipMenu(object):
         potential = {}
         if self.menu_horizontal_index == "Inventory" and self.parent.persist['inventory'] and len(
                 self.parent.persist['inventory']) > self.inventory_selection_index >= 0:
-            slot = self.parent.persist['inventory'][self.inventory_selection_index].slot
-            for value in stats:
-                if value != 'strength':
-                    if hasattr(self.parent.persist['inventory'][self.inventory_selection_index], value):
-                        potential_value = getattr(self.parent.persist['inventory'][self.inventory_selection_index],
-                                                  value)
-                    else:
-                        potential_value = 0
-                    if slot in self.parent.persist['characters'][self.player_index].equipment.keys():
-                        if hasattr(self.parent.persist['characters'][self.player_index].equipment[slot], value):
-                            current_value = getattr(
-                                self.parent.persist['characters'][self.player_index].equipment[slot], value)
+            if hasattr(self.parent.persist['inventory'][self.inventory_selection_index], 'slot'):
+                slot = self.parent.persist['inventory'][self.inventory_selection_index].slot
+                for value in stats:
+                    if value != 'strength':
+                        if hasattr(self.parent.persist['inventory'][self.inventory_selection_index], value):
+                            potential_value = getattr(self.parent.persist['inventory'][self.inventory_selection_index],
+                                                      value)
+                        else:
+                            potential_value = 0
+                        if slot in self.parent.persist['characters'][self.player_index].equipment.keys():
+                            if hasattr(self.parent.persist['characters'][self.player_index].equipment[slot], value):
+                                current_value = getattr(
+                                    self.parent.persist['characters'][self.player_index].equipment[slot], value)
+                            else:
+                                current_value = 0
                         else:
                             current_value = 0
+                        if potential_value - current_value != 0:
+                            potential[value] = potential_value - current_value
                     else:
-                        current_value = 0
-                    if potential_value - current_value != 0:
-                        potential[value] = potential_value - current_value
-                else:
-                    if hasattr(self.parent.persist['inventory'][self.inventory_selection_index], 'attack'):
-                        potential_value = getattr(self.parent.persist['inventory'][self.inventory_selection_index],
-                                                  'attack')
-                    else:
-                        potential_value = 0
-                    if slot in self.parent.persist['characters'][self.player_index].equipment.keys():
-                        if hasattr(self.parent.persist['characters'][self.player_index].equipment[slot], value):
-                            current_value = getattr(
-                                self.parent.persist['characters'][self.player_index].equipment[slot], value)
+                        if hasattr(self.parent.persist['inventory'][self.inventory_selection_index], 'attack'):
+                            potential_value = getattr(self.parent.persist['inventory'][self.inventory_selection_index],
+                                                      'attack')
+                        else:
+                            potential_value = 0
+                        if slot in self.parent.persist['characters'][self.player_index].equipment.keys():
+                            if hasattr(self.parent.persist['characters'][self.player_index].equipment[slot], value):
+                                current_value = getattr(
+                                    self.parent.persist['characters'][self.player_index].equipment[slot], value)
+                            else:
+                                current_value = 0
                         else:
                             current_value = 0
-                    else:
-                        current_value = 0
-                    if potential_value - current_value != 0:
-                        potential[value] = potential_value - current_value
+                        if potential_value - current_value != 0:
+                            potential[value] = potential_value - current_value
         elif self.menu_horizontal_index == "Equip":
             if len(self.parent.persist['characters'][self.player_index].equipment_options) - 1 >= \
                     self.equip_selection_index >= 0:
@@ -2524,6 +2525,43 @@ class BattleOverlay(object):
         self.target_speed = 500
         self.target_time = 0
         self.target_direction = 1
+        self.item_index = -1
+        self.item_display_index = 0
+        self.item_relative = -1
+
+    def handle_action(self, action):
+        if self.parent.turn_sub_state == "Item":
+            if action == "mouse_move":
+                for key in range(5):
+                    if click_check(BATTLE_MENUS['item_menu_rects'][key]):
+                        self.item_relative = key
+                        self.item_index = key + self.item_display_index
+                        break
+                    else:
+                        self.item_relative = -1
+                        self.item_index = -1
+            elif action == "click":
+                pass
+            elif action == "up":
+                if self.item_relative < 0 or self.item_relative > 4:
+                    self.item_relative = 0
+                if self.item_relative == 0 and self.item_display_index > 0:
+                    self.item_display_index -= 1
+                elif self.item_relative > 0:
+                    self.item_relative -= 1
+                self.item_index = self.item_relative + self.item_display_index
+            elif action == "down":
+                if self.item_relative < 0 or self.item_relative > 4:
+                    self.item_relative = 0
+                if self.item_relative == 4 and self.item_index < len(self.parent.persist['inventory']) - 1:
+                    self.item_display_index += 1
+                elif self.item_relative < 4:
+                    self.item_relative += 1
+                self.item_index = self.item_relative + self.item_display_index
+            elif action == "backspace":
+                pass
+            elif action == "return":
+                pass
 
     def update(self, dt):
         self.reticle_color_update(dt)
@@ -2540,6 +2578,20 @@ class BattleOverlay(object):
                     if i == self.parent.action_type_index:
                         color = SELECTED_COLOR
                     tw(surface, option, color, BATTLE_MENUS['move_top_menu_rects'][option], TEXT_FONT)
+                if self.parent.turn_sub_state == "Item":
+                    for key in range(5):
+                        if key + 1 > len(self.parent.persist['inventory']):
+                            color = (50, 50, 50)
+                            if key == self.item_relative:
+                                color = (100, 100, 100)
+                            tw(surface, "-".rjust(5), color, BATTLE_MENUS['item_menu_rects'][key], TEXT_FONT)
+                        else:
+                            color = TEXT_COLOR
+                            if key == self.item_relative:
+                                color = SELECTED_COLOR
+                            tw(surface, self.parent.persist['inventory'][self.item_index].name, color,
+                               BATTLE_MENUS['item_menu_rects'][key], TEXT_FONT)
+
             elif self.parent.turn_sub_state == "Browse":
                 pygame.draw.rect(surface, (150, 150, 20), BATTLE_MENUS['turn_end_rect'], 5, 12)
                 tw(surface, "END TURN", TEXT_COLOR, BATTLE_MENUS['turn_end_rect'],
@@ -2631,8 +2683,9 @@ class BattleAction(pygame.sprite.Sprite):
         self.target = target
         self.hover = False
         self.parent = parent
-        self.source = self.parent.slot
-        self.speed = self.parent.speed
+        if self.parent is not None:
+            self.source = self.parent.slot
+            self.speed = self.parent.speed
         self.queue = 0
         self.priority = False
         self.x = 0
@@ -2705,6 +2758,9 @@ class BattleAction(pygame.sprite.Sprite):
 
     def target_set(self, battle_character):
         pass
+
+    def cancel(self):
+        self.kill()
 
 
 class NoActionSelected(BattleAction):
@@ -2842,10 +2898,46 @@ class Attack(BattleAction):
     def target_set(self, battle_character):
         self.target = battle_character
         if self.parent.battle_action:
+            self.parent.battle_action.cancel()
+        self.parent.battle_action = self
+        self.parent.parent.battle_actions.add(self)
+        self.parent.parent.battle_objects.add(self)
+
+
+class BattleConsumable(BattleAction):
+    def __init__(self, parent=None, target=None):
+        super().__init__(parent, target=None)
+        self.action_type = "Item"
+
+    def cancel(self):
+        self.parent.parent.persist['inventory'].append(copy.deepcopy(self))
+        self.kill()
+
+
+class StimPack(BattleConsumable):
+    def __init__(self, parent=None, target=None):
+        super().__init__(parent=None, target=None)
+        self.target_type = "Single"
+        self.animation = "Slash_1"
+        self.name = "Stimpack"
+        self.buy_value = 50
+        self.sell_value = 25
+
+    def do_action(self):
+        for target in self.target:
+            self.target.hp += int(self.target.max_hp * 0.1)
+            self.target.regen += 4
+            self.target.quick += 4
+        self.end_action_timer = 1000
+
+    def target_set(self, battle_character):
+        self.target = battle_character
+        if self.parent.battle_action:
             self.parent.battle_action.kill()
         self.parent.battle_action = self
         self.parent.parent.battle_actions.add(self)
         self.parent.parent.battle_objects.add(self)
+
 
 
 def attack_defense_calculate(action, source, target, estimate=False, ev=False):
