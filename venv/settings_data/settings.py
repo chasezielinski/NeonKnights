@@ -1388,9 +1388,16 @@ class EquipMenu(object):
             self.equip_unequip()
             if not click_check(self.bg_1_rect):
                 self.parent.state = "Browse"
-#            for n, equip_slot in enumerate(self.parent.persist['characters'][self.player_index].equipment_options):
-#                if click_check(self.equip_rects[n]):
-#                    self.equip_unequip()
+        elif action == "wheel_up":
+            if self.menu_horizontal_index == "Inventory":
+                if self.scroll_index > 0:
+                    self.scroll_index -= 1
+                    self.display_index -= 1
+        elif action == "wheel_down":
+            if self.menu_horizontal_index == "Inventory":
+                if self.scroll_index + 8 < len(self.parent.persist['inventory']):
+                    self.scroll_index += 1
+                    self.display_index += 1
 
     def draw(self, surface):
         pygame.draw.rect(surface, (50, 50, 50), self.bg_1_rect, border_radius=int(X / 128))
