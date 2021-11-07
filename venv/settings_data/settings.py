@@ -2220,7 +2220,7 @@ class DamageParticle:
         if self.particles:
             particles_copy = []
             for particle in self.particles:
-                if particle[5] <= 0:
+                if particle[6] <= 0:
                     settings.tw(surface, str(particle[3]), particle[4], particle[0], settings.TEXT_FONT)
                     new_x = int(particle[0][0] + particle[1][0])
                     new_y = int(particle[0][1] + particle[1][1])
@@ -2248,7 +2248,7 @@ class DamageParticle:
                         b = particle[4][2] + 11
                         b %= 255
                     new_color = (r, g, b)
-                    particles_copy.append([new_rect, new_velocity, particle[2], particle[3], new_color, particle[5]])
+                    particles_copy.append([new_rect, new_velocity, particle[2], particle[3], new_color, particle[5], particle[6]])
                 else:
                     particles_copy.append(particle)
             self.particles = particles_copy
@@ -2257,8 +2257,8 @@ class DamageParticle:
     def update(self, dt):
         if self.particles:
             for particle in self.particles:
-                if particle[5] > 0:
-                    particle[5] -= dt
+                if particle[6] > 0:
+                    particle[6] -= dt
 
     def add_particles(self, x, y, damage, critical=False, velocity=(1, 1), delay=0):
         rect = [x, y, 200, 100]
@@ -2335,9 +2335,10 @@ class BattleCharacter(pygame.sprite.Sprite):
         pass
 
     def damage(self, damage, action, delay=0):
-        damage_total = damage
-        if damage_total == 'miss':
+        if damage == 'miss':
             self.parent.damage_particle.add_particles(self.rect.centerx, self.rect.centery, damage, delay=delay)
+        elif damage == 'effect':
+            pass
         elif damage < 0:
             self.parent.damage_particle.add_particles(self.rect.centerx, self.rect.centery, -damage, delay=delay)
             self.hp += -damage
@@ -2348,19 +2349,41 @@ class BattleCharacter(pygame.sprite.Sprite):
         else:
             if action.defend_stat == "defense" or action.defend_stat == "lowest":
                 if self.shield > 0:
-                    damage_total /= 2
+                    damage /= 2
             if action.defend_stat == "spirit" or action.defend_stat == "lowest":
                 if self.ward > 0:
-                    damage_total /= 2
+                    damage /= 2
             if self.spite > 0:
-                damage_total += 10
+                damage += 10
             if self.curse > 0:
-                damage_total *= 2
-            damage_total = int(damage_total)
-            self.parent.damage_particle.add_particles(self.rect.centerx, self.rect.centery, damage_total, delay=delay)
-            self.hp -= damage_total
+                damage *= 2
+            damage = int(damage)
+            self.parent.damage_particle.add_particles(self.rect.centerx, self.rect.centery, damage, delay=delay)
+            self.hp -= damage
             if self.hp < 0:
                 self.hp = 0
+        if damage != 'miss':
+            if hasattr(action, 'effects'):
+                for index, effect in enumerate(action.effects):
+                    if random_int(0, 100) <= (action.parent.luck / self.luck) * effect[2]:
+                        setattr(self, effect[0], getattr(self, effect[0]) + effect[1])
+                        self.parent.damage_particle.add_particles(self.rect.centerx, self.rect.centery,
+                                                                  effect[0] + '+' + str(effect[1]).rjust(3),
+                                                                  delay=(index+2)*200)
+
+    #        def call_effects(self):
+#            if self.current_action.target_type == "Single":
+#                if len(self.apply_effects) > 0:
+#                    status = self.apply_effects[0][0]
+#                    turns = self.apply_effects[0][1]
+#                    self.apply_effects = self.apply_effects[1:]
+#                    setattr(getattr(self, self.current_action.target), status, turns +
+#                            getattr(getattr(self, self.current_action.target), status))
+#                    self.damage_particle.add_particles(getattr(self, self.current_action.target).x +
+#                                                       getattr(self, self.current_action.target).rect[2] / 2,
+#                                                       getattr(self, self.current_action.target).y +
+#                                                       getattr(self, self.current_action.target).rect[3] / 2,
+#                                                       status + str(turns).rjust(3))
 
     def give_options(self):
         options = []
@@ -2972,6 +2995,54 @@ class Attack(BattleAction):
         self.parent.parent.battle_actions.add(self)
         self.parent.parent.battle_objects.add(self)
 
+ITEM_LIST = {"All": ["StimPack"],
+             "All_Shop_Weights": [1],
+             "All_Reward_Weights": [1],
+             "Desert": [],
+             "Desert_Shop_Weights": [],
+             "Desert_Reward_Weights": [],
+             "Grasslands": [],
+             "Grasslands_Shop_Weights": [],
+             "Grasslands_Reward_Weights": [],
+             "Badlands": [],
+             "Badlands_Shop_Weights": [],
+             "Badlands_Reward_Weights": [],
+             "Valley": [],
+             "Valley_Shop_Weights": [],
+             "Valley_Reward_Weights": [],
+             "Tundra": [],
+             "Tundra_Shop_Weights": [],
+             "Tundra_Reward_Weights": [],}
+
+STORE_NAMES = ["Equipments", "Gear", "Stuff", "Things", "Trappings", "Paraphernalia", "Sundries", "Storehouse",
+               "Stockhouse", "Surplus", "Oddments", "Bits", "Accoutraments", "Armaments", "Ordnance Supply",
+               "Munitions", "Supplies", "Materials", "Necessities", "Outfitting"]
+
+ADJECTIVES = ["accurate", "accessible", "adaptable", "advisable", "aesthetically pleasing", "agreeable", "available",
+              "balanced", "bright", "calm", "candid", "capable", "certified", "clear", "compliant", "cooperative",
+              "coordinated", "courageous", "credible", "cultured", "curious", "decisive", "deep", "delightful",
+              "deployable", "descriptive", "detailed", "different", "diligent", "distinct", "dominant", "dramatic",
+              "dry", "durable", "dynamic", "economical", "educated", "efficient", "elastic", "eloquent", "energetic",
+              "entertaining", "enthusiastic", "familiar", "famous", "fast", "fearless", "festive", "fierce", "fine",
+              "flawless", "flowing", "focused", "frequent", "fresh", "friendly", "functional", "funny", "futuristic",
+              "gainful", "good", "grounded", "hard-to-find", "harmonious", "helpful", "holistic", "hybrid", "important",
+              "inexpensive", "inquisitive", "instinctive", "intelligent", "interesting", "interoperable", "judicious",
+              "knowledgeable", "known", "large", "lean", "learnable", "light", "likable", "literate", "logical",
+              "long lasting", "long term", "lyrical", "magical", "maintainable", "makeshift", "material", "mature",
+              "mixed", "momentous", "mysterious", "natural", "necessary", "new", "next", "nimble", "obtainable", "odd",
+              "offbeat", "open", "operable", "optimal", "organic", "outstanding", "overt", "painstaking", "panoramic",
+              "parallel", "peaceful", "perfect", "periodic", "perpetual", "physical", "plausible", "popular",
+              "possible", "powerful", "precious", "premium", "present", "private", "productive", "protective", "proud",
+              "public", "quick", "quiet", "rare", "ready", "real", "real time", "rebel", "receptive", "redundant",
+              "regular", "relaxed", "relevant", "reliable", "remarkable", "resilient", "reusable", "ripe", "robust",
+              "safe", "satisfying", "scalable", "scarce", "secure", "selective", "serious", "sharp", "silent", "simple",
+              "sincere", "skillful", "small", "smart", "smooth", "solid", "sophisticated", "special", "spectacular",
+              "spotless", "stable", "standard", "steadfast", "steady", "strategic", "strong", "sturdy", "stylish",
+              "substantial", "subtle", "successful", "succinct", "sudden", "suitable", "superb", "supreme",
+              "sustainable", "swanky", "talented", "tame", "tangible", "tasteful", "tasty", "tested", "thankful",
+              "thin", "thinkable", "thoughtful", "threatening", "timely", "traceable", "truthful", "typical",
+              "ubiquitous", "unbiased", "uncovered", "unique", "unknown", "upbeat", "upscale", "usable", "useful",
+              "valuable", "vast", "well-made", "wide", "wise", "workable", "youthful", ]
 
 class BattleConsumable(BattleAction):
     def __init__(self, parent=None, target=None):
@@ -2989,6 +3060,7 @@ class StimPack(BattleConsumable):
         self.name = "Stimpack"
         self.buy_value = 50
         self.sell_value = 25
+        self.effects = [("regen", 4, 100), ("quick", 4, 100)]
 
     def cancel(self):
         self.parent.parent.persist['inventory'].append(StimPack())
@@ -2996,9 +3068,7 @@ class StimPack(BattleConsumable):
 
     def do_action(self):
         for target in self.target:
-            target.damage(-int(target.max_hp * 0.1), self)
-            target.regen += 4
-            target.quick += 4
+            target.damage(-int(target.max_hp * 0.1), self, delay=100)
         self.end_action_timer = 1000
 
     def target_set(self, source, battle_character):

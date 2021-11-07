@@ -250,7 +250,6 @@ class Battle(BaseState):
         for sprite in self.battle_characters:
             if sprite.hp <= 0:
                 sprite.ko()
-
         if not self.state == "Victory_1" and not self.state == "Victory_2" and not \
                 self.state == "Defeat" and not self.state == "Clean_Up":
             if len(self.player_characters.sprites()) <= 0:
@@ -264,10 +263,9 @@ class Battle(BaseState):
                 self.persist['supplies'] += self.supply_reward
                 self.persist['chargers'] += self.charger_reward
                 self.persist['elixirs'] += self.elixir_reward
-
-
         self.battle_objects.update(dt)
         self.battle_overlay.update(dt)
+        self.damage_particle.update(dt)
         self.message.update(dt)
         if self.state == "Pre_Battle":
             self.state = "Pre_Turn"
