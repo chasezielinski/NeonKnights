@@ -1208,10 +1208,62 @@ NODE_EVENT_IDS = {"Empty": {"Nothing": "Null"}}
 
 
 class ScreenTransition(object):
-    def __init__(self, size):
-        self.screen = pygame.display.set_mode(size)
+    def __init__(self):
+        self.surface = pygame.Surface((X, Y))
         self.color = (0, 0, 0)
+        self.surface.fill(self.color)
+        self.alpha = 255
+        self.surface.set_alpha(self.alpha)
+        self.start = None
+        self.timer = None
+        self.delay = None
+        self.state = "Black"
+        self.next_state = "In"
+
+    def update(self, dt):
+        if self.delay is not None:
+            self.delay -= dt
+            if self.delay <= 0:
+                self.delay = None
+        elif self.timer is not None:
+            self.timer -= dt
+            if self.timer < 0:
+                self.timer = 0
+            if self.state == "In":
+                self.alpha = int(255 * pytweening.easeInSine(self.timer/self.start))
+                if self.timer < 0:
+                    self.timer = None
+                    self.state = "Clear"
+            elif self.state == "Out":
+                self.alpha = int(255 * pytweening.easeInSine(1 - self.timer/self.start))
+                if self.timer < 0:
+                    self.timer = None
+                    self.state = "Black"
+        self.surface.fill(self.color)
+        self.surface.set_alpha(self.alpha)
+
+    def draw(self, surface):
+        surface.blit(self.surface, (0, 0))
+
+    def fade_in(self, time=500, delay=None):
+        self.state = "In"
+        self.timer = self.start = time
+        self.delay = delay
+
+    def fade_out(self, time=500, delay=None):
+        self.state = "Out"
+        self.timer = self.start = time
+        self.delay = delay
+
+    def set_black(self):
+        self.alpha = 255
+        self.surface.set_alpha(self.alpha)
+        self.state = "Black"
+
+    def set_clear(self):
         self.alpha = 0
+        self.surface.set_alpha(self.alpha)
+        self.state = "Clear"
 
 
 class NodeEvent(object):

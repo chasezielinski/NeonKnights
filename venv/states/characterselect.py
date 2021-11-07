@@ -402,6 +402,7 @@ class CharacterSelect(BaseState):
                 self.state = "Name_Entry"
 
     def update(self, dt):
+        self.persist["Transition"].update(dt)
         self.fighter_animation_time += settings.random_int(10, 30)
         if self.fighter_animation_time > self.fighter_idle_weights[self.fighter_animation_index]:
             self.fighter_animation_time -= self.fighter_idle_weights[self.fighter_animation_index]
@@ -638,3 +639,10 @@ class CharacterSelect(BaseState):
 
         elif self.state == "Start":
             pass
+
+        self.persist["Transition"].draw(surface)
+
+    def startup(self, persistent):
+        self.persist = persistent
+        self.persist["Transition"].fade_in(500)
+

@@ -11,6 +11,10 @@ class Menu(BaseState):
         self.options = ["Start Game", "Map Bounds", "Quit Game"]
         self.next_state = "CHARACTER_SELECT"
 
+    def startup(self, persistent):
+        self.persist = persistent
+        self.persist["Transition"].fade_in(500)
+
     def render_text(self, index):
         color = pygame.Color("red") if index == self.active_index else pygame.Color("white")
         return self.font.render(self.options[index], True, color)
@@ -65,6 +69,9 @@ class Menu(BaseState):
         elif event.type == pygame.MOUSEMOTION:
             self.handle_action("mouse_move")
 
+    def update(self, dt):
+        self.persist["Transition"].update(dt)
+
     def draw(self, surface):
         surface.fill(pygame.Color("black"))
         for index, option in enumerate(self.options):
@@ -72,3 +79,4 @@ class Menu(BaseState):
             if index == self.active_index:
                 color = settings.SELECTED_COLOR
             settings.tw(surface, option, color, settings.MAIN_MENU_RECTS["options"][index], settings.HEADING_FONT)
+        self.persist["Transition"].draw(surface)
