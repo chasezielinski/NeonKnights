@@ -23,7 +23,7 @@ class Battle(BaseState):
         self.state = "Pre_Battle"
         self.turn_sub_state = "Browse"
         self.action_type_index = -1
-        self.player_index = 'player_a'
+        self.player_index = None
         self.enemy_slots = ['enemy_a', 'enemy_b', 'enemy_c', 'enemy_d', 'enemy_e']
         self.player_slots = ['player_a', 'player_b', 'player_c']
         self.name = "SlimeBall"
@@ -74,7 +74,8 @@ class Battle(BaseState):
                     for i, sprite in enumerate(self.battle_characters.sprites()):
                         if getattr(sprite, 'slot', 'none') in self.player_slots:
                             if sprite.rect.collidepoint(pygame.mouse.get_pos()):
-                                self.player_index = sprite.slot
+                                self.player_index = sprite
+                                print(self.player_index.speed)
                                 self.turn_sub_state = "Move_Select"
                     # check for click on end turn button
                     if settings.click_check(settings.BATTLE_MENUS['turn_end_rect']):
@@ -105,10 +106,10 @@ class Battle(BaseState):
                     if self.action_type_index == -1:
                         pass
                     elif settings.actions_dict.keys()[self.action_type_index] == "Skill":
-                        if getattr(self, self.player_index).action_options:
-                            if not getattr(self, self.player_index).dazed > 0 \
-                                    and not getattr(self, self.player_index).stunned > 0:
-                                for action in getattr(self, self.player_index).action_options:
+                        if self.player_index.action_options:
+                            if not self.player_index.dazed > 0 \
+                                    and not self.player_index.stunned > 0:
+                                for action in self.player_index.action_options:
                                     if action.is_usable():
                                         self.turn_sub_state = "Skill"
                                         break
@@ -116,8 +117,8 @@ class Battle(BaseState):
                                     pass
                     elif settings.actions_dict.keys()[self.action_type_index] == "Item":
                         if self.persist['inventory']:
-                            if not getattr(self, self.player_index).perplexed > 0 \
-                                    and not getattr(self, self.player_index).stunned > 0:
+                            if not self.player_index.perplexed > 0 \
+                                    and not self.player_index.stunned > 0:
                                 for item in self.persist['inventory']:
                                     if item.is_usable():
                                         self.turn_sub_state = "Item"
@@ -125,22 +126,22 @@ class Battle(BaseState):
                                 else:
                                     pass
                     elif settings.actions_dict.keys()[self.action_type_index] == "Attack":
-                        if hasattr(getattr(self, self.player_index), 'attack_action') \
-                                and not getattr(self, self.player_index).disabled > 0 \
-                                and not getattr(self, self.player_index).stunned > 0:
-                            self.selected_action = getattr(self, self.player_index).attack_action
+                        if hasattr(self.player_index, 'attack_action') \
+                                and not self.player_index.disabled > 0 \
+                                and not self.player_index.stunned > 0:
+                            self.selected_action = self.player_index.attack_action
                             self.turn_sub_state = "Target"
                     elif settings.actions_dict.keys()[self.action_type_index] == "Defend":
-                        if hasattr(getattr(self, self.player_index), 'defend_action') \
-                                and not getattr(self, self.player_index).smitten > 0 \
-                                and not getattr(self, self.player_index).stunned > 0:
-                            self.selected_action = getattr(self, self.player_index).defend_action
+                        if hasattr(self.player_index, 'defend_action') \
+                                and not self.player_index.smitten > 0 \
+                                and not self.player_index.stunned > 0:
+                            self.selected_action = self.player_index.defend_action
                             self.turn_sub_state = "Target"
                     elif settings.actions_dict.keys()[self.action_type_index] == "Run":
-                        if hasattr(getattr(self, self.player_index), 'run_action') \
-                                and not getattr(self, self.player_index).trapped > 0 \
-                                and not getattr(self, self.player_index).stunned > 0:
-                            self.selected_action = getattr(self, self.player_index).run_action
+                        if hasattr(self.player_index, 'run_action') \
+                                and not self.player_index.trapped > 0 \
+                                and not self.player_index.stunned > 0:
+                            self.selected_action = self.player_index.run_action
                             self.turn_sub_state = "Target"
                 elif action == "backspace":
                     self.turn_sub_state = "Browse"
@@ -149,10 +150,10 @@ class Battle(BaseState):
                     for i, option in enumerate(settings.actions_dict.keys()):
                         if settings.click_check(settings.BATTLE_MENUS['move_top_menu_rects'][option]):
                             if option == "Skill":
-                                if getattr(self, self.player_index).action_options:
-                                    if not getattr(self, self.player_index).dazed > 0 \
-                                            and not getattr(self, self.player_index).stunned > 0:
-                                        for action in getattr(self, self.player_index).action_options:
+                                if self.player_index.action_options:
+                                    if not self.player_index.dazed > 0 \
+                                            and not self.player_index.stunned > 0:
+                                        for action in self.player_index.action_options:
                                             if action.is_usable():
                                                 self.turn_sub_state = "Skill"
                                                 check = False
@@ -161,33 +162,32 @@ class Battle(BaseState):
                                             pass
                             elif option == "Item":
                                 if self.persist['inventory']:
-                                    if not getattr(self, self.player_index).perplexed > 0 \
-                                            and not getattr(self, self.player_index).stunned > 0:
+                                    if not self.player_index.perplexed > 0 \
+                                            and not self.player_index.stunned > 0:
                                         for item in self.persist['inventory']:
                                             if settings.BattleConsumable.__instancecheck__(item):
                                                 self.turn_sub_state = "Item"
                                                 check = False
                                                 break
                             elif option == "Attack":
-                                if hasattr(getattr(self, self.player_index), 'attack_action') \
-                                        and not getattr(self, self.player_index).disabled > 0 \
-                                        and not getattr(self, self.player_index).stunned > 0:
-                                    self.selected_action = getattr(self, self.player_index).attack_action
-                                    print(getattr(self, self.player_index).attack_action)
+                                if hasattr(self.player_index, 'attack_action') \
+                                        and not self.player_index.disabled > 0 \
+                                        and not self.player_index.stunned > 0:
+                                    self.selected_action = self.player_index.attack_action
                                     self.turn_sub_state = "Target"
                                     check = False
                             elif option == "Run":
-                                if hasattr(getattr(self, self.player_index), 'run_action') \
-                                        and not getattr(self, self.player_index).trapped > 0 \
-                                        and not getattr(self, self.player_index).stunned > 0:
-                                    self.selected_action = getattr(self, self.player_index).run_action
+                                if hasattr(self.player_index, 'run_action') \
+                                        and not self.player_index.trapped > 0 \
+                                        and not self.player_index.stunned > 0:
+                                    self.selected_action = self.player_index.run_action
                                     self.turn_sub_state = "Target"
                                     check = False
                             elif option == "Defend":
-                                if hasattr(getattr(self, self.player_index), 'defend_action') \
-                                        and not getattr(self, self.player_index).smitten > 0 \
-                                        and not getattr(self, self.player_index).stunned > 0:
-                                    self.selected_action = getattr(self, self.player_index).defend_action
+                                if hasattr(self.player_index, 'defend_action') \
+                                        and not self.player_index.smitten > 0 \
+                                        and not self.player_index.stunned > 0:
+                                    self.selected_action = self.player_index.defend_action
                                     self.turn_sub_state = "Target"
                                     check = False
                     if check:
@@ -204,7 +204,7 @@ class Battle(BaseState):
                 if action == "click":
                     for sprite in self.battle_characters:
                         if sprite.rect.collidepoint(pygame.mouse.get_pos()):
-                            self.selected_action.target_set([sprite])
+                            self.selected_action.target_set(self.player_index, [sprite])
                             self.sort_actions()
                         self.turn_sub_state = "Browse"
 
@@ -259,7 +259,6 @@ class Battle(BaseState):
                 self.state = "Victory_1"
                 self.win_timer = 2000
                 for player in self.player_characters.sprites():
-                    print(self.player_characters.sprites())
                     player.exp += self.exp_reward/len(self.player_characters.sprites())
                 self.persist['gold'] += self.gold_reward
                 self.persist['supplies'] += self.supply_reward
@@ -281,7 +280,7 @@ class Battle(BaseState):
             choices = settings.utility_select(options)
             for choice in choices:
                 if choice[1] != "None":
-                    choice[1].target_set(choice[2])
+                    choice[1].target_set(choice[0], choice[2])
             self.sort_actions()
             self.state = "Turn"
             self.turn_sub_state = "Browse"

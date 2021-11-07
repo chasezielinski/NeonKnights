@@ -477,8 +477,7 @@ class CharacterSelect(BaseState):
             self.persist['gold'] = 1000
             self.persist['region_type'] = "None"
             self.persist['inventory'] = [settings.StimPack(), settings.StimPack(), settings.StimPack(),
-                                         settings.StimPack(), settings.StimPack(), settings.StimPack(),
-                                         settings.StimPack(), settings.StimPack(), settings.StimPack()]
+                                         settings.StimPack(), settings.StimPack()]
             self.persist['inventory manager'] = InventoryManager(self)
             settings.character_initial(self.persist['characters'][0], self.options[self.active_index])
             self.persist['equip menu indices'] = settings.REGION_MENUS['equip menu']['equip menu indices']

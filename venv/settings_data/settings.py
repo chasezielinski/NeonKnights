@@ -2321,6 +2321,7 @@ class BattleCharacter(pygame.sprite.Sprite):
         self.dull = 0
         self.savage = 0
         self.gentle = 0
+        self.regen = 0
         self.speed = 0
         self.state = "Idle"
         self.action_options = []
@@ -2336,7 +2337,12 @@ class BattleCharacter(pygame.sprite.Sprite):
     def damage(self, damage, action, delay=0):
         damage_total = damage
         if damage_total == 'miss':
-            self.parent.damage_particle.add_particles(self.rect.centerx, self.rect.centery, damage_total, delay=delay)
+            self.parent.damage_particle.add_particles(self.rect.centerx, self.rect.centery, damage, delay=delay)
+        elif damage < 0:
+            self.parent.damage_particle.add_particles(self.rect.centerx, self.rect.centery, -damage, delay=delay)
+            self.hp += -damage
+            if self.hp > self.max_hp:
+                self.hp = self.max_hp
         elif self.invincible > 0:
             self.parent.damage_particle.add_particles(self.rect.centerx, self.rect.centery, "immune")
         else:
@@ -2600,7 +2606,11 @@ class BattleOverlay(object):
                         self.item_relative = -1
                         self.item_index = -1
             elif action == "click":
-                pass
+                if self.item_index >= 0:
+                    self.parent.selected_action = self.parent.persist['inventory'][self.item_index]
+                    self.parent.turn_sub_state = "Target"
+                else:
+                    self.parent.turn_sub_state = "Browse"
             elif action == "up":
                 if self.item_relative < 0 or self.item_relative > 4:
                     self.item_relative = 0
@@ -2815,7 +2825,7 @@ class BattleAction(pygame.sprite.Sprite):
     def do_action(self):
         self.end_action_timer = 1000
 
-    def target_set(self, battle_character):
+    def target_set(self, source, battle_character):
         pass
 
     def cancel(self):
@@ -2838,7 +2848,7 @@ class NoActionSelected(BattleAction):
     def do_action(self):
         self.end_action_timer = 1000
 
-    def target_set(self, battle_character):
+    def target_set(self, source, battle_character):
         self.target = battle_character
         if self.parent.battle_action:
             self.parent.battle_action.kill()
@@ -2954,7 +2964,7 @@ class Attack(BattleAction):
             target.damage(damage, self, delay=100)
         self.end_action_timer = 1000
 
-    def target_set(self, battle_character):
+    def target_set(self, source, battle_character):
         self.target = battle_character
         if self.parent.battle_action:
             self.parent.battle_action.cancel()
@@ -2968,34 +2978,38 @@ class BattleConsumable(BattleAction):
         super().__init__(parent, target=None)
         self.action_type = "Item"
 
-    def cancel(self):
-        self.parent.parent.persist['inventory'].append(copy.deepcopy(self))
-        self.kill()
-
 
 class StimPack(BattleConsumable):
     def __init__(self, parent=None, target=None):
         super().__init__(parent=None, target=None)
+        self.parent = parent
+        self.target = target
         self.target_type = "Single"
         self.animation = "Slash_1"
         self.name = "Stimpack"
         self.buy_value = 50
         self.sell_value = 25
 
+    def cancel(self):
+        self.parent.parent.persist['inventory'].append(StimPack())
+        self.kill()
+
     def do_action(self):
         for target in self.target:
-            self.target.hp += int(self.target.max_hp * 0.1)
-            self.target.regen += 4
-            self.target.quick += 4
+            target.damage(-int(target.max_hp * 0.1), self)
+            target.regen += 4
+            target.quick += 4
         self.end_action_timer = 1000
 
-    def target_set(self, battle_character):
-        self.target = battle_character
-        if self.parent.battle_action:
-            self.parent.battle_action.kill()
-        self.parent.battle_action = self
-        self.parent.parent.battle_actions.add(self)
-        self.parent.parent.battle_objects.add(self)
+    def target_set(self, source, battle_character):
+        if hasattr(source, 'battle_action'):
+            pass
+        source.battle_action.cancel()
+        source.battle_action = StimPack(source, battle_character)
+        source.parent.battle_actions.add(source.battle_action)
+        source.parent.battle_objects.add(source.battle_action)
+        self.kill()
+        source.parent.persist['inventory'].remove(self)
 
 
 
