@@ -5,7 +5,6 @@ import numpy as np
 import pygame
 import names
 import pytweening
-import settings
 from threading import Timer
 
 pygame.init()
@@ -102,6 +101,8 @@ def character_initial(char, char_class):
         char.equipment["Armor"] = Armor("Iron Plate", "common", '1')
         char.equipment["Boots"] = Boots("Leather Boots", "common", '1')
 
+def random_name():
+    return names.get_last_name()
 
 # Character Select
 
@@ -551,7 +552,8 @@ class EmptyNode(object):
 
 
 class Shop(object):
-    def __init__(self, name, supplies, elixirs, chargers, items, characters):
+    def __init__(self, parent, name, supplies, elixirs, chargers, items, characters):
+        self.parent = parent
         self.name = name
         self.name_rect = [X * 10 / 100, Y * 14 / 100, X * 75 / 100, Y * 7 / 100]
         self.supplies = supplies
@@ -585,11 +587,12 @@ class Shop(object):
                            [X * 42 / 100, Y * 65 / 100, X * 12 / 100, Y * 7 / 100], 
                            [X * 42 / 100, Y * 73 / 100, X * 12 / 100, Y * 7 / 100], 
                            [X * 42 / 100, Y * 80 / 100, X * 12 / 100, Y * 7 / 100]]
+        self.price_rect = [X * 30 / 100, Y * 23 / 100, X * 12 / 100, Y * 7 / 100]
+        self.stock_rect = [X * 42 / 100, Y * 23 / 100, X * 12 / 100, Y * 7 / 100]
         self.shop_inventory = []
         self.shop_index = -1
         self.shop_display_index = 0
         self.relative_index = -1
-
 
     def update(self, dt):
         inventory = []
@@ -607,15 +610,30 @@ class Shop(object):
         pygame.draw.rect(surface, (150, 150, 150), self.bg_1_rect, border_radius=8)
         pygame.draw.rect(surface, (0, 0, 0), self.bg_2_rect, border_radius=8)
         tw(surface, self.name.rjust(25-len(self.name)), TEXT_COLOR, self.name_rect, HEADING_FONT)
+        tw(surface, "price", TEXT_COLOR, self.price_rect, TEXT_FONT)
+        tw(surface, "stock", TEXT_COLOR, self.stock_rect, TEXT_FONT)
         for i in range(8):
             if len(self.shop_inventory) > i:
-                tw(surface, self.shop_inventory[i + self.shop_display_index][0], TEXT_COLOR, self.item_rects[i], TEXT_FONT)
+                color = TEXT_COLOR
+                if i == self.relative_index:
+                    color = SELECTED_COLOR
+                tw(surface, self.shop_inventory[i + self.shop_display_index][0], color, self.item_rects[i], TEXT_FONT)
                 tw(surface, str(self.shop_inventory[i + self.shop_display_index][1]), TEXT_COLOR, self.price_rects[i], TEXT_FONT)
                 tw(surface, str(self.shop_inventory[i + self.shop_display_index][2]), TEXT_COLOR, self.stock_rects[i], TEXT_FONT)
 
     def handle_action(self, action):
         if action == "mouse_move":
             print((int(100 * pygame.mouse.get_pos()[0]/X), int(100 * pygame.mouse.get_pos()[1]/Y)))
+            for i in range(8):
+                if len(self.shop_inventory) > i:
+                    if click_check(self.item_rects[i]):
+                        self.relative_index = i
+                        self.shop_index = self.relative_index + self.shop_display_index
+                        break
+            else:
+                self.relative_index = -1
+        elif action == "escape":
+            self.parent.parent.state = "Browse"
 
 
 class Event(object):
@@ -662,6 +680,8 @@ class Event(object):
             self.parent.parent.state = "Browse"
         elif self.state == "Battle":
             self.battle()
+        elif self.state == "Shop":
+            self.parent.event = shop_builder(self.parent)
 
     def draw(self, surface):
         pygame.draw.rect(surface, (150, 150, 150), self.bg_1_rect, border_radius=8)
@@ -769,23 +789,41 @@ def event_caller(parent, node):
     elif node.type == "Dungeon":
         return EmptyNode(node)
     elif node.type == "Shop":
-        supplies = random_int(3, 12)
-        elixirs = random_int(1, 8)
-        chargers = random_int(0, 8)
-        item_number = random_int(2, 5)
-        equipment_number = random_int(1, 5)
-        items = []
-        for i in range(item_number):
-            items.append(eval(choose_random_weighted(ITEM_LIST["All"] + ITEM_LIST[region_type], ITEM_LIST["All_Shop_Weights"] + ITEM_LIST[region_type+"_Shop_Weights"]))())
-        characters = None
-        shop_name = "Name"
-        return Shop(shop_name, supplies, elixirs, chargers, items, characters)
+        parameter_dictionary = choose_random_weighted(shop_dictionary["All"] + shop_dictionary[region_type],
+                                                      shop_dictionary["All_Weights"] + shop_dictionary[
+                                                          region_type + "_Weights"])
+        return Event(node, parameter_dictionary)
     elif node.type == "Empty":
         return EmptyNode(node)
     else:
         return EmptyNode(node)
     # prompt, option_1, option_2 = None, option_3 = None, option_4 = None, enemies = None,
     # supply_reward = None, gold_reward = None, elixir_reward = None, charger_reward = None, item_reward = None
+
+
+def shop_builder(node):
+    region_index = node.parent.persist['region_index']
+    region_type = node.parent.persist['region_type']
+    supplies = random_int(3, 12)
+    elixirs = random_int(1, 8)
+    chargers = random_int(0, 8)
+    item_number = random_int(2, 5)
+    equipment_number = random_int(1, 5)
+    items = []
+    for i in range(item_number):
+        items.append(eval(choose_random_weighted(ITEM_LIST["All"] + ITEM_LIST[region_type],
+                                                 ITEM_LIST["All_Shop_Weights"] + ITEM_LIST[
+                                                     region_type + "_Shop_Weights"]))())
+    characters = None
+    name_type = choose_random_weighted(["Adjective_Noun", "Name_Noun", "Title_Name_Noun"], [5, 5, 1])
+    shop_name = "Name"
+    if name_type == "Adjective_Noun":
+        shop_name = choose_random(ADJECTIVES) + " " + choose_random(STORE_NAMES)
+    elif name_type == "Name_Noun":
+        shop_name = random_name() + "'s " + choose_random(STORE_NAMES)
+    elif name_type == "Title_Name_Noun":
+        shop_name = choose_random(STORE_NAMES) + " " + random_name() + "'s " + choose_random(STORE_NAMES)
+    return Shop(node, shop_name, supplies, elixirs, chargers, items, characters)
 
 
 encounter_dictionary = {
@@ -801,15 +839,17 @@ encounter_dictionary = {
     "Desert": [],
     "Desert_Weights": [], }
 
-NODE_EVENT_TYPES = {"Empty": [["Nothing", "Investigate", "Region Entry"], [60, 40, 0]],
-                    "Town": [["Shop", "Tavern", "Academy"], [45, 45, 10]],
-                    "Dungeon": [["Cave", "Fortress"], [50, 50]],
-                    "Lone Building": [["Witch's Hut", "Shop"], [10, 90]],
-                    "Encounter": [["Regular", "Inescapable", "Thieves", "Boss"], [80, 10, 10, 0]]}
+shop_dictionary = {
+    "All": [
+        {"prompt": "A small shop that might have something useful.",
+         "options": [["Check it out.", [{"state": "Shop"}], [1]],
+                     ["Not interested.", [{"state": "Exit"}], [1]]],
+         "enemies": ["Slime", "Slime"]}],
+    "All_Weights": [1],
+    "Desert": [],
+    "Desert_Weights": [], }
 
 P_NODE_TYPES = [10, 15, 20, 60]
-
-REGION_PARAMETERS_MAX_SHOP = [4, 4, 4, 3, 3, 3, 2, 2]
 
 REGION_STATIC_SPRITES = {
     'coin icon': image_load(
@@ -1220,14 +1260,6 @@ def tw(surface, text, color, rect, font, aa=False, bkg=None):
     return text
 
 
-def node_assign(persist):
-    node_type = random.choices(NODE_TYPES[0], weights=NODE_TYPES[1])
-    event_type = random.choices(NODE_EVENT_TYPES[node_type[0]][0],
-                                weights=NODE_EVENT_TYPES[node_type[0]][1])
-    event_id = event_assign(node_type, event_type, persist)
-    return node_type[0], event_type[0], event_id[0]
-
-
 def node_assign_2(parent):
     shops = 0
     n = 0
@@ -1328,98 +1360,6 @@ class ScreenTransition(object):
         self.alpha = 0
         self.surface.set_alpha(self.alpha)
         self.state = "Clear"
-
-
-class NodeEvent(object):
-    def __init__(self, event_type, node_type, persist):
-        #        region = persist['region_index']
-        self.event_done = True
-        self.option_index = 0
-        # Less Empty Nodes *****************************************************
-        if node_type == "Empty":
-            if persist['party_abilities'].no_empty_nodes:
-                node_type = persist['nodes'][persist['current_position']].type = choose_random_weighted(
-                    NODE_TYPES[0][1:], NODE_TYPES[1][1:])
-                if node_type == "Encounter":
-                    event_type = persist['nodes'][persist['current_position']].event = choose_random_weighted(
-                        NODE_EVENT_TYPES[node_type][0][:-1], NODE_EVENT_TYPES[node_type][1][:-1])
-                else:
-                    event_type = persist['nodes'][persist['current_position']].event = choose_random_weighted(
-                        NODE_EVENT_TYPES[node_type][0], NODE_EVENT_TYPES[node_type][1])
-            elif persist['party_abilities'].less_empty_nodes and random_int(0, 100) > 50:
-                node_type = persist['nodes'][persist['current_position']].type = choose_random_weighted(
-                    NODE_TYPES[0][1:], NODE_TYPES[1][1:])
-                if node_type == "Encounter":
-                    event_type = persist['nodes'][persist['current_position']].event = choose_random_weighted(
-                        NODE_EVENT_TYPES[node_type][0][:-1], NODE_EVENT_TYPES[node_type][1][:-1])
-                else:
-                    event_type = persist['nodes'][persist['current_position']].event = choose_random_weighted(
-                        NODE_EVENT_TYPES[node_type][0], NODE_EVENT_TYPES[node_type][1])
-        if node_type in Event_Dictionary:
-            if event_type in Event_Dictionary[node_type]:
-                event_list = []
-                self.event_done = False
-                for event in Event_Dictionary[node_type][event_type]:
-                    if str(persist['region_index']) in Event_Dictionary[node_type][event_type][event]["Region"] \
-                            or "All" in Event_Dictionary[node_type][event_type][event]["Region"]:
-                        if persist['region_type'] in Event_Dictionary[node_type][event_type][event]["Region Type"] \
-                                or "All" in Event_Dictionary[node_type][event_type][event]["Region Type"]:
-                            event_list.append(Event_Dictionary[node_type][event_type][event])
-                event = choose_random(event_list)
-                if "Prompt" in event:
-                    self.prompt = event["Prompt"]
-                if "Options" in event:
-                    self.options = event["Options"]
-                if "Battle" in event:
-                    self.battle = event["Battle"]
-                if "Weights" in event:
-                    self.weights = event["Weights"]
-                if event_type == "Shop":
-                    self.shop = shop_builder(persist['region_index'])
-
-
-Event_Dictionary = {
-    "Encounter": {
-        "Regular": {
-            "Single Slime": {
-                "Prompt": "A lone slime is preventing your continuation. While not very threatening, there is no "
-                          "reasoning with this monster.",
-                "Options": [["Fight it.", "Try and run around it"]],
-                "Weights": [[["Battle"], [100]], [["Battle", "Escape"], [50, 1050]]],
-                "Battle": ["Slime", "Slime"],
-                "Region": ["All"],
-                "Region Type": ["All"],
-            },
-            "Double Slime": {
-                "Prompt": "A couple of slimes are preventing your continuation. While not very threatening, there is "
-                          "no reasoning with these monsters.",
-                "Options": [["Fight them.", "Try and run around them"]],
-                "Weights": [[["Battle"], [100]], [["Battle", "Escape"], [50, 1050]]],
-                "Battle": ["Slime", "Slime"],
-                "Region": ["All"],
-                "Region Type": ["All"],
-            },
-
-        },
-    },
-
-    "Town": {
-        "Shop": {
-            "Desolate Town Shop": {
-                "Prompt": "You come across a desolate town. There's not much here but you see a shop that may have "
-                          "some useful items.",
-                "Options": [["Check out the shop.", "Leave."]],
-                "Weights": [[["Shop"], [100]], [["Escape"], [100]]],
-                "Region": ["All"],
-                "Region Type": ["All"],
-            },
-        },
-    },
-}
-
-
-def random_name():
-    return names.get_last_name()
 
 
 def character_stat_update(persist):
@@ -1547,50 +1487,50 @@ class EquipMenu(object):
                     color = (100, 100, 100)
                 tw(surface, '-'.center(12), color, self.inventory_rects[j], TEXT_FONT)
         potential = self.potential_stat()
-        for key, value in enumerate(settings.REGION_MENUS['equip menu']['Stat_Rects']):
+        for key, value in enumerate(REGION_MENUS['equip menu']['Stat_Rects']):
             stat = getattr(self.parent.persist['characters'][self.player_index], value)
             if value == 'hp':
                 stat2 = getattr(self.parent.persist['characters'][self.player_index], 'max_hp')
-                settings.tw(surface, value + ':' + str(stat).rjust(8 - len(value)) + '/' + str(stat2),
-                            settings.TEXT_COLOR,
-                            settings.REGION_MENUS['equip menu']['Stat_Rects'][value], settings.TEXT_FONT)
+                tw(surface, value + ':' + str(stat).rjust(8 - len(value)) + '/' + str(stat2),
+                            TEXT_COLOR,
+                            REGION_MENUS['equip menu']['Stat_Rects'][value], TEXT_FONT)
             elif value == 'mp':
                 stat2 = getattr(self.parent.persist['characters'][self.player_index], 'max_mp')
-                settings.tw(surface, value + ':' + str(stat).rjust(9 - len(value)) + '/' + str(stat2),
-                            settings.TEXT_COLOR,
-                            settings.REGION_MENUS['equip menu']['Stat_Rects'][value], settings.TEXT_FONT)
+                tw(surface, value + ':' + str(stat).rjust(9 - len(value)) + '/' + str(stat2),
+                            TEXT_COLOR,
+                            REGION_MENUS['equip menu']['Stat_Rects'][value], TEXT_FONT)
             else:
-                settings.tw(surface, value + ':' + str(stat).rjust(12 - len(value)), settings.TEXT_COLOR,
-                            settings.REGION_MENUS['equip menu']['Stat_Rects'][value], settings.TEXT_FONT)
+                tw(surface, value + ':' + str(stat).rjust(12 - len(value)), TEXT_COLOR,
+                            REGION_MENUS['equip menu']['Stat_Rects'][value], TEXT_FONT)
                 if value in potential.keys():
                     if value == 'defense' or value == 'spirit' or value == 'luck':
                         if potential[value] < 0:
-                            settings.tw(surface, str(potential[value]).rjust(22 - len(value)), (150, 0, 0),
-                                        settings.REGION_MENUS['equip menu']['Stat_Rects'][value], settings.TEXT_FONT)
+                            tw(surface, str(potential[value]).rjust(22 - len(value)), (150, 0, 0),
+                                        REGION_MENUS['equip menu']['Stat_Rects'][value], TEXT_FONT)
                         else:
-                            settings.tw(surface, ('+' + str(potential[value])).rjust(22
+                            tw(surface, ('+' + str(potential[value])).rjust(22
                                                                                      - len(value)), (0, 150, 0),
-                                        settings.REGION_MENUS['equip menu']['Stat_Rects'][value], settings.TEXT_FONT)
+                                        REGION_MENUS['equip menu']['Stat_Rects'][value], TEXT_FONT)
                     elif value == 'magic' or value == 'speed':
                         if potential[value] < 0:
-                            settings.tw(surface, str(potential[value]).rjust(20 - len(value)), (150, 0, 0),
-                                        settings.REGION_MENUS['equip menu']['Stat_Rects'][value],
-                                        settings.TEXT_FONT)
+                            tw(surface, str(potential[value]).rjust(20 - len(value)), (150, 0, 0),
+                                        REGION_MENUS['equip menu']['Stat_Rects'][value],
+                                        TEXT_FONT)
                         else:
-                            settings.tw(surface, ('+' + str(potential[value])).rjust(20
+                            tw(surface, ('+' + str(potential[value])).rjust(20
                                                                                      - len(value)), (0, 150, 0),
-                                        settings.REGION_MENUS['equip menu']['Stat_Rects'][value],
-                                        settings.TEXT_FONT)
+                                        REGION_MENUS['equip menu']['Stat_Rects'][value],
+                                        TEXT_FONT)
                     elif value == 'strength':
                         if potential[value] < 0:
-                            settings.tw(surface, str(potential[value]).rjust(23 - len(value)), (150, 0, 0),
-                                        settings.REGION_MENUS['equip menu']['Stat_Rects'][value],
-                                        settings.TEXT_FONT)
+                            tw(surface, str(potential[value]).rjust(23 - len(value)), (150, 0, 0),
+                                        REGION_MENUS['equip menu']['Stat_Rects'][value],
+                                        TEXT_FONT)
                         else:
-                            settings.tw(surface, ('+' + str(potential[value])).rjust(23
+                            tw(surface, ('+' + str(potential[value])).rjust(23
                                                                                      - len(value)), (0, 150, 0),
-                                        settings.REGION_MENUS['equip menu']['Stat_Rects'][value],
-                                        settings.TEXT_FONT)
+                                        REGION_MENUS['equip menu']['Stat_Rects'][value],
+                                        TEXT_FONT)
 
     def potential_stat(self):
         stats = ['max_hp', 'max_mp', 'strength', 'magic', 'defense', 'spirit', 'speed', 'luck', 'crit_rate',
@@ -1686,8 +1626,8 @@ class EquipMenu(object):
                     self.parent.persist['characters'][self.player_index].equipment[slot] = copy.deepcopy(
                         self.parent.persist['inventory'][self.inventory_selection_index])
                     del self.parent.persist['inventory'][self.inventory_selection_index]
-        settings.character_stat_update(self.parent.persist)
-        settings.character_ability_update(self.parent.persist)
+        character_stat_update(self.parent.persist)
+        character_ability_update(self.parent.persist)
 
 
 class PartyAbilityManager(object):
@@ -1714,28 +1654,6 @@ class PartyAbilityManager(object):
         self.fly_charges = 50  # paired to fly
         self.teleport = True  # can travel to any node, using multiple elixirs
         self.scout_vision = True  # can see details of neighboring nodes
-
-
-def shop_builder(region):
-    shop_inventory = {
-        "Supplies": {},
-        "Elixir": {},
-        "Charger": {},
-        "Items": {},
-        "Equipment": {}, }
-    supplies_price = [3, 3, 3, 4, 4, 4, 5, 5]
-    supplies_quantity = random_int(3, 12)
-    shop_inventory["Supplies"]["Price"] = supplies_price[region]
-    shop_inventory["Supplies"]["Stock"] = supplies_quantity
-    elixir_price = [3, 3, 3, 4, 4, 4, 5, 5]
-    elixir_quantity = random_int(3, 12)
-    shop_inventory["Elixir"]["Price"] = elixir_price[region]
-    shop_inventory["Elixir"]["Stock"] = elixir_quantity
-    charger_price = [3, 3, 3, 4, 4, 4, 5, 5]
-    charger_quantity = random_int(3, 12)
-    shop_inventory["Charger"]["Price"] = charger_price[region]
-    shop_inventory["Charger"]["Stock"] = charger_quantity
-    return shop_inventory
 
 
 class Weapon(object):
@@ -2285,7 +2203,7 @@ class DamageParticle:
             particles_copy = []
             for particle in self.particles:
                 if particle[6] <= 0:
-                    settings.tw(surface, str(particle[3]), particle[4], particle[0], settings.TEXT_FONT)
+                    tw(surface, str(particle[3]), particle[4], particle[0], TEXT_FONT)
                     new_x = int(particle[0][0] + particle[1][0])
                     new_y = int(particle[0][1] + particle[1][1])
                     new_vx = particle[1][0] / particle[2][0]
@@ -2326,13 +2244,13 @@ class DamageParticle:
 
     def add_particles(self, x, y, damage, critical=False, velocity=(1, 1), delay=0):
         rect = [x, y, 200, 100]
-        f = settings.random_int(1090, 1150) / 1000
-        l = settings.random_int(100, 120) / 100
-        if (settings.X * 3 / 8) - x < 0:
-            velocity = (-settings.X / 100 * velocity[0], (-settings.Y / 720) * l * velocity[1])
+        f = random_int(1090, 1150) / 1000
+        l = random_int(100, 120) / 100
+        if (X * 3 / 8) - x < 0:
+            velocity = (-X / 100 * velocity[0], (-Y / 720) * l * velocity[1])
             force = (f, 0)
         else:
-            velocity = (settings.X / 100 * velocity[0], (-settings.Y / 720) * l * velocity[1])
+            velocity = (X / 100 * velocity[0], (-Y / 720) * l * velocity[1])
             force = (f, 0)
         color = (20, 100, 20)
         particle = [rect, velocity, force, damage, color, critical, delay]
@@ -3080,7 +2998,7 @@ ITEM_LIST = {"All": ["StimPack"],
 
 STORE_NAMES = ["Equipments", "Gear", "Stuff", "Things", "Trappings", "Paraphernalia", "Sundries", "Storehouse",
                "Stockhouse", "Surplus", "Oddments", "Bits", "Accoutraments", "Armaments", "Ordnance Supply",
-               "Munitions", "Supplies", "Materials", "Necessities", "Outfitting"]
+               "Munitions", "Supplies", "Materials", "Necessities", "Outfitting", "Remedies"]
 
 ADJECTIVES = ["accurate", "accessible", "adaptable", "advisable", "aesthetically pleasing", "agreeable", "available",
               "balanced", "bright", "calm", "candid", "capable", "certified", "clear", "compliant", "cooperative",
@@ -3107,6 +3025,9 @@ ADJECTIVES = ["accurate", "accessible", "adaptable", "advisable", "aesthetically
               "thin", "thinkable", "thoughtful", "threatening", "timely", "traceable", "truthful", "typical",
               "ubiquitous", "unbiased", "uncovered", "unique", "unknown", "upbeat", "upscale", "usable", "useful",
               "valuable", "vast", "well-made", "wide", "wise", "workable", "youthful", ]
+
+TITLES = ["Sir", "Madam"]
+
 
 class BattleConsumable(BattleAction):
     def __init__(self, parent=None, target=None):
@@ -3144,7 +3065,6 @@ class StimPack(BattleConsumable):
         source.parent.battle_objects.add(source.battle_action)
         self.kill()
         source.parent.persist['inventory'].remove(self)
-
 
 
 def attack_defense_calculate(action, source, target, estimate=False, ev=False):

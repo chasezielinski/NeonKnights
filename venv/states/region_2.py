@@ -465,7 +465,7 @@ class Region(BaseState):
             elif event.key == pygame.K_BACKSPACE:
                 self.handle_action("backspace")
             elif event.key == pygame.K_ESCAPE:
-                self.handle_action("backspace")
+                self.handle_action("escape")
         elif event.type == pygame.MOUSEBUTTONDOWN:
             if event.button == 1:
                 self.handle_action("click")
