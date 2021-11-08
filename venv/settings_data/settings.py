@@ -551,17 +551,71 @@ class EmptyNode(object):
 
 
 class Shop(object):
-    def __init__(self):
-        pass
+    def __init__(self, name, supplies, elixirs, chargers, items, characters):
+        self.name = name
+        self.name_rect = [X * 10 / 100, Y * 14 / 100, X * 75 / 100, Y * 7 / 100]
+        self.supplies = supplies
+        self.elixirs = elixirs
+        self.chargers = chargers
+        self.items = items
+        self.characters = characters
+        self.bg_1_rect = [X * 8 / 100, Y * 11 / 100, X * 76 / 100, Y * 85 / 100]
+        self.bg_2_rect = [X * 8.5 / 100, Y * 12 / 100, X * 75 / 100, Y * 83 / 100]
+        self.item_rects = [[X * 10 / 100, Y * 30 / 100, X * 20 / 100, Y * 7 / 100],
+                           [X * 10 / 100, Y * 37 / 100, X * 20 / 100, Y * 7 / 100], 
+                           [X * 10 / 100, Y * 44 / 100, X * 20 / 100, Y * 7 / 100], 
+                           [X * 10 / 100, Y * 51 / 100, X * 20 / 100, Y * 7 / 100], 
+                           [X * 10 / 100, Y * 58 / 100, X * 20 / 100, Y * 7 / 100], 
+                           [X * 10 / 100, Y * 65 / 100, X * 20 / 100, Y * 7 / 100], 
+                           [X * 10 / 100, Y * 73 / 100, X * 20 / 100, Y * 7 / 100], 
+                           [X * 10 / 100, Y * 80 / 100, X * 20 / 100, Y * 7 / 100]]
+        self.price_rects = [[X * 30 / 100, Y * 30 / 100, X * 12 / 100, Y * 7 / 100],
+                           [X * 30 / 100, Y * 37 / 100, X * 12 / 100, Y * 7 / 100], 
+                           [X * 30 / 100, Y * 44 / 100, X * 12 / 100, Y * 7 / 100], 
+                           [X * 30 / 100, Y * 51 / 100, X * 12 / 100, Y * 7 / 100], 
+                           [X * 30 / 100, Y * 58 / 100, X * 12 / 100, Y * 7 / 100], 
+                           [X * 30 / 100, Y * 65 / 100, X * 12 / 100, Y * 7 / 100], 
+                           [X * 30 / 100, Y * 73 / 100, X * 12 / 100, Y * 7 / 100], 
+                           [X * 30 / 100, Y * 80 / 100, X * 12 / 100, Y * 7 / 100]]
+        self.stock_rects = [[X * 42 / 100, Y * 30 / 100, X * 12 / 100, Y * 7 / 100],
+                           [X * 42 / 100, Y * 37 / 100, X * 12 / 100, Y * 7 / 100], 
+                           [X * 42 / 100, Y * 44 / 100, X * 12 / 100, Y * 7 / 100], 
+                           [X * 42 / 100, Y * 51 / 100, X * 12 / 100, Y * 7 / 100], 
+                           [X * 42 / 100, Y * 58 / 100, X * 12 / 100, Y * 7 / 100], 
+                           [X * 42 / 100, Y * 65 / 100, X * 12 / 100, Y * 7 / 100], 
+                           [X * 42 / 100, Y * 73 / 100, X * 12 / 100, Y * 7 / 100], 
+                           [X * 42 / 100, Y * 80 / 100, X * 12 / 100, Y * 7 / 100]]
+        self.shop_inventory = []
+        self.shop_index = -1
+        self.shop_display_index = 0
+        self.relative_index = -1
+
 
     def update(self, dt):
-        pass
+        inventory = []
+        if self.supplies > 0:
+            inventory.append(["supply", 3, self.supplies])
+        if self.elixirs > 0:
+            inventory.append(["elixir", 3, self.elixirs])
+        if self.chargers > 0:
+            inventory.append(["charger", 3, self.chargers])
+        for item in self.items:
+            inventory.append([item.name, item.buy_value, 1])
+        self.shop_inventory = inventory
 
     def draw(self, surface):
-        pass
+        pygame.draw.rect(surface, (150, 150, 150), self.bg_1_rect, border_radius=8)
+        pygame.draw.rect(surface, (0, 0, 0), self.bg_2_rect, border_radius=8)
+        tw(surface, self.name.rjust(25-len(self.name)), TEXT_COLOR, self.name_rect, HEADING_FONT)
+        for i in range(8):
+            if len(self.shop_inventory) > i:
+                tw(surface, self.shop_inventory[i + self.shop_display_index][0], TEXT_COLOR, self.item_rects[i], TEXT_FONT)
+                tw(surface, str(self.shop_inventory[i + self.shop_display_index][1]), TEXT_COLOR, self.price_rects[i], TEXT_FONT)
+                tw(surface, str(self.shop_inventory[i + self.shop_display_index][2]), TEXT_COLOR, self.stock_rects[i], TEXT_FONT)
 
     def handle_action(self, action):
-        pass
+        if action == "mouse_move":
+            print((int(100 * pygame.mouse.get_pos()[0]/X), int(100 * pygame.mouse.get_pos()[1]/Y)))
 
 
 class Event(object):
@@ -715,7 +769,17 @@ def event_caller(parent, node):
     elif node.type == "Dungeon":
         return EmptyNode(node)
     elif node.type == "Shop":
-        return EmptyNode(node)
+        supplies = random_int(3, 12)
+        elixirs = random_int(1, 8)
+        chargers = random_int(0, 8)
+        item_number = random_int(2, 5)
+        equipment_number = random_int(1, 5)
+        items = []
+        for i in range(item_number):
+            items.append(eval(choose_random_weighted(ITEM_LIST["All"] + ITEM_LIST[region_type], ITEM_LIST["All_Shop_Weights"] + ITEM_LIST[region_type+"_Shop_Weights"]))())
+        characters = None
+        shop_name = "Name"
+        return Shop(shop_name, supplies, elixirs, chargers, items, characters)
     elif node.type == "Empty":
         return EmptyNode(node)
     else:
@@ -1173,7 +1237,7 @@ def node_assign_2(parent):
         if node.type == "Shop":
             shops += 1
     if shops < 3 and random_int(0, 100) > (100 - (1.5 * n)):
-        node_type = "Shop"
+        node_type = ["Shop"]
     else:
         node_type = random.choices(NODE_TYPES_2[0], weights=NODE_TYPES_2[1])
     return node_type[0]

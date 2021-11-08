@@ -375,7 +375,6 @@ class StatusBar(object):
             if settings.click_check([self.skills_button[0], self.skills_button[1] + (i * self.Y * self.offset),
                                      self.skills_button[2], self.skills_button[3]]):
                 self.parent.state = "Equip"
-                
 
 
 class Background(object):
@@ -495,6 +494,8 @@ class Region(BaseState):
         for path in self.paths:
             path.draw(surface)
         self.nodes.draw(surface)
+        for node in self.nodes.sprites():
+            settings.tw(surface, node.type, (0, 0, 0), [node.x + 50, node.y + 50, 100, 100], settings.DETAIL_FONT)
         self.party.draw(surface)
         surface.blit(self.overlay_image, (0, 0))
         for button in self.buttons:
