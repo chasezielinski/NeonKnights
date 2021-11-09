@@ -596,12 +596,15 @@ class Shop(object):
 
     def update(self, dt):
         inventory = []
-        if self.supplies > 0:
-            inventory.append(["supply", 3, self.supplies])
-        if self.elixirs > 0:
-            inventory.append(["elixir", 3, self.elixirs])
-        if self.chargers > 0:
-            inventory.append(["charger", 3, self.chargers])
+        if self.supplies < 0:
+            self.supplies = 0
+        inventory.append(["supply", 3, self.supplies])
+        if self.elixirs < 0:
+            self.elixirs = 0
+        inventory.append(["elixir", 3, self.elixirs])
+        if self.chargers < 0:
+            self.chargers = 0
+        inventory.append(["charger", 3, self.chargers])
         for item in self.items:
             inventory.append([item.name, item.buy_value, 1])
         self.shop_inventory = inventory
@@ -634,7 +637,33 @@ class Shop(object):
                 self.relative_index = -1
         elif action == "escape":
             self.parent.parent.state = "Browse"
+        elif action == "click":
+            for i in range(8):
+                if len(self.shop_inventory) > i:
+                    if click_check(self.item_rects[i]):
+                        self.buy()
+                        break
 
+    def buy(self):
+        if self.shop_inventory[self.shop_index][2] > 0 and self.parent.parent.persist['gold'] > \
+                self.shop_inventory[self.shop_index][1]:
+            self.parent.parent.persist['gold'] -= self.shop_inventory[self.shop_index][1]
+            if self.shop_index == 0:
+                self.parent.parent.persist['supplies'] += 1
+                self.supplies -= 1
+            elif self.shop_index == 1:
+                self.parent.parent.persist['elixirs'] += 1
+                self.elixirs -= 1
+            elif self.shop_index == 2:
+                self.parent.parent.persist['chargers'] += 1
+                self.chargers -= 1
+            else:
+                self.parent.parent.persist['inventory'].append(eval(self.items[self.shop_index - 3].name)())
+                del self.shop_inventory[self.shop_index]
+                del self.items[self.shop_index - 3]
+
+    def sell(self):
+        pass
 
 class Event(object):
     def __init__(self, parent, parameter_dictionary):
@@ -822,7 +851,7 @@ def shop_builder(node):
     elif name_type == "Name_Noun":
         shop_name = random_name() + "'s " + choose_random(STORE_NAMES)
     elif name_type == "Title_Name_Noun":
-        shop_name = choose_random(STORE_NAMES) + " " + random_name() + "'s " + choose_random(STORE_NAMES)
+        shop_name = choose_random(TITLES) + " " + random_name() + "'s " + choose_random(STORE_NAMES)
     return Shop(node, shop_name, supplies, elixirs, chargers, items, characters)
 
 
@@ -3042,7 +3071,7 @@ class StimPack(BattleConsumable):
         self.target = target
         self.target_type = "Single"
         self.animation = "Slash_1"
-        self.name = "Stimpack"
+        self.name = "StimPack"
         self.buy_value = 50
         self.sell_value = 25
         self.effects = [("regen", 4, 100), ("quick", 4, 100)]
