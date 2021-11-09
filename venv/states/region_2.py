@@ -268,6 +268,62 @@ class TravelButton(object):
             self.parent.travel()
 
 
+class ShopButton(object):
+    def __init__(self, parent):
+        self.parent = parent
+        self.state = "Hidden"
+        self.bg_rect = [settings.X * 84/100, settings.Y * 2/100, settings.X * 13/100, settings.Y * 8/100]
+        self.text_rect = [settings.X * 88/100, settings.Y * 4/100, settings.X * 9/100, settings.Y * 6/100]
+
+    def draw(self, surface):
+        if self.state == "Active":
+            color = (40, 40, 40)
+            if settings.click_check(self.bg_rect) and self.parent.state != "Event":
+                color = (60, 60, 60)
+            pygame.draw.rect(surface, color, self.bg_rect, border_radius=8)
+            pygame.draw.rect(surface, (125, 125, 50), self.bg_rect, 5, border_radius=8)
+            settings.tw(surface, "SHOP", (125, 125, 50), self.text_rect, settings.TEXT_FONT)
+
+    def update(self, dt):
+        if self.parent.party.node.type == "Shop":
+            self.state = "Active"
+        else:
+            self.state = "Hidden"
+
+    def click(self):
+        if self.state == "Active":
+            if settings.click_check(self.bg_rect):
+                self.parent.state = "Event"
+
+
+class ExitButton(object):
+    def __init__(self, parent):
+        self.parent = parent
+        self.state = "Hidden"
+        self.bg_rect = [settings.X * 84/100, settings.Y * 2/100, settings.X * 13/100, settings.Y * 8/100]
+        self.text_rect = [settings.X * 88/100, settings.Y * 4/100, settings.X * 9/100, settings.Y * 6/100]
+
+    def draw(self, surface):
+        if self.state == "Active":
+            color = (40, 40, 40)
+            if settings.click_check(self.bg_rect) and self.parent.state != "Event":
+                color = (60, 60, 60)
+            pygame.draw.rect(surface, color, self.bg_rect, border_radius=8)
+            pygame.draw.rect(surface, (125, 50, 50), self.bg_rect, 5, border_radius=8)
+            settings.tw(surface, "EXIT", (125, 50, 50), self.text_rect, settings.TEXT_FONT)
+
+    def update(self, dt):
+        if self.parent.party.node.type == "Exit":
+            self.state = "Active"
+        else:
+            self.state = "Hidden"
+
+    def click(self):
+        if self.state == "Active":
+            if settings.click_check(self.bg_rect):
+                self.parent.state = "Exit_Reqion"
+
+
 class Resources(object):
     def __init__(self, parent):
         self.parent = parent
@@ -397,7 +453,7 @@ class Region(BaseState):
         self.nodes = pygame.sprite.Group()
         self.selected_node = None
         self.party = Party(self)
-        self.buttons = [TravelButton(self), Resources(self), StatusBar(self)]
+        self.buttons = [TravelButton(self), Resources(self), StatusBar(self), ShopButton(self), ExitButton()]
         self.equip_menu = settings.EquipMenu(self)
         self.paths = []
         self.background = None
