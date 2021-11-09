@@ -313,7 +313,7 @@ class ExitButton(object):
             settings.tw(surface, "EXIT", (125, 50, 50), self.text_rect, settings.TEXT_FONT)
 
     def update(self, dt):
-        if self.parent.party.node.type == "Exit":
+        if self.parent.party.node.type == "Boss":
             self.state = "Active"
         else:
             self.state = "Hidden"
