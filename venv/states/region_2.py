@@ -453,7 +453,7 @@ class Region(BaseState):
         self.nodes = pygame.sprite.Group()
         self.selected_node = None
         self.party = Party(self)
-        self.buttons = [TravelButton(self), Resources(self), StatusBar(self), ShopButton(self), ExitButton()]
+        self.buttons = [TravelButton(self), Resources(self), StatusBar(self), ShopButton(self), ExitButton(self)]
         self.equip_menu = settings.EquipMenu(self)
         self.paths = []
         self.background = None
