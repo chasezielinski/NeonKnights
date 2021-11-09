@@ -483,6 +483,8 @@ REGION_CARDS = {
         r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Region\Cards\Grasslands_Card_480p_1.png"),
     "Valley": image_load(
         r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Region\Cards\Valley_Card_480p_1.png"),
+    "Savannah": image_load(
+        r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Region\Cards\Savannah_Card_480p_1.png"),
 }
 
 REGION_SHAPES = ["Land-Locked", "Coastal", "Archipelago", "Island", "Plateau",
@@ -598,15 +600,15 @@ class Shop(object):
         inventory = []
         if self.supplies < 0:
             self.supplies = 0
-        inventory.append(["supply", 3, self.supplies])
+        inventory.append(["supply", 3, self.supplies, 'common'])
         if self.elixirs < 0:
             self.elixirs = 0
-        inventory.append(["elixir", 3, self.elixirs])
+        inventory.append(["elixir", 3, self.elixirs, 'common'])
         if self.chargers < 0:
             self.chargers = 0
-        inventory.append(["charger", 3, self.chargers])
+        inventory.append(["charger", 3, self.chargers, 'common'])
         for item in self.items:
-            inventory.append([item.name, item.buy_value, 1])
+            inventory.append([item.name, item.buy_value, 1, 'item'])
         self.shop_inventory = inventory
 
     def draw(self, surface):
@@ -657,7 +659,7 @@ class Shop(object):
             elif self.shop_index == 2:
                 self.parent.parent.persist['chargers'] += 1
                 self.chargers -= 1
-            else:
+            elif self.shop_inventory[self.shop_index][3] == 'item':
                 self.parent.parent.persist['inventory'].append(eval(self.items[self.shop_index - 3].name)())
                 del self.shop_inventory[self.shop_index]
                 del self.items[self.shop_index - 3]
