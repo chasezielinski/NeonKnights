@@ -538,6 +538,40 @@ NODE_TYPES = [["Empty", "Town", "Dungeon", "Lone Building", "Encounter"], [30, 1
 
 NODE_TYPES_2 = [["Shop", "Dungeon", "Encounter", "Event", "Empty"], [1, 2, 40, 27, 30]]
 
+UNEXPLORED_NODE = [pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Node_Sheet1.png"), pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Node_Sheet2.png"), pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Node_Sheet3.png"), pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Node_Sheet4.png"),
+                   pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Node_Sheet5.png"), pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Node_Sheet6.png"), pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Node_Sheet7.png"), pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Node_Sheet8.png"),
+                   pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Node_Sheet9.png"), pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Node_Sheet10.png"), pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Node_Sheet11.png"), pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Node_Sheet12.png"), 
+                   pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Node_Sheet13.png")]
+
+EXPLORED_NODE = [pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Node_Explored1.png"), pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Node_Explored2.png"), pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Node_Explored3.png"), pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Node_Explored4.png"),
+                   pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Node_Explored5.png"), pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Node_Explored6.png"), pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Node_Explored7.png"), pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Node_Explored8.png"),
+                   pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Node_Explored9.png"), pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Node_Explored10.png"), pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Node_Explored11.png"), pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Node_Explored12.png"), 
+                   pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Node_Explored13.png")]
+
+EXIT_NODE = [pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Exit_Node1.png"), pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Exit_Node2.png"), pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Exit_Node3.png"), pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Exit_Node4.png"),
+                   pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Exit_Node5.png"), pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Exit_Node6.png"), pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Exit_Node7.png"), pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Exit_Node8.png"),
+                   pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Exit_Node9.png"), pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Exit_Node10.png"), pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Exit_Node11.png"), pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Exit_Node12.png"), 
+                   pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Exit_Node13.png")]
+
+EVENT_NODE = [pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Event_Node32p1.png"), pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Event_Node32p2.png"), pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Event_Node32p3.png"), pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Event_Node32p4.png"),
+              pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Event_Node32p5.png"), pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Event_Node32p6.png"), pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Event_Node32p7.png"), pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Event_Node32p8.png")]
+
+DUNGEON_NODE = [pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Dungeon_Node32p1.png"), pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Dungeon_Node32p2.png"), pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Dungeon_Node32p3.png"), pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Dungeon_Node32p4.png"),
+              pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Dungeon_Node32p5.png"), pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Dungeon_Node32p6.png"), pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Dungeon_Node32p7.png"), pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Dungeon_Node32p8.png")]
+
+SHOP_NODE = [pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Shop_Node32p1.png"), pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Shop_Node32p2.png"), pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Shop_Node32p3.png"), pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Shop_Node32p4.png"),
+              pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Shop_Node32p5.png"), pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Shop_Node32p6.png"), pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Shop_Node32p7.png"), pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Shop_Node32p8.png")]
+
+ENCOUNTER_NODE = [pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Encounter_Node32p1.png"), pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Encounter_Node32p2.png"), pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Encounter_Node32p3.png"), pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Encounter_Node32p4.png"),
+              pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Encounter_Node32p5.png"), pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Encounter_Node32p6.png"), pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Encounter_Node32p7.png"), pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Encounter_Node32p8.png")]
+
+BOSS_NODE = [pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Boss_Node32p1.png"), pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Boss_Node32p2.png"), pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Boss_Node32p3.png"), pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Boss_Node32p4.png"),
+              pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Boss_Node32p5.png"), pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Boss_Node32p6.png"), pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Boss_Node32p7.png"), pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Boss_Node32p8.png")]
+
+Party_Marker = [[pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Region\Party_Marker1.png"), pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Region\Party_Marker2.png"), pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Region\Party_Marker3.png"), pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Region\Party_Marker4.png"),
+                pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Region\Party_Marker5.png"), pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Region\Party_Marker6.png"), pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Region\Party_Marker7.png"), pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Region\Party_Marker8.png")],
+                [65, 65, 65, 65, 65, 65, 65, 65]]
+
 
 class EmptyNode(object):
     def __init__(self, parent):
@@ -666,6 +700,7 @@ class Shop(object):
 
     def sell(self):
         pass
+
 
 class Event(object):
     def __init__(self, parent, parameter_dictionary):
@@ -1671,12 +1706,14 @@ class PartyAbilityManager(object):
         self.no_empty_nodes = True  # no empty nodes spawn
         self.path_vision = False  # see all paths in region
         self.static_path = False  # false = paths only visible when hovering over node
-        self.region_revealed = True  # all region info revealed
-        self.locate_shops = True  # see all shops in region
-        self.locate_encounter = True  # see all encounters in region
-        self.locate_inn = True  # see all inns in region
-        self.locate_tavern = True  # see all taverns in region
-        self.locate_dungeon = True  # see all dungeons in region
+        self.region_revealed = False  # all region info revealed
+        self.locate_shops = False  # see all shops in region
+        self.locate_encounters = False  # see all encounters in region
+        self.locate_inn = False  # see all inns in region
+        self.locate_tavern = False  # see all taverns in region
+        self.locate_events = False  # see all events in region
+        self.locate_boss = False  # see boss node
+        self.locate_dungeons = False  # see all dungeons in region
         self.mp_regen_travel = True  # regen some mp when traveling
         self.boosted_regen_travel = True  # regen more when traveling
         self.conserve_supplies = True  # chance to not use supplies when traveling

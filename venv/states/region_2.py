@@ -14,6 +14,7 @@ class Node(pygame.sprite.Sprite):
         self.parent = parent
         self.index = state
         self.seen = False
+        self.visited = False
         self.x = x
         self.y = y
         self.type = node_type
@@ -29,119 +30,92 @@ class Node(pygame.sprite.Sprite):
         self.hover = False
         self.neighbors = neighbors
         self.edges = edges
-        self.images_unexplored = []
-        self.images_explored = []
-        self.images_exit = []
-        self.images_unexplored.append(
-            pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\FinalRogue\venv\resources\sprites\Node\Node_Sheet1.png"))
-        self.images_unexplored.append(
-            pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\FinalRogue\venv\resources\sprites\Node\Node_Sheet2.png"))
-        self.images_unexplored.append(
-            pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\FinalRogue\venv\resources\sprites\Node\Node_Sheet3.png"))
-        self.images_unexplored.append(
-            pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\FinalRogue\venv\resources\sprites\Node\Node_Sheet4.png"))
-        self.images_unexplored.append(
-            pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\FinalRogue\venv\resources\sprites\Node\Node_Sheet5.png"))
-        self.images_unexplored.append(
-            pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\FinalRogue\venv\resources\sprites\Node\Node_Sheet6.png"))
-        self.images_unexplored.append(
-            pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\FinalRogue\venv\resources\sprites\Node\Node_Sheet7.png"))
-        self.images_unexplored.append(
-            pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\FinalRogue\venv\resources\sprites\Node\Node_Sheet8.png"))
-        self.images_unexplored.append(
-            pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\FinalRogue\venv\resources\sprites\Node\Node_Sheet9.png"))
-        self.images_unexplored.append(pygame.image.load(
-            r"C:\Users\Chase\Dropbox\Pycharm\FinalRogue\venv\resources\sprites\Node\Node_Sheet10.png"))
-        self.images_unexplored.append(pygame.image.load(
-            r"C:\Users\Chase\Dropbox\Pycharm\FinalRogue\venv\resources\sprites\Node\Node_Sheet11.png"))
-        self.images_unexplored.append(pygame.image.load(
-            r"C:\Users\Chase\Dropbox\Pycharm\FinalRogue\venv\resources\sprites\Node\Node_Sheet12.png"))
-        self.images_unexplored.append(pygame.image.load(
-            r"C:\Users\Chase\Dropbox\Pycharm\FinalRogue\venv\resources\sprites\Node\Node_Sheet13.png"))
-        self.images_explored.append(pygame.image.load(
-            r"C:\Users\Chase\Dropbox\Pycharm\FinalRogue\venv\resources\sprites\Node\Node_Explored1.png"))
-        self.images_explored.append(pygame.image.load(
-            r"C:\Users\Chase\Dropbox\Pycharm\FinalRogue\venv\resources\sprites\Node\Node_Explored2.png"))
-        self.images_explored.append(pygame.image.load(
-            r"C:\Users\Chase\Dropbox\Pycharm\FinalRogue\venv\resources\sprites\Node\Node_Explored3.png"))
-        self.images_explored.append(pygame.image.load(
-            r"C:\Users\Chase\Dropbox\Pycharm\FinalRogue\venv\resources\sprites\Node\Node_Explored4.png"))
-        self.images_explored.append(pygame.image.load(
-            r"C:\Users\Chase\Dropbox\Pycharm\FinalRogue\venv\resources\sprites\Node\Node_Explored5.png"))
-        self.images_explored.append(pygame.image.load(
-            r"C:\Users\Chase\Dropbox\Pycharm\FinalRogue\venv\resources\sprites\Node\Node_Explored6.png"))
-        self.images_explored.append(pygame.image.load(
-            r"C:\Users\Chase\Dropbox\Pycharm\FinalRogue\venv\resources\sprites\Node\Node_Explored7.png"))
-        self.images_explored.append(pygame.image.load(
-            r"C:\Users\Chase\Dropbox\Pycharm\FinalRogue\venv\resources\sprites\Node\Node_Explored8.png"))
-        self.images_explored.append(pygame.image.load(
-            r"C:\Users\Chase\Dropbox\Pycharm\FinalRogue\venv\resources\sprites\Node\Node_Explored9.png"))
-        self.images_explored.append(pygame.image.load(
-            r"C:\Users\Chase\Dropbox\Pycharm\FinalRogue\venv\resources\sprites\Node\Node_Explored10.png"))
-        self.images_explored.append(pygame.image.load(
-            r"C:\Users\Chase\Dropbox\Pycharm\FinalRogue\venv\resources\sprites\Node\Node_Explored11.png"))
-        self.images_explored.append(pygame.image.load(
-            r"C:\Users\Chase\Dropbox\Pycharm\FinalRogue\venv\resources\sprites\Node\Node_Explored12.png"))
-        self.images_explored.append(pygame.image.load(
-            r"C:\Users\Chase\Dropbox\Pycharm\FinalRogue\venv\resources\sprites\Node\Node_Explored13.png"))
-        self.images_exit.append(
-            pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\FinalRogue\venv\resources\sprites\Node\Exit_Node1.png"))
-        self.images_exit.append(
-            pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\FinalRogue\venv\resources\sprites\Node\Exit_Node2.png"))
-        self.images_exit.append(
-            pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\FinalRogue\venv\resources\sprites\Node\Exit_Node3.png"))
-        self.images_exit.append(
-            pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\FinalRogue\venv\resources\sprites\Node\Exit_Node4.png"))
-        self.images_exit.append(
-            pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\FinalRogue\venv\resources\sprites\Node\Exit_Node5.png"))
-        self.images_exit.append(
-            pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\FinalRogue\venv\resources\sprites\Node\Exit_Node6.png"))
-        self.images_exit.append(
-            pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\FinalRogue\venv\resources\sprites\Node\Exit_Node7.png"))
-        self.images_exit.append(
-            pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\FinalRogue\venv\resources\sprites\Node\Exit_Node8.png"))
-        self.images_exit.append(
-            pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\FinalRogue\venv\resources\sprites\Node\Exit_Node9.png"))
-        self.images_exit.append(
-            pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\FinalRogue\venv\resources\sprites\Node\Exit_Node10.png"))
-        self.images_exit.append(
-            pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\FinalRogue\venv\resources\sprites\Node\Exit_Node11.png"))
-        self.images_exit.append(
-            pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\FinalRogue\venv\resources\sprites\Node\Exit_Node12.png"))
-        self.images_exit.append(
-            pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\FinalRogue\venv\resources\sprites\Node\Exit_Node13.png"))
+        self.images = settings.UNEXPLORED_NODE
         self.animation_index = 0
-        self.image = self.images_unexplored[self.animation_index]
+        self.image = self.images[0]
         self.rect = pygame.Rect(self.x, self.y, self.image.get_width(), self.image.get_height())
-        for i, value in enumerate(self.images_unexplored):
-            self.images_unexplored[i].set_colorkey((255, 55, 202))
-            self.images_explored[i].set_colorkey((255, 55, 202))
-            self.images_exit[i].set_colorkey((255, 55, 202))
+        self.animation_speed = 0.25
+        self.quick_speed = 0.25
+        self.slow_speed = 0.375
 
     def update(self, dt):
-        if self.state == "Unexplored":
-            if self.selected:
-                self.animation_index += 0.375
-                self.animation_index %= len(self.images_unexplored)
+        if self.type == "Shop":
+            if (self.parent.persist['party_abilities'].scout_vision and self.seen) or \
+                    self.parent.persist['party_abilities'].region_revealed or \
+                    self.parent.persist['party_abilities'].locate_shops:
+                self.images = settings.SHOP_NODE
+                self.animation_speed = self.quick_speed
+            elif self.visited:
+                self.images = settings.EXPLORED_NODE
+                self.animation_speed = self.slow_speed
+            else:
+                self.images = settings.UNEXPLORED_NODE
+                self.animation_speed = self.slow_speed
+        elif self.type == "Dungeon":
+            if (self.parent.persist['party_abilities'].scout_vision and self.seen) or \
+                    self.parent.persist['party_abilities'].region_revealed or \
+                    self.parent.persist['party_abilities'].locate_dungeons:
+                self.images = settings.DUNGEON_NODE
+                self.animation_speed = self.quick_speed
+            elif self.visited:
+                self.images = settings.EXPLORED_NODE
+                self.animation_speed = self.slow_speed
+            else:
+                self.images = settings.UNEXPLORED_NODE
+                self.animation_speed = self.slow_speed
+        elif self.type == "Encounter":
+            if (self.parent.persist['party_abilities'].scout_vision and self.seen) or \
+                    self.parent.persist['party_abilities'].region_revealed or \
+                    self.parent.persist['party_abilities'].locate_encounters:
+                self.images = settings.ENCOUNTER_NODE
+                self.animation_speed = self.quick_speed
+            elif self.visited:
+                self.images = settings.EXPLORED_NODE
+                self.animation_speed = self.slow_speed
+            else:
+                self.images = settings.UNEXPLORED_NODE
+                self.animation_speed = self.slow_speed
+        elif self.type == "Event":
+            if (self.parent.persist['party_abilities'].scout_vision and self.seen) or \
+                    self.parent.persist['party_abilities'].region_revealed or \
+                    self.parent.persist['party_abilities'].locate_events:
+                self.images = settings.EVENT_NODE
+                self.animation_speed = self.quick_speed
+            elif self.visited:
+                self.images = settings.EXPLORED_NODE
+                self.animation_speed = self.slow_speed
+            else:
+                self.images = settings.UNEXPLORED_NODE
+                self.animation_speed = self.slow_speed
+        elif self.type == "Empty":
+            if self.visited:
+                self.images = settings.EXPLORED_NODE
+                self.animation_speed = self.slow_speed
+            else:
+                self.images = settings.UNEXPLORED_NODE
+                self.animation_speed = self.slow_speed
+        elif self.type == "Boss":
+            if (self.parent.persist['party_abilities'].scout_vision and self.seen) or \
+                    self.parent.persist['party_abilities'].region_revealed or \
+                    self.parent.persist['party_abilities'].locate_boss:
+                self.images = settings.BOSS_NODE
+                self.animation_speed = self.quick_speed
+            elif self.visited:
+                self.images = settings.EXPLORED_NODE
+                self.animation_speed = self.slow_speed
+            else:
+                self.images = settings.UNEXPLORED_NODE
+                self.animation_speed = self.slow_speed
+        if self.selected:
+            self.animation_index += self.animation_speed
+            self.animation_index %= len(self.images)
+        else:
+            if self.visited:
+                self.animation_index = -1
             else:
                 self.animation_index = 0
-            self.image = self.images_unexplored[math.floor(self.animation_index)]
+        self.image = self.images[math.floor(self.animation_index)]
 
-        elif self.state == "Explored":
-            if self.selected:
-                self.animation_index += 0.375
-                self.animation_index %= len(self.images_explored)
-            else:
-                self.animation_index = 0
-            self.image = self.images_explored[math.floor(self.animation_index)]
-
-        if self.state == "Exit":
-            if self.selected:
-                self.animation_index += 0.375
-                self.animation_index %= len(self.images_exit)
-            else:
-                self.animation_index = 0
-            self.image = self.images_exit[math.floor(self.animation_index)]
         if self.index in self.parent.party.node.neighbors:
             self.travel = True
         else:
@@ -149,6 +123,8 @@ class Node(pygame.sprite.Sprite):
         self.hover = False
         if self.rect.collidepoint(pygame.mouse.get_pos()):
             self.hover = True
+        if self.index in self.parent.party.node.neighbors:
+            self.seen = True
 
     def cleanup(self):
         self.kill()
@@ -199,15 +175,29 @@ class Party(pygame.sprite.Sprite):
         self.parent = parent
         self.x = 2 * settings.X
         self.y = 2 * settings.Y
-        self.image = pygame.image.load(
-            r"C:\Users\Chase\Dropbox\Pycharm\FinalRogue\venv\resources\sprites\Region\D20_Party.png")
+        self.images = []
+        for image in settings.Party_Marker[0]:
+            self.images.append(image.convert_alpha())
+        self.image = self.images[0]
+        self.times = settings.Party_Marker[1]
+        self.timer = self.times[0]
         self.rect = pygame.Rect(self.x, self.y, self.image.get_width(), self.image.get_height())
         self.image.set_colorkey((255, 55, 202))
         self.node = None
+        self.animation_index = 0
+        self.width = (self.image.get_width() * 24/100)
+        self.height = (self.image.get_height() * 25/100)
 
     def update(self, dt):
-        self.x = self.node.x - (self.image.get_width() / 4)
-        self.y = self.node.y - (self.image.get_height() / 2)
+        self.timer += dt
+        if self.timer >= self.times[self.animation_index]:
+            self.timer = 0
+            self.animation_index += 1
+            self.animation_index %= len(self.images)
+            self.image = self.images[self.animation_index]
+
+        self.x = self.node.x - self.width
+        self.y = self.node.y - self.height
 
     def draw(self, surface):
         surface.blit(self.image, (self.x, self.y))
@@ -272,8 +262,8 @@ class ShopButton(object):
     def __init__(self, parent):
         self.parent = parent
         self.state = "Hidden"
-        self.bg_rect = [settings.X * 84/100, settings.Y * 2/100, settings.X * 13/100, settings.Y * 8/100]
-        self.text_rect = [settings.X * 88/100, settings.Y * 4/100, settings.X * 9/100, settings.Y * 6/100]
+        self.bg_rect = [settings.X * 84 / 100, settings.Y * 2 / 100, settings.X * 13 / 100, settings.Y * 8 / 100]
+        self.text_rect = [settings.X * 88 / 100, settings.Y * 4 / 100, settings.X * 9 / 100, settings.Y * 6 / 100]
 
     def draw(self, surface):
         if self.state == "Active":
@@ -300,8 +290,8 @@ class ExitButton(object):
     def __init__(self, parent):
         self.parent = parent
         self.state = "Hidden"
-        self.bg_rect = [settings.X * 84/100, settings.Y * 2/100, settings.X * 13/100, settings.Y * 8/100]
-        self.text_rect = [settings.X * 88/100, settings.Y * 4/100, settings.X * 9/100, settings.Y * 6/100]
+        self.bg_rect = [settings.X * 84 / 100, settings.Y * 2 / 100, settings.X * 13 / 100, settings.Y * 8 / 100]
+        self.text_rect = [settings.X * 88 / 100, settings.Y * 4 / 100, settings.X * 9 / 100, settings.Y * 6 / 100]
 
     def draw(self, surface):
         if self.state == "Active":
@@ -425,7 +415,7 @@ class StatusBar(object):
 
     def click(self):
         for i, player in enumerate(self.parent.persist['characters']):
-            if settings.click_check([self.equip_button[0], self.equip_button[1] + (i * self.Y * self.offset), 
+            if settings.click_check([self.equip_button[0], self.equip_button[1] + (i * self.Y * self.offset),
                                      self.equip_button[2], self.equip_button[3]]):
                 self.parent.state = "Equip"
             if settings.click_check([self.skills_button[0], self.skills_button[1] + (i * self.Y * self.offset),
@@ -479,7 +469,7 @@ class Region(BaseState):
                 for node in self.nodes.sprites():
                     node.click()
             elif action == "mouse_move":
-                pos = (int(pygame.mouse.get_pos()[0]*100/1280), int(pygame.mouse.get_pos()[1]*100/720))
+                pos = (int(pygame.mouse.get_pos()[0] * 100 / 1280), int(pygame.mouse.get_pos()[1] * 100 / 720))
                 print(pos)
 
         elif self.state == "Event":
@@ -550,8 +540,8 @@ class Region(BaseState):
         for path in self.paths:
             path.draw(surface)
         self.nodes.draw(surface)
-        for node in self.nodes.sprites():
-            settings.tw(surface, node.type, (0, 0, 0), [node.x + 50, node.y + 50, 100, 100], settings.DETAIL_FONT)
+        #        for node in self.nodes.sprites():
+        #            settings.tw(surface, node.type, (0, 0, 0), [node.x + 50, node.y + 50, 100, 100], settings.DETAIL_FONT)
         self.party.draw(surface)
         surface.blit(self.overlay_image, (0, 0))
         for button in self.buttons:
@@ -639,3 +629,4 @@ class Region(BaseState):
             if self.party.node.state == "Unexplored":
                 self.state = "Event"
                 self.party.node.state = "Explored"
+                self.party.node.visited = True
