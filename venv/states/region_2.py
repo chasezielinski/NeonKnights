@@ -621,12 +621,13 @@ class Region(BaseState):
                     self.paths.append(Path(self, node_1, node_2))
 
     def travel(self):
-        if self.selected_node.travel and self.selected_node.selected and self.party.node.index in \
-                self.selected_node.neighbors:
-            self.party.node = self.selected_node
-            self.selected_node.selected = False
-            self.selected_node = None
-            if self.party.node.state == "Unexplored":
-                self.state = "Event"
-                self.party.node.state = "Explored"
-                self.party.node.visited = True
+        if self.selected_node is not None:
+            if self.selected_node.travel and self.selected_node.selected and self.party.node.index in \
+                    self.selected_node.neighbors:
+                self.party.node = self.selected_node
+                self.selected_node.selected = False
+                self.selected_node = None
+                if self.party.node.state == "Unexplored":
+                    self.state = "Event"
+                    self.party.node.state = "Explored"
+                    self.party.node.visited = True

@@ -94,7 +94,12 @@ BASE_STATS = {
                              'ARTIFICER_BASE_TECHNIQUES': ["Construct"]},
 }
 
-
+class SkillTree(object):
+    def __init__(self, character_class, tree):
+        self.character_class = character_class
+        self.tree = tree
+        self.points = 0
+        skills = self.character_class.upper() + "tree".upper()
 def character_initial(char, char_class):
     if char_class == "Fighter":
         char.equipment["Weapon"] = Weapon("Coder Sword", 1)
@@ -2514,6 +2519,9 @@ class PlayerCharacter(BattleCharacter):
         self.skill_points = 0
         self.experience_to_level = 0
         self.battle_action = NoActionSelected(self)
+        self.left_tree = char_class.upper() + "_LEFT"
+        self.center_tree = char_class.upper() + "_CENTER"
+        self.right_tree = char_class.upper() + "_RIGHT"
 
     def update(self, dt):
         if self.level < len(EXPERIENCE_CURVE) + 1:
