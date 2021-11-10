@@ -445,6 +445,7 @@ class Region(BaseState):
         self.party = Party(self)
         self.buttons = [TravelButton(self), Resources(self), StatusBar(self), ShopButton(self), ExitButton(self)]
         self.equip_menu = settings.EquipMenu(self)
+        self.skill_menu = settings.SkillTreeMenu(self)
         self.paths = []
         self.background = None
         self.state = "Browse"
@@ -480,7 +481,7 @@ class Region(BaseState):
             self.equip_menu.handle_action(action)
 
         elif self.state == "Skill_Tree":
-            pass
+            self.skill_menu.handle_action(action)
 
         elif self.state == "Options":
             pass
@@ -533,6 +534,8 @@ class Region(BaseState):
             self.party.node.event.update(dt)
         elif self.state == "Equip":
             self.equip_menu.update(dt)
+        elif self.state == "Skill_Tree":
+            self.skill_menu.update(dt)
 
     def draw(self, surface):
         surface.fill(pygame.Color("black"))
@@ -550,6 +553,8 @@ class Region(BaseState):
             self.party.node.event.draw(surface)
         elif self.state == "Equip":
             self.equip_menu.draw(surface)
+        elif self.state == "Skill_Tree":
+            self.skill_menu.draw(surface)
 
     def region_generate(self):
         valid = False

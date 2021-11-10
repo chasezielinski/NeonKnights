@@ -94,17 +94,52 @@ BASE_STATS = {
                              'ARTIFICER_BASE_TECHNIQUES': ["Construct"]},
 }
 
+FIGHTER_LEFT_TREE = [[0, 1, "Skill_1", 1, "The first skill."], [0, 1, "Skill_2", 1, "The second skill."],
+                     [1, 2, "Skill_3", 1, "The third skill."]]
+
+FIGHTER_CENTER_TREE = [[0, 1, "Skill_1", 1, "The first skill."], [0, 1, "Skill_2", 1, "The second skill."],
+                     [1, 2, "Skill_3", 1, "The third skill."]]
+
+FIGHTER_RIGHT_TREE = [[0, 1, "Skill_1", 1, "The first skill."], [0, 1, "Skill_2", 1, "The second skill."],
+                     [1, 2, "Skill_3", 1, "The third skill."]]
+
+
+class TreeNode(object):
+    def __init__(self, parent, prerequisite, branch, skill, cost=1, info=None):
+        self.parent = parent
+        self.prerequisite = prerequisite
+        self.visible = False
+        self.purchased = False
+        self.branch = branch
+        self.skill = skill
+        self.cost = cost
+        self.info = info
+
+    def update(self, dt):
+        if self.parent.points >= self.prerequisite:
+            self.visible = True
+
+
 class SkillTree(object):
     def __init__(self, character_class, tree):
         self.character_class = character_class
         self.tree = tree
         self.points = 0
-        skills = self.character_class.upper() + "tree".upper()
+        self.skill_nodes = []
+        for skill in eval(self.character_class.upper() + "_" + self.tree.upper() + "_TREE"):
+            self.skill_nodes.append(TreeNode(self, skill[0], skill[1], skill[2], skill[3], skill[4]))
+
+    def update(self, dt):
+        for node in self.skill_nodes:
+            node.update(dt)
+
+
 def character_initial(char, char_class):
     if char_class == "Fighter":
         char.equipment["Weapon"] = Weapon("Coder Sword", 1)
         char.equipment["Armor"] = Armor("Iron Plate", "common", '1')
         char.equipment["Boots"] = Boots("Leather Boots", "common", '1')
+
 
 def random_name():
     return names.get_last_name()
@@ -1511,6 +1546,8 @@ class EquipMenu(object):
                     break
                 else:
                     self.inventory_selection_index = -1
+        elif action == "tab":
+            self.parent.state = "Skill_Tree"
         elif action == "click":
             self.equip_unequip()
             if not click_check(self.bg_1_rect):
@@ -1699,6 +1736,35 @@ class EquipMenu(object):
                     del self.parent.persist['inventory'][self.inventory_selection_index]
         character_stat_update(self.parent.persist)
         character_ability_update(self.parent.persist)
+
+
+class SkillTreeMenu(object):
+    def __init__(self, parent):
+        self.parent = parent
+        self.player_index = 0
+        self.bg_1_rect = [X * 8 / 100, Y * 11 / 100, X * 76 / 100, Y * 85 / 100]
+        self.bg_2_rect = [X * 8.5 / 100, Y * 12 / 100, X * 75 / 100, Y * 83 / 100]
+
+    def update(self, dt):
+        self.parent.persist['characters'][self.player_index].left_tree.update(dt)
+        self.parent.persist['characters'][self.player_index].center_tree.update(dt)
+        self.parent.persist['characters'][self.player_index].right_tree.update(dt)
+
+    def handle_action(self, action):
+        if action == "mouse_move":
+            pass
+        elif action == "click":
+            pass
+        elif action == "wheel_up":
+            pass
+        elif action == "wheel_down":
+            pass
+        elif action == "tab":
+            self.parent.state = "Equip"
+
+    def draw(self, surface):
+        pygame.draw.rect(surface, (50, 50, 50), self.bg_1_rect, border_radius=int(X / 128))
+        pygame.draw.rect(surface, (0, 0, 0), self.bg_2_rect, border_radius=int(X / 128))
 
 
 class PartyAbilityManager(object):
@@ -2519,9 +2585,9 @@ class PlayerCharacter(BattleCharacter):
         self.skill_points = 0
         self.experience_to_level = 0
         self.battle_action = NoActionSelected(self)
-        self.left_tree = char_class.upper() + "_LEFT"
-        self.center_tree = char_class.upper() + "_CENTER"
-        self.right_tree = char_class.upper() + "_RIGHT"
+        self.left_tree = SkillTree(char_class, "left")
+        self.center_tree = SkillTree(char_class, "center")
+        self.right_tree = SkillTree(char_class, "right")
 
     def update(self, dt):
         if self.level < len(EXPERIENCE_CURVE) + 1:
