@@ -35,7 +35,7 @@ HEADING_FONT = pygame.font.Font(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\ven
 TEXT_COLOR = (20, 100, 100)
 SELECTED_COLOR = (75, 225, 225)
 COLOR_KEY = (255, 55, 202)
-MAX_NAME_LENGTH = 20
+MAX_NAME_LENGTH = 12
 
 # Player Characters
 BASE_CLASSES = ["Fighter", "Adept", "Rogue", "Artificer"]
@@ -94,14 +94,56 @@ BASE_STATS = {
                              'ARTIFICER_BASE_TECHNIQUES': ["Construct"]},
 }
 
-FIGHTER_LEFT_TREE = [[0, 1, "Skill_1", 1, "The first skill."], [0, 1, "Skill_2", 1, "The second skill."],
-                     [1, 2, "Skill_3", 1, "The third skill."]]
+FIGHTER_LEFT_TREE = ["Brute",
+                     [[0, 1, "Skill_1", 1, {"Name": "Skill_1",
+                                            "Ability_Type": "Ability",
+                                            "Description": "This is a skill. You can unlock it by clicking here, "
+                                                           "if you have sufficient skill points.",
+                                            "Cost": "1 Skill Point"}],
+                      [0, 1, "Skill_2", 1, {"Name": "Skill_2",
+                                            "Ability_Type": "Ability",
+                                            "Description": "This is a skill. You can unlock it by clicking here, "
+                                                           "if you have sufficient skill points.",
+                                            "Cost": "1 Skill Point"}],
+                      [1, 2, "Skill_3", 1, {"Name": "Skill_3",
+                                            "Ability_Type": "Ability",
+                                            "Description": "This is a skill. You can unlock it by clicking here, "
+                                                           "if you have sufficient skill points.",
+                                            "Cost": "1 Skill Point"}]]]
 
-FIGHTER_CENTER_TREE = [[0, 1, "Skill_1", 1, "The first skill."], [0, 1, "Skill_2", 1, "The second skill."],
-                     [1, 2, "Skill_3", 1, "The third skill."]]
+FIGHTER_CENTER_TREE = ["Kight",
+                       [[0, 1, "Skill_1", 1, {"Name": "Skill_1",
+                                              "Ability_Type": "Ability",
+                                              "Description": "This is a skill. You can unlock it by clicking here, "
+                                                             "if you have sufficient skill points.",
+                                              "Cost": "1 Skill Point"}],
+                        [0, 1, "Skill_2", 1, {"Name": "Skill_2",
+                                              "Ability_Type": "Ability",
+                                              "Description": "This is a skill. You can unlock it by clicking here, "
+                                                             "if you have sufficient skill points.",
+                                              "Cost": "1 Skill Point"}],
+                        [1, 2, "Skill_3", 1, {"Name": "Skill_3",
+                                              "Ability_Type": "Ability",
+                                              "Description": "This is a skill. You can unlock it by clicking here, "
+                                                             "if you have sufficient skill points.",
+                                              "Cost": "1 Skill Point"}]]]
 
-FIGHTER_RIGHT_TREE = [[0, 1, "Skill_1", 1, "The first skill."], [0, 1, "Skill_2", 1, "The second skill."],
-                     [1, 2, "Skill_3", 1, "The third skill."]]
+FIGHTER_RIGHT_TREE = ["Paladin",
+                      [[0, 1, "Skill_1", 1, {"Name": "Skill_1",
+                                             "Ability_Type": "Ability",
+                                             "Description": "This is a skill. You can unlock it by clicking here, "
+                                                            "if you have sufficient skill points.",
+                                             "Cost": "1 Skill Point"}],
+                       [0, 1, "Skill_2", 1, {"Name": "Skill_2",
+                                             "Ability_Type": "Ability",
+                                             "Description": "This is a skill. You can unlock it by clicking here, "
+                                                            "if you have sufficient skill points.",
+                                             "Cost": "1 Skill Point"}],
+                       [1, 2, "Skill_3", 1, {"Name": "Skill_3",
+                                             "Ability_Type": "Ability",
+                                             "Description": "This is a skill. You can unlock it by clicking here, "
+                                                            "if you have sufficient skill points.",
+                                             "Cost": "1 Skill Point"}]]]
 
 
 class TreeNode(object):
@@ -110,20 +152,67 @@ class TreeNode(object):
         self.prerequisite = prerequisite
         self.visible = False
         self.purchased = False
+        self.hover = False
         self.branch = branch
         self.skill = skill
         self.cost = cost
         self.info = info
+        self.order = 0
+        self.width = 23
+        self.y_pos = Y * (8 * (self.branch - 1)) / 100
+        self.height = Y * 6 / 100
+        self.x_pos = 0
+        self.rect = [0, 0, 10, 10]
+        self.text = [0, 0, 10, 10]
+        self.player = self.parent.parent
 
     def update(self, dt):
         if self.parent.points >= self.prerequisite:
             self.visible = True
+        if self.parent.structure[self.branch - 1] == 1:
+            self.width = X * 23 / 100
+            self.x_pos = 0
+        elif self.parent.structure[self.branch - 1] == 2:
+            self.width = X * 11 / 100
+            self.x_pos = self.order * 12
+        elif self.parent.structure[self.branch - 1] == 3:
+            self.width = X * 7 / 100
+            self.x_pos = self.order * 8
+
+    def draw(self, surface, pos):
+        self.rect = [pos[0] + (X * self.x_pos) / 100, self.y_pos + pos[1], self.width, self.height]
+        self.text = [pos[0] + (X * self.x_pos + 2) / 100, self.y_pos + Y * 1.5 / 100 + pos[1], self.width, self.height]
+        color = (40, 40, 40)
+        if self.hover and self.visible and not self.purchased:
+            color = (80, 80, 80)
+        elif self.purchased:
+            color = (80, 80, 120)
+        if self.visible:
+            pygame.draw.rect(surface, color, self.rect, border_radius=4)
+            tw(surface, self.skill.center(int(self.width / 10) - (2 + len(self.skill))), SELECTED_COLOR, self.text,
+               DETAIL_FONT)
+        else:
+            pygame.draw.rect(surface, (20, 20, 20), self.rect, border_radius=4)
+            tw(surface, self.skill.center(int(self.width / 10) - (2 + len(self.skill))), TEXT_COLOR, self.text,
+               DETAIL_FONT)
+
+    def handle_action(self, action):
+        if action == "mouse_move":
+            self.hover = False
+            if click_check(self.rect):
+                self.hover = True
+        elif action == "click":
+            if click_check(self.rect) and not self.purchased and self.player.skill_points > self.cost:
+                self.player.skill_points -= self.cost
+                self.parent.points += self.cost
+                self.purchased = True
 
 
 class SkillTree(object):
-    def __init__(self, character_class, tree):
+    def __init__(self, character_class, tree, parent):
         self.character_class = character_class
         self.tree = tree
+        self.parent = parent
         self.points = 0
         self.skill_nodes = []
         self.node_third_rect = []
@@ -132,28 +221,30 @@ class SkillTree(object):
         self.half_index = None
         self.node_rect = []
         self.y_offset = None
-        for skill in eval(self.character_class.upper() + "_" + self.tree.upper() + "_TREE"):
+        self.structure = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        self.name = eval(self.character_class.upper() + "_" + self.tree.upper() + "_TREE")[0]
+        for skill in eval(self.character_class.upper() + "_" + self.tree.upper() + "_TREE")[1]:
             self.skill_nodes.append(TreeNode(self, skill[0], skill[1], skill[2], skill[3], skill[4]))
 
     def update(self, dt):
-        for node in self.skill_nodes:
-            node.update(dt)
-        for branch, in range(len(self.skill_nodes)):
-            count = []
+        for branch in range(len(self.structure)):
+            self.structure[branch] = 0
             for node in self.skill_nodes:
                 if node.branch == branch + 1:
-                    count.append(node)
-            for i, node in enumerate(count):
-                if len(count) == 1:
-                    pass
-                if len(count) == 2:
-                    pass
-                if len(count) == 3:
-                    pass
+                    node.order = self.structure[branch]
+                    self.structure[branch] += 1
+        for node in self.skill_nodes:
+            node.update(dt)
 
     def draw(self, surface, pos):
-        pass
+        tw(surface, (self.name + ": " + str(self.points)).center(18 - len(self.name)), TEXT_COLOR,
+           [pos[0], pos[1] - (Y * 7 / 100), (X * 23 / 100), (Y * 7 / 100)], HEADING_FONT)
+        for node in self.skill_nodes:
+            node.draw(surface, pos)
 
+    def handle_action(self, action):
+        for node in self.skill_nodes:
+            node.handle_action(action)
 
 
 def character_initial(char, char_class):
@@ -165,6 +256,7 @@ def character_initial(char, char_class):
 
 def random_name():
     return names.get_last_name()
+
 
 # Character Select
 
@@ -600,39 +692,111 @@ NODE_TYPES = [["Empty", "Town", "Dungeon", "Lone Building", "Encounter"], [30, 1
 
 NODE_TYPES_2 = [["Shop", "Dungeon", "Encounter", "Event", "Empty"], [1, 2, 40, 27, 30]]
 
-UNEXPLORED_NODE = [pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Node_Sheet1.png"), pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Node_Sheet2.png"), pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Node_Sheet3.png"), pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Node_Sheet4.png"),
-                   pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Node_Sheet5.png"), pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Node_Sheet6.png"), pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Node_Sheet7.png"), pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Node_Sheet8.png"),
-                   pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Node_Sheet9.png"), pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Node_Sheet10.png"), pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Node_Sheet11.png"), pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Node_Sheet12.png"), 
-                   pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Node_Sheet13.png")]
+UNEXPLORED_NODE = [
+    pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Node_Sheet1.png"),
+    pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Node_Sheet2.png"),
+    pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Node_Sheet3.png"),
+    pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Node_Sheet4.png"),
+    pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Node_Sheet5.png"),
+    pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Node_Sheet6.png"),
+    pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Node_Sheet7.png"),
+    pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Node_Sheet8.png"),
+    pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Node_Sheet9.png"),
+    pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Node_Sheet10.png"),
+    pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Node_Sheet11.png"),
+    pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Node_Sheet12.png"),
+    pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Node_Sheet13.png")]
 
-EXPLORED_NODE = [pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Node_Explored1.png"), pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Node_Explored2.png"), pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Node_Explored3.png"), pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Node_Explored4.png"),
-                   pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Node_Explored5.png"), pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Node_Explored6.png"), pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Node_Explored7.png"), pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Node_Explored8.png"),
-                   pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Node_Explored9.png"), pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Node_Explored10.png"), pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Node_Explored11.png"), pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Node_Explored12.png"), 
-                   pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Node_Explored13.png")]
+EXPLORED_NODE = [
+    pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Node_Explored1.png"),
+    pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Node_Explored2.png"),
+    pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Node_Explored3.png"),
+    pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Node_Explored4.png"),
+    pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Node_Explored5.png"),
+    pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Node_Explored6.png"),
+    pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Node_Explored7.png"),
+    pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Node_Explored8.png"),
+    pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Node_Explored9.png"),
+    pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Node_Explored10.png"),
+    pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Node_Explored11.png"),
+    pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Node_Explored12.png"),
+    pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Node_Explored13.png")]
 
-EXIT_NODE = [pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Exit_Node1.png"), pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Exit_Node2.png"), pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Exit_Node3.png"), pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Exit_Node4.png"),
-                   pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Exit_Node5.png"), pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Exit_Node6.png"), pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Exit_Node7.png"), pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Exit_Node8.png"),
-                   pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Exit_Node9.png"), pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Exit_Node10.png"), pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Exit_Node11.png"), pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Exit_Node12.png"), 
-                   pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Exit_Node13.png")]
+EXIT_NODE = [
+    pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Exit_Node1.png"),
+    pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Exit_Node2.png"),
+    pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Exit_Node3.png"),
+    pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Exit_Node4.png"),
+    pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Exit_Node5.png"),
+    pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Exit_Node6.png"),
+    pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Exit_Node7.png"),
+    pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Exit_Node8.png"),
+    pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Exit_Node9.png"),
+    pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Exit_Node10.png"),
+    pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Exit_Node11.png"),
+    pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Exit_Node12.png"),
+    pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Exit_Node13.png")]
 
-EVENT_NODE = [pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Event_Node32p1.png"), pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Event_Node32p2.png"), pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Event_Node32p3.png"), pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Event_Node32p4.png"),
-              pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Event_Node32p5.png"), pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Event_Node32p6.png"), pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Event_Node32p7.png"), pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Event_Node32p8.png")]
+EVENT_NODE = [
+    pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Event_Node32p1.png"),
+    pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Event_Node32p2.png"),
+    pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Event_Node32p3.png"),
+    pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Event_Node32p4.png"),
+    pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Event_Node32p5.png"),
+    pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Event_Node32p6.png"),
+    pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Event_Node32p7.png"),
+    pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Event_Node32p8.png")]
 
-DUNGEON_NODE = [pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Dungeon_Node32p1.png"), pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Dungeon_Node32p2.png"), pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Dungeon_Node32p3.png"), pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Dungeon_Node32p4.png"),
-              pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Dungeon_Node32p5.png"), pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Dungeon_Node32p6.png"), pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Dungeon_Node32p7.png"), pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Dungeon_Node32p8.png")]
+DUNGEON_NODE = [
+    pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Dungeon_Node32p1.png"),
+    pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Dungeon_Node32p2.png"),
+    pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Dungeon_Node32p3.png"),
+    pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Dungeon_Node32p4.png"),
+    pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Dungeon_Node32p5.png"),
+    pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Dungeon_Node32p6.png"),
+    pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Dungeon_Node32p7.png"),
+    pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Dungeon_Node32p8.png")]
 
-SHOP_NODE = [pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Shop_Node32p1.png"), pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Shop_Node32p2.png"), pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Shop_Node32p3.png"), pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Shop_Node32p4.png"),
-              pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Shop_Node32p5.png"), pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Shop_Node32p6.png"), pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Shop_Node32p7.png"), pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Shop_Node32p8.png")]
+SHOP_NODE = [
+    pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Shop_Node32p1.png"),
+    pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Shop_Node32p2.png"),
+    pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Shop_Node32p3.png"),
+    pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Shop_Node32p4.png"),
+    pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Shop_Node32p5.png"),
+    pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Shop_Node32p6.png"),
+    pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Shop_Node32p7.png"),
+    pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Shop_Node32p8.png")]
 
-ENCOUNTER_NODE = [pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Encounter_Node32p1.png"), pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Encounter_Node32p2.png"), pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Encounter_Node32p3.png"), pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Encounter_Node32p4.png"),
-              pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Encounter_Node32p5.png"), pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Encounter_Node32p6.png"), pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Encounter_Node32p7.png"), pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Encounter_Node32p8.png")]
+ENCOUNTER_NODE = [
+    pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Encounter_Node32p1.png"),
+    pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Encounter_Node32p2.png"),
+    pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Encounter_Node32p3.png"),
+    pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Encounter_Node32p4.png"),
+    pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Encounter_Node32p5.png"),
+    pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Encounter_Node32p6.png"),
+    pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Encounter_Node32p7.png"),
+    pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Encounter_Node32p8.png")]
 
-BOSS_NODE = [pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Boss_Node32p1.png"), pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Boss_Node32p2.png"), pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Boss_Node32p3.png"), pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Boss_Node32p4.png"),
-              pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Boss_Node32p5.png"), pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Boss_Node32p6.png"), pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Boss_Node32p7.png"), pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Boss_Node32p8.png")]
+BOSS_NODE = [
+    pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Boss_Node32p1.png"),
+    pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Boss_Node32p2.png"),
+    pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Boss_Node32p3.png"),
+    pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Boss_Node32p4.png"),
+    pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Boss_Node32p5.png"),
+    pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Boss_Node32p6.png"),
+    pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Boss_Node32p7.png"),
+    pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Node\Boss_Node32p8.png")]
 
-Party_Marker = [[pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Region\Party_Marker1.png"), pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Region\Party_Marker2.png"), pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Region\Party_Marker3.png"), pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Region\Party_Marker4.png"),
-                pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Region\Party_Marker5.png"), pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Region\Party_Marker6.png"), pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Region\Party_Marker7.png"), pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Region\Party_Marker8.png")],
-                [65, 65, 65, 65, 65, 65, 65, 65]]
+Party_Marker = [
+    [pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Region\Party_Marker1.png"),
+     pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Region\Party_Marker2.png"),
+     pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Region\Party_Marker3.png"),
+     pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Region\Party_Marker4.png"),
+     pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Region\Party_Marker5.png"),
+     pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Region\Party_Marker6.png"),
+     pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Region\Party_Marker7.png"),
+     pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Region\Party_Marker8.png")],
+    [65, 65, 65, 65, 65, 65, 65, 65]]
 
 
 class EmptyNode(object):
@@ -662,29 +826,29 @@ class Shop(object):
         self.bg_1_rect = [X * 8 / 100, Y * 11 / 100, X * 76 / 100, Y * 85 / 100]
         self.bg_2_rect = [X * 8.5 / 100, Y * 12 / 100, X * 75 / 100, Y * 83 / 100]
         self.item_rects = [[X * 10 / 100, Y * 30 / 100, X * 20 / 100, Y * 7 / 100],
-                           [X * 10 / 100, Y * 37 / 100, X * 20 / 100, Y * 7 / 100], 
-                           [X * 10 / 100, Y * 44 / 100, X * 20 / 100, Y * 7 / 100], 
-                           [X * 10 / 100, Y * 51 / 100, X * 20 / 100, Y * 7 / 100], 
-                           [X * 10 / 100, Y * 58 / 100, X * 20 / 100, Y * 7 / 100], 
-                           [X * 10 / 100, Y * 65 / 100, X * 20 / 100, Y * 7 / 100], 
-                           [X * 10 / 100, Y * 73 / 100, X * 20 / 100, Y * 7 / 100], 
+                           [X * 10 / 100, Y * 37 / 100, X * 20 / 100, Y * 7 / 100],
+                           [X * 10 / 100, Y * 44 / 100, X * 20 / 100, Y * 7 / 100],
+                           [X * 10 / 100, Y * 51 / 100, X * 20 / 100, Y * 7 / 100],
+                           [X * 10 / 100, Y * 58 / 100, X * 20 / 100, Y * 7 / 100],
+                           [X * 10 / 100, Y * 65 / 100, X * 20 / 100, Y * 7 / 100],
+                           [X * 10 / 100, Y * 73 / 100, X * 20 / 100, Y * 7 / 100],
                            [X * 10 / 100, Y * 80 / 100, X * 20 / 100, Y * 7 / 100]]
         self.price_rects = [[X * 30 / 100, Y * 30 / 100, X * 12 / 100, Y * 7 / 100],
-                           [X * 30 / 100, Y * 37 / 100, X * 12 / 100, Y * 7 / 100], 
-                           [X * 30 / 100, Y * 44 / 100, X * 12 / 100, Y * 7 / 100], 
-                           [X * 30 / 100, Y * 51 / 100, X * 12 / 100, Y * 7 / 100], 
-                           [X * 30 / 100, Y * 58 / 100, X * 12 / 100, Y * 7 / 100], 
-                           [X * 30 / 100, Y * 65 / 100, X * 12 / 100, Y * 7 / 100], 
-                           [X * 30 / 100, Y * 73 / 100, X * 12 / 100, Y * 7 / 100], 
-                           [X * 30 / 100, Y * 80 / 100, X * 12 / 100, Y * 7 / 100]]
+                            [X * 30 / 100, Y * 37 / 100, X * 12 / 100, Y * 7 / 100],
+                            [X * 30 / 100, Y * 44 / 100, X * 12 / 100, Y * 7 / 100],
+                            [X * 30 / 100, Y * 51 / 100, X * 12 / 100, Y * 7 / 100],
+                            [X * 30 / 100, Y * 58 / 100, X * 12 / 100, Y * 7 / 100],
+                            [X * 30 / 100, Y * 65 / 100, X * 12 / 100, Y * 7 / 100],
+                            [X * 30 / 100, Y * 73 / 100, X * 12 / 100, Y * 7 / 100],
+                            [X * 30 / 100, Y * 80 / 100, X * 12 / 100, Y * 7 / 100]]
         self.stock_rects = [[X * 42 / 100, Y * 30 / 100, X * 12 / 100, Y * 7 / 100],
-                           [X * 42 / 100, Y * 37 / 100, X * 12 / 100, Y * 7 / 100], 
-                           [X * 42 / 100, Y * 44 / 100, X * 12 / 100, Y * 7 / 100], 
-                           [X * 42 / 100, Y * 51 / 100, X * 12 / 100, Y * 7 / 100], 
-                           [X * 42 / 100, Y * 58 / 100, X * 12 / 100, Y * 7 / 100], 
-                           [X * 42 / 100, Y * 65 / 100, X * 12 / 100, Y * 7 / 100], 
-                           [X * 42 / 100, Y * 73 / 100, X * 12 / 100, Y * 7 / 100], 
-                           [X * 42 / 100, Y * 80 / 100, X * 12 / 100, Y * 7 / 100]]
+                            [X * 42 / 100, Y * 37 / 100, X * 12 / 100, Y * 7 / 100],
+                            [X * 42 / 100, Y * 44 / 100, X * 12 / 100, Y * 7 / 100],
+                            [X * 42 / 100, Y * 51 / 100, X * 12 / 100, Y * 7 / 100],
+                            [X * 42 / 100, Y * 58 / 100, X * 12 / 100, Y * 7 / 100],
+                            [X * 42 / 100, Y * 65 / 100, X * 12 / 100, Y * 7 / 100],
+                            [X * 42 / 100, Y * 73 / 100, X * 12 / 100, Y * 7 / 100],
+                            [X * 42 / 100, Y * 80 / 100, X * 12 / 100, Y * 7 / 100]]
         self.price_rect = [X * 30 / 100, Y * 23 / 100, X * 12 / 100, Y * 7 / 100]
         self.stock_rect = [X * 42 / 100, Y * 23 / 100, X * 12 / 100, Y * 7 / 100]
         self.shop_inventory = []
@@ -710,7 +874,7 @@ class Shop(object):
     def draw(self, surface):
         pygame.draw.rect(surface, (150, 150, 150), self.bg_1_rect, border_radius=8)
         pygame.draw.rect(surface, (0, 0, 0), self.bg_2_rect, border_radius=8)
-        tw(surface, self.name.rjust(25-len(self.name)), TEXT_COLOR, self.name_rect, HEADING_FONT)
+        tw(surface, self.name.rjust(25 - len(self.name)), TEXT_COLOR, self.name_rect, HEADING_FONT)
         tw(surface, "price", TEXT_COLOR, self.price_rect, TEXT_FONT)
         tw(surface, "stock", TEXT_COLOR, self.stock_rect, TEXT_FONT)
         for i in range(8):
@@ -719,12 +883,14 @@ class Shop(object):
                 if i == self.relative_index:
                     color = SELECTED_COLOR
                 tw(surface, self.shop_inventory[i + self.shop_display_index][0], color, self.item_rects[i], TEXT_FONT)
-                tw(surface, str(self.shop_inventory[i + self.shop_display_index][1]), TEXT_COLOR, self.price_rects[i], TEXT_FONT)
-                tw(surface, str(self.shop_inventory[i + self.shop_display_index][2]), TEXT_COLOR, self.stock_rects[i], TEXT_FONT)
+                tw(surface, str(self.shop_inventory[i + self.shop_display_index][1]), TEXT_COLOR, self.price_rects[i],
+                   TEXT_FONT)
+                tw(surface, str(self.shop_inventory[i + self.shop_display_index][2]), TEXT_COLOR, self.stock_rects[i],
+                   TEXT_FONT)
 
     def handle_action(self, action):
         if action == "mouse_move":
-            print((int(100 * pygame.mouse.get_pos()[0]/X), int(100 * pygame.mouse.get_pos()[1]/Y)))
+            print((int(100 * pygame.mouse.get_pos()[0] / X), int(100 * pygame.mouse.get_pos()[1] / Y)))
             for i in range(8):
                 if len(self.shop_inventory) > i:
                     if click_check(self.item_rects[i]):
@@ -1454,12 +1620,12 @@ class ScreenTransition(object):
             if self.timer < 0:
                 self.timer = 0
             if self.state == "In":
-                self.alpha = int(255 * pytweening.easeInSine(self.timer/self.start))
+                self.alpha = int(255 * pytweening.easeInSine(self.timer / self.start))
                 if self.timer < 0:
                     self.timer = None
                     self.state = "Clear"
             elif self.state == "Out":
-                self.alpha = int(255 * pytweening.easeInSine(1 - self.timer/self.start))
+                self.alpha = int(255 * pytweening.easeInSine(1 - self.timer / self.start))
                 if self.timer < 0:
                     self.timer = None
                     self.state = "Black"
@@ -1550,7 +1716,7 @@ class EquipMenu(object):
 
     def handle_action(self, action):
         if action == "mouse_move":
-            pos = (int(pygame.mouse.get_pos()[0]*100/1280), int(pygame.mouse.get_pos()[1]*100/720))
+            pos = (int(pygame.mouse.get_pos()[0] * 100 / 1280), int(pygame.mouse.get_pos()[1] * 100 / 720))
             print(pos)
             for n, equip_slot in enumerate(self.parent.persist['characters'][self.player_index].equipment_options):
                 if click_check(self.equip_rects[n]):
@@ -1622,45 +1788,45 @@ class EquipMenu(object):
             if value == 'hp':
                 stat2 = getattr(self.parent.persist['characters'][self.player_index], 'max_hp')
                 tw(surface, value + ':' + str(stat).rjust(8 - len(value)) + '/' + str(stat2),
-                            TEXT_COLOR,
-                            REGION_MENUS['equip menu']['Stat_Rects'][value], TEXT_FONT)
+                   TEXT_COLOR,
+                   REGION_MENUS['equip menu']['Stat_Rects'][value], TEXT_FONT)
             elif value == 'mp':
                 stat2 = getattr(self.parent.persist['characters'][self.player_index], 'max_mp')
                 tw(surface, value + ':' + str(stat).rjust(9 - len(value)) + '/' + str(stat2),
-                            TEXT_COLOR,
-                            REGION_MENUS['equip menu']['Stat_Rects'][value], TEXT_FONT)
+                   TEXT_COLOR,
+                   REGION_MENUS['equip menu']['Stat_Rects'][value], TEXT_FONT)
             else:
                 tw(surface, value + ':' + str(stat).rjust(12 - len(value)), TEXT_COLOR,
-                            REGION_MENUS['equip menu']['Stat_Rects'][value], TEXT_FONT)
+                   REGION_MENUS['equip menu']['Stat_Rects'][value], TEXT_FONT)
                 if value in potential.keys():
                     if value == 'defense' or value == 'spirit' or value == 'luck':
                         if potential[value] < 0:
                             tw(surface, str(potential[value]).rjust(22 - len(value)), (150, 0, 0),
-                                        REGION_MENUS['equip menu']['Stat_Rects'][value], TEXT_FONT)
+                               REGION_MENUS['equip menu']['Stat_Rects'][value], TEXT_FONT)
                         else:
                             tw(surface, ('+' + str(potential[value])).rjust(22
-                                                                                     - len(value)), (0, 150, 0),
-                                        REGION_MENUS['equip menu']['Stat_Rects'][value], TEXT_FONT)
+                                                                            - len(value)), (0, 150, 0),
+                               REGION_MENUS['equip menu']['Stat_Rects'][value], TEXT_FONT)
                     elif value == 'magic' or value == 'speed':
                         if potential[value] < 0:
                             tw(surface, str(potential[value]).rjust(20 - len(value)), (150, 0, 0),
-                                        REGION_MENUS['equip menu']['Stat_Rects'][value],
-                                        TEXT_FONT)
+                               REGION_MENUS['equip menu']['Stat_Rects'][value],
+                               TEXT_FONT)
                         else:
                             tw(surface, ('+' + str(potential[value])).rjust(20
-                                                                                     - len(value)), (0, 150, 0),
-                                        REGION_MENUS['equip menu']['Stat_Rects'][value],
-                                        TEXT_FONT)
+                                                                            - len(value)), (0, 150, 0),
+                               REGION_MENUS['equip menu']['Stat_Rects'][value],
+                               TEXT_FONT)
                     elif value == 'strength':
                         if potential[value] < 0:
                             tw(surface, str(potential[value]).rjust(23 - len(value)), (150, 0, 0),
-                                        REGION_MENUS['equip menu']['Stat_Rects'][value],
-                                        TEXT_FONT)
+                               REGION_MENUS['equip menu']['Stat_Rects'][value],
+                               TEXT_FONT)
                         else:
                             tw(surface, ('+' + str(potential[value])).rjust(23
-                                                                                     - len(value)), (0, 150, 0),
-                                        REGION_MENUS['equip menu']['Stat_Rects'][value],
-                                        TEXT_FONT)
+                                                                            - len(value)), (0, 150, 0),
+                               REGION_MENUS['equip menu']['Stat_Rects'][value],
+                               TEXT_FONT)
 
     def potential_stat(self):
         stats = ['max_hp', 'max_mp', 'strength', 'magic', 'defense', 'spirit', 'speed', 'luck', 'crit_rate',
@@ -1766,15 +1932,21 @@ class SkillTreeMenu(object):
         self.player_index = 0
         self.bg_1_rect = [X * 8 / 100, Y * 11 / 100, X * 76 / 100, Y * 85 / 100]
         self.bg_2_rect = [X * 8.5 / 100, Y * 12 / 100, X * 75 / 100, Y * 83 / 100]
-        self.left_pos = (X * 1/100, Y * 1/100)
-        self.center_pos = (X * 1/100, Y * 1/100)
-        self.right_pos = (X * 1/100, Y * 1/100)
+        self.left_pos = (X * 9 / 100, Y * 32 / 100)
+        self.center_pos = (X * 35 / 100, Y * 32 / 100)
+        self.right_pos = (X * 60 / 100, Y * 32 / 100)
+        self.detail = SkillDetail(self)
+
     def update(self, dt):
         self.parent.persist['characters'][self.player_index].left_tree.update(dt)
         self.parent.persist['characters'][self.player_index].center_tree.update(dt)
         self.parent.persist['characters'][self.player_index].right_tree.update(dt)
+        self.detail.update(dt)
 
     def handle_action(self, action):
+        self.parent.persist['characters'][self.player_index].left_tree.handle_action(action)
+        self.parent.persist['characters'][self.player_index].center_tree.handle_action(action)
+        self.parent.persist['characters'][self.player_index].right_tree.handle_action(action)
         if action == "mouse_move":
             pass
         elif action == "click":
@@ -1789,9 +1961,84 @@ class SkillTreeMenu(object):
     def draw(self, surface):
         pygame.draw.rect(surface, (50, 50, 50), self.bg_1_rect, border_radius=int(X / 128))
         pygame.draw.rect(surface, (0, 0, 0), self.bg_2_rect, border_radius=int(X / 128))
+        pygame.draw.line(surface, (40, 40, 40), (X * 33.5 / 100, Y * 30 / 100), (X * 33.5 / 100, Y * 90 / 100), 5)
+        pygame.draw.line(surface, (40, 40, 40), (X * 59 / 100, Y * 30 / 100), (X * 59 / 100, Y * 90 / 100), 5)
         self.parent.persist['characters'][self.player_index].left_tree.draw(surface, self.left_pos)
         self.parent.persist['characters'][self.player_index].center_tree.draw(surface, self.center_pos)
         self.parent.persist['characters'][self.player_index].right_tree.draw(surface, self.right_pos)
+        name = self.parent.persist['characters'][self.player_index].name
+        tw(surface, name.center(18 - len(name)), TEXT_COLOR,
+           [X * 11 / 100, Y * 16 / 100, (X * 23 / 100), (Y * 7 / 100)],
+           TEXT_FONT)
+        tw(surface, "Skill Tree".center(18 - len(name)), TEXT_COLOR,
+           [X * 35 / 100, Y * 13 / 100, (X * 23 / 100), (Y * 7 / 100)],
+           HEADING_FONT)
+        self.detail.draw(surface)
+
+
+class SkillDetail(object):
+    def __init__(self, parent):
+        self.parent = parent
+        self.visible = False
+        self.bg_1_rect = self.left_bg_1_rect = [X * 17 / 100, Y * 16 / 100, X * 35 / 100, Y * 70 / 100]
+        self.bg_2_rect = self.left_bg_2_rect = [X * 18 / 100, Y * 17 / 100, X * 33 / 100, Y * 68 / 100]
+        self.right_bg_1_rect = [X * 59 / 100, Y * 16 / 100, X * 35 / 100, Y * 70 / 100]
+        self.right_bg_2_rect = [X * 60 / 100, Y * 17 / 100, X * 33 / 100, Y * 68 / 100]
+        self.info = None
+        self.name_rect = self.left_name = [X * 19 / 100, Y * 19 / 100, X * 32 / 100, Y * 7 / 100]
+        self.ability_type_rect = self.left_type = [X * 19 / 100, Y * 28 / 100, X * 32 / 100, Y * 7 / 100]
+        self.description_rect = self.left_description = [X * 19 / 100, Y * 37 / 100, X * 32 / 100, Y * 40 / 100]
+        self.cost_rect = self.left_cost = [X * 19 / 100, Y * 75 / 100, X * 32 / 100, Y * 7 / 100]
+        self.right_name = [X * 61 / 100, Y * 19 / 100, X * 32 / 100, Y * 7 / 100]
+        self.right_type = [X * 61 / 100, Y * 28 / 100, X * 32 / 100, Y * 7 / 100]
+        self.right_description = [X * 61 / 100, Y * 37 / 100, X * 32 / 100, Y * 40 / 100]
+        self.right_cost = [X * 61 / 100, Y * 75 / 100, X * 32 / 100, Y * 7 / 100]
+
+    def update(self, dt):
+        self.visible = False
+        for node in self.parent.parent.persist['characters'][self.parent.player_index].left_tree.skill_nodes:
+            if node.hover:
+                self.visible = True
+                self.bg_1_rect = self.right_bg_1_rect
+                self.bg_2_rect = self.right_bg_2_rect
+                self.name_rect = self.right_name
+                self.ability_type_rect = self.right_type
+                self.description_rect = self.right_description
+                self.cost_rect = self.right_cost
+                self.info = node.info
+                break
+        if not self.visible:
+            for node in self.parent.parent.persist['characters'][self.parent.player_index].center_tree.skill_nodes:
+                if node.hover:
+                    self.visible = True
+                    self.bg_1_rect = self.right_bg_1_rect
+                    self.bg_2_rect = self.right_bg_2_rect
+                    self.name_rect = self.right_name
+                    self.ability_type_rect = self.right_type
+                    self.description_rect = self.right_description
+                    self.cost_rect = self.right_cost
+                    self.info = node.info
+                    break
+        if not self.visible:
+            for node in self.parent.parent.persist['characters'][self.parent.player_index].right_tree.skill_nodes:
+                if node.hover:
+                    self.visible = True
+                    self.bg_1_rect = self.left_bg_1_rect
+                    self.bg_2_rect = self.left_bg_2_rect
+                    self.name_rect = self.left_name
+                    self.ability_type_rect = self.left_type
+                    self.description_rect = self.left_description
+                    self.cost_rect = self.left_cost
+                    self.info = node.info
+                    break
+
+    def draw(self, surface):
+        if self.visible:
+            pygame.draw.rect(surface, (50, 50, 50), self.bg_1_rect, border_radius=int(X / 128))
+            pygame.draw.rect(surface, (0, 0, 0), self.bg_2_rect, border_radius=int(X / 128))
+            if self.info is not None:
+                for key in self.info.keys():
+                    tw(surface, self.info[key], TEXT_COLOR, eval("self." + key.lower() + "_rect"), TEXT_FONT)
 
 
 class PartyAbilityManager(object):
@@ -2396,7 +2643,8 @@ class DamageParticle:
                         b = particle[4][2] + 11
                         b %= 255
                     new_color = (r, g, b)
-                    particles_copy.append([new_rect, new_velocity, particle[2], particle[3], new_color, particle[5], particle[6]])
+                    particles_copy.append(
+                        [new_rect, new_velocity, particle[2], particle[3], new_color, particle[5], particle[6]])
                 else:
                     particles_copy.append(particle)
             self.particles = particles_copy
@@ -2517,21 +2765,21 @@ class BattleCharacter(pygame.sprite.Sprite):
                         setattr(self, effect[0], getattr(self, effect[0]) + effect[1])
                         self.parent.damage_particle.add_particles(self.rect.centerx, self.rect.centery,
                                                                   effect[0] + '+' + str(effect[1]).rjust(3),
-                                                                  delay=(index+2)*200)
+                                                                  delay=(index + 2) * 200)
 
     #        def call_effects(self):
-#            if self.current_action.target_type == "Single":
-#                if len(self.apply_effects) > 0:
-#                    status = self.apply_effects[0][0]
-#                    turns = self.apply_effects[0][1]
-#                    self.apply_effects = self.apply_effects[1:]
-#                    setattr(getattr(self, self.current_action.target), status, turns +
-#                            getattr(getattr(self, self.current_action.target), status))
-#                    self.damage_particle.add_particles(getattr(self, self.current_action.target).x +
-#                                                       getattr(self, self.current_action.target).rect[2] / 2,
-#                                                       getattr(self, self.current_action.target).y +
-#                                                       getattr(self, self.current_action.target).rect[3] / 2,
-#                                                       status + str(turns).rjust(3))
+    #            if self.current_action.target_type == "Single":
+    #                if len(self.apply_effects) > 0:
+    #                    status = self.apply_effects[0][0]
+    #                    turns = self.apply_effects[0][1]
+    #                    self.apply_effects = self.apply_effects[1:]
+    #                    setattr(getattr(self, self.current_action.target), status, turns +
+    #                            getattr(getattr(self, self.current_action.target), status))
+    #                    self.damage_particle.add_particles(getattr(self, self.current_action.target).x +
+    #                                                       getattr(self, self.current_action.target).rect[2] / 2,
+    #                                                       getattr(self, self.current_action.target).y +
+    #                                                       getattr(self, self.current_action.target).rect[3] / 2,
+    #                                                       status + str(turns).rjust(3))
 
     def give_options(self):
         options = []
@@ -2609,12 +2857,12 @@ class PlayerCharacter(BattleCharacter):
         self.crit_damage = self.base_crit_damage = 1
         self.level = 1
         self.exp = 0
-        self.skill_points = 0
+        self.skill_points = 10
         self.experience_to_level = 0
         self.battle_action = NoActionSelected(self)
-        self.left_tree = SkillTree(char_class, "left")
-        self.center_tree = SkillTree(char_class, "center")
-        self.right_tree = SkillTree(char_class, "right")
+        self.left_tree = SkillTree(char_class, "left", self)
+        self.center_tree = SkillTree(char_class, "center", self)
+        self.right_tree = SkillTree(char_class, "right", self)
 
     def update(self, dt):
         if self.level < len(EXPERIENCE_CURVE) + 1:
@@ -3146,6 +3394,7 @@ class Attack(BattleAction):
         self.parent.parent.battle_actions.add(self)
         self.parent.parent.battle_objects.add(self)
 
+
 ITEM_LIST = {"All": ["StimPack"],
              "All_Shop_Weights": [1],
              "All_Reward_Weights": [1],
@@ -3163,7 +3412,7 @@ ITEM_LIST = {"All": ["StimPack"],
              "Valley_Reward_Weights": [],
              "Tundra": [],
              "Tundra_Shop_Weights": [],
-             "Tundra_Reward_Weights": [],}
+             "Tundra_Reward_Weights": [], }
 
 STORE_NAMES = ["Equipments", "Gear", "Stuff", "Things", "Trappings", "Paraphernalia", "Sundries", "Storehouse",
                "Stockhouse", "Surplus", "Oddments", "Bits", "Accoutraments", "Armaments", "Ordnance Supply",

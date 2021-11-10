@@ -420,7 +420,7 @@ class StatusBar(object):
                 self.parent.state = "Equip"
             if settings.click_check([self.skills_button[0], self.skills_button[1] + (i * self.Y * self.offset),
                                      self.skills_button[2], self.skills_button[3]]):
-                self.parent.state = "Equip"
+                self.parent.state = "Skill_Tree"
 
 
 class Background(object):
