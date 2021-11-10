@@ -202,7 +202,8 @@ class TreeNode(object):
             if click_check(self.rect):
                 self.hover = True
         elif action == "click":
-            if click_check(self.rect) and not self.purchased and self.player.skill_points > self.cost:
+            if click_check(self.rect) and not self.purchased and self.player.skill_points > self.cost and \
+                    self.parent.points >= self.prerequisite:
                 self.player.skill_points -= self.cost
                 self.parent.points += self.cost
                 self.purchased = True
@@ -1986,13 +1987,13 @@ class SkillDetail(object):
         self.right_bg_2_rect = [X * 60 / 100, Y * 17 / 100, X * 33 / 100, Y * 68 / 100]
         self.info = None
         self.name_rect = self.left_name = [X * 19 / 100, Y * 19 / 100, X * 32 / 100, Y * 7 / 100]
-        self.ability_type_rect = self.left_type = [X * 19 / 100, Y * 28 / 100, X * 32 / 100, Y * 7 / 100]
-        self.description_rect = self.left_description = [X * 19 / 100, Y * 37 / 100, X * 32 / 100, Y * 40 / 100]
-        self.cost_rect = self.left_cost = [X * 19 / 100, Y * 75 / 100, X * 32 / 100, Y * 7 / 100]
+        self.ability_type_rect = self.left_type = [X * 19 / 100, Y * 25 / 100, X * 32 / 100, Y * 7 / 100]
+        self.description_rect = self.left_description = [X * 19 / 100, Y * 31 / 100, X * 32 / 100, Y * 25 / 100]
+        self.cost_rect = self.left_cost = [X * 19 / 100, Y * 80 / 100, X * 32 / 100, Y * 7 / 100]
         self.right_name = [X * 61 / 100, Y * 19 / 100, X * 32 / 100, Y * 7 / 100]
-        self.right_type = [X * 61 / 100, Y * 28 / 100, X * 32 / 100, Y * 7 / 100]
-        self.right_description = [X * 61 / 100, Y * 37 / 100, X * 32 / 100, Y * 40 / 100]
-        self.right_cost = [X * 61 / 100, Y * 75 / 100, X * 32 / 100, Y * 7 / 100]
+        self.right_type = [X * 61 / 100, Y * 25 / 100, X * 32 / 100, Y * 7 / 100]
+        self.right_description = [X * 61 / 100, Y * 31 / 100, X * 32 / 100, Y * 25 / 100]
+        self.right_cost = [X * 61 / 100, Y * 80 / 100, X * 32 / 100, Y * 7 / 100]
 
     def update(self, dt):
         self.visible = False
