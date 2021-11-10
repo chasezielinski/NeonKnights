@@ -126,12 +126,34 @@ class SkillTree(object):
         self.tree = tree
         self.points = 0
         self.skill_nodes = []
+        self.node_third_rect = []
+        self.third_offset = None
+        self.node_half_rect = []
+        self.half_index = None
+        self.node_rect = []
+        self.y_offset = None
         for skill in eval(self.character_class.upper() + "_" + self.tree.upper() + "_TREE"):
             self.skill_nodes.append(TreeNode(self, skill[0], skill[1], skill[2], skill[3], skill[4]))
 
     def update(self, dt):
         for node in self.skill_nodes:
             node.update(dt)
+        for branch, in range(len(self.skill_nodes)):
+            count = []
+            for node in self.skill_nodes:
+                if node.branch == branch + 1:
+                    count.append(node)
+            for i, node in enumerate(count):
+                if len(count) == 1:
+                    pass
+                if len(count) == 2:
+                    pass
+                if len(count) == 3:
+                    pass
+
+    def draw(self, surface, pos):
+        pass
+
 
 
 def character_initial(char, char_class):
@@ -1744,7 +1766,9 @@ class SkillTreeMenu(object):
         self.player_index = 0
         self.bg_1_rect = [X * 8 / 100, Y * 11 / 100, X * 76 / 100, Y * 85 / 100]
         self.bg_2_rect = [X * 8.5 / 100, Y * 12 / 100, X * 75 / 100, Y * 83 / 100]
-
+        self.left_pos = (X * 1/100, Y * 1/100)
+        self.center_pos = (X * 1/100, Y * 1/100)
+        self.right_pos = (X * 1/100, Y * 1/100)
     def update(self, dt):
         self.parent.persist['characters'][self.player_index].left_tree.update(dt)
         self.parent.persist['characters'][self.player_index].center_tree.update(dt)
@@ -1765,6 +1789,9 @@ class SkillTreeMenu(object):
     def draw(self, surface):
         pygame.draw.rect(surface, (50, 50, 50), self.bg_1_rect, border_radius=int(X / 128))
         pygame.draw.rect(surface, (0, 0, 0), self.bg_2_rect, border_radius=int(X / 128))
+        self.parent.persist['characters'][self.player_index].left_tree.draw(surface, self.left_pos)
+        self.parent.persist['characters'][self.player_index].center_tree.draw(surface, self.center_pos)
+        self.parent.persist['characters'][self.player_index].right_tree.draw(surface, self.right_pos)
 
 
 class PartyAbilityManager(object):
