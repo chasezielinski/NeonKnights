@@ -250,9 +250,11 @@ class SkillTree(object):
 
 def character_initial(char, char_class):
     if char_class == "Fighter":
-        char.equipment["Weapon"] = Weapon("Coder Sword", 1)
-        char.equipment["Armor"] = Armor("Iron Plate", "common", '1')
-        char.equipment["Boots"] = Boots("Leather Boots", "common", '1')
+        char.equipment["Weapon"] = equipment_builder(equipment_type="Weapon")
+        char.equipment["Armor"] = equipment_builder(equipment_type="Armor")
+        char.equipment["Boots"] = equipment_builder(equipment_type="Boots")
+        char.equipment["Helm"] = equipment_builder(equipment_type="Helm")
+        char.equipment["Shield"] = equipment_builder(equipment_type="Shield")
 
 
 def random_name():
@@ -2070,37 +2072,64 @@ class PartyAbilityManager(object):
         self.scout_vision = True  # can see details of neighboring nodes
 
 
-class Weapon(object):
-    def __init__(self, weapon, level):
-        self.name = weapon
-        self.level = level
-        self.max_level = weapon_dict[self.name]["max_level"]
-        self.attack = weapon_dict[self.name]["attack"][self.level - 1]
+def equipment_builder(region_index=None, region_type=None, equipment_type=None, name=None):
+    types = ["Weapon", "Armor", "Boots", "Helm", "Shield", "Artifact", "Cape", "Medallion"]
+    weights = [5, 5, 5, 5, 4, 4, 4, 4]
+    if equipment_type is None:
+        equipment_type = choose_random_weighted(types, weights)
+    if name is not None:
+        if name in eval(equipment_type.upper() + "_DICT").keys():
+            dictionary = eval(equipment_type.upper() + "_DICT")[name]
+    else:
+        key = choose_random(eval(equipment_type.upper() + "_DICT").keys())
+        dictionary = eval(equipment_type.upper() + "_DICT")[key]
+    return eval(equipment_type)(dictionary)
+
+
+WEAPON_DICT = {"Coder Sword": {"attack": 20,},}
+ARMOR_DICT = {"Iron Plate": {"defense": 10,}}
+BOOTS_DICT = {"Leather Boots": {"speed": 5, "defense": 3},}
+HELM_DICT = {"Iron Helm": {"defense": 5, "spirit": 5, }}
+CAPE_DICT = {}
+SHIELD_DICT = {"Spiked Shield": {"attack": 5, "defense": 5,}}
+MEDALLION_DICT = {}
+ARTIFACT_DICT = {}
+
+
+class Equipment(object):
+    def __init__(self):
+        self.parent = None
+        self.buy_value = 0
+        self.sell_value = 0
+        self.max_hp = 0
+        self.max_mp = 0
+        self.attack = 0
+        self.magic = 0
+        self.defense = 0
+        self.spirit = 0
+        self.speed = 0
+        self.luck = 0
+        self.crit_rate = 1
+        self.crit_damage = 1
+
+    def equip(self, parent):
+        self.parent = parent
+
+    def unequip(self):
+        self.parent = None
+
+
+class Weapon(Equipment):
+    def __init__(self, dictionary):
+        super(Weapon, self).__init__()
+        self.name = None
+        self.attack = 0
         self.slot = "Weapon"
         self.equipment = True
-        self.attack_type = weapon_dict[self.name]['attack_type']
-        self.buy_value = weapon_dict[self.name]['buy_value']
-        self.sell_value = weapon_dict[self.name]['sell_value']
-        if 'hits' in weapon_dict[self.name].keys():
-            self.hits = weapon_dict[self.name]['hits'][self.level - 1]
-        else:
-            self.hits = 1
-        if 'status' in weapon_dict[self.name].keys():
-            for effect in weapon_dict[self.name]['status'].keys():
-                setattr(self, effect, [weapon_dict[self.name]['status'][effect][0][self.level - 1],
-                                       weapon_dict[self.name]['status'][effect][1][self.level - 1]])
-        if 'techniques' in weapon_dict[self.name].keys():
-            self.techniques = []
-            for technique in weapon_dict[self.name]['status'].keys():
-                self.techniques.append(weapon_dict[self.name]['techniques'][technique])
-        stats = ['max_hp', 'max_mp', 'strength', 'magic', 'defense', 'spirit', 'speed', 'luck', 'crit_rate',
-                 'crit_damage']
-        for stat in stats:
-            if stat in weapon_dict[self.name].keys():
-                setattr(self, stat, weapon_dict[self.name][stat][self.level - 1])
-        if 'charge' in weapon_dict[self.name].keys():
-            self.max_charge = self.charge = weapon_dict[self.name]['charge'][0]
-            self.charge_cost = weapon_dict[self.name]['charge'][1]
+        self.attack_type = "Attack"
+        self.hits = 1
+        for key in dictionary.keys():
+            setattr(self, key, dictionary[key])
 
     def recharge(self):
         if hasattr(self, 'charge') and hasattr(self, 'max_charge'):
@@ -2137,23 +2166,20 @@ class Weapon(object):
         self.stat_update()
 
 
-class Armor(object):
-    def __init__(self, armor, tier, level):
+class Armor(Equipment):
+    def __init__(self, armor, level):
+        super(Armor, self).__init__()
         self.name = armor
-        self.tier = tier
         self.level = level
-        self.defense = armor_dict[armor]["defense"][int(level) - 1] + armor_dict[armor]["tier mod"][tier]
         self.slot = "Armor"
         self.equipment = True
 
 
-class Boots(object):
-    def __init__(self, boots, tier, level):
+class Boots(Equipment):
+    def __init__(self, boots, level):
+        super(Boots, self).__init__()
         self.name = boots
-        self.tier = tier
         self.level = level
-        self.defense = boots_dict[boots]["defense"][int(level) - 1] + boots_dict[boots]["tier mod"][tier]
-        self.speed = boots_dict[boots]["speed"][int(level)] + boots_dict[boots]["tier mod"][tier]
         self.slot = "Boots"
         self.equipment = True
 

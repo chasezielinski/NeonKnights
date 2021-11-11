@@ -15,7 +15,6 @@ class Game(object):
     def event_loop(self):
         for event in pygame.event.get():
             self.state.get_event(event)
-           # print(event)
 
     def flip_state(self):
         current_state = self.state_name
