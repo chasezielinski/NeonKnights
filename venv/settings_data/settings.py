@@ -1771,7 +1771,7 @@ class EquipMenu(object):
             tw(surface, text, color, self.equip_rects[n], TEXT_FONT)
         for i, item in enumerate(self.parent.persist['inventory']):
             color = TEXT_COLOR
-            if not hasattr(item, 'equipment'):
+            if not isinstance(item, Equipment):
                 color = (50, 50, 50)
                 if self.inventory_selection_index == i and self.menu_horizontal_index == "Inventory":
                     color = (100, 100, 100)
@@ -1915,16 +1915,15 @@ class EquipMenu(object):
 
         elif self.menu_horizontal_index == "Inventory" and 0 <= self.inventory_selection_index <= len(
                 self.parent.persist['inventory']) - 1:
-            if hasattr(self.parent.persist['inventory'][self.inventory_selection_index], 'slot'):
-                slot = self.parent.persist['inventory'][self.inventory_selection_index].slot
-                if slot in self.parent.persist['characters'][self.player_index].equipment_options:
-                    if slot in self.parent.persist['characters'][self.player_index].equipment:
-                        self.parent.persist['inventory'].append(
-                            copy.deepcopy(self.parent.persist['characters'][self.player_index].equipment[slot]))
-                        del (self.parent.persist['characters'][self.player_index].equipment[slot])
-                    self.parent.persist['characters'][self.player_index].equipment[slot] = copy.deepcopy(
-                        self.parent.persist['inventory'][self.inventory_selection_index])
-                    del self.parent.persist['inventory'][self.inventory_selection_index]
+            slot = type(self.parent.persist['inventory'][self.inventory_selection_index]).__name__
+            if slot in self.parent.persist['characters'][self.player_index].equipment_options:
+                if slot in self.parent.persist['characters'][self.player_index].equipment:
+                    self.parent.persist['inventory'].append(
+                        copy.deepcopy(self.parent.persist['characters'][self.player_index].equipment[slot]))
+                    del (self.parent.persist['characters'][self.player_index].equipment[slot])
+                self.parent.persist['characters'][self.player_index].equipment[slot] = copy.deepcopy(
+                    self.parent.persist['inventory'][self.inventory_selection_index])
+                del self.parent.persist['inventory'][self.inventory_selection_index]
         character_stat_update(self.parent.persist)
         character_ability_update(self.parent.persist)
 
@@ -2080,24 +2079,26 @@ def equipment_builder(region_index=None, region_type=None, equipment_type=None, 
     if name is not None:
         if name in eval(equipment_type.upper() + "_DICT").keys():
             dictionary = eval(equipment_type.upper() + "_DICT")[name]
+        else:
+            return equipment_builder(region_index, region_type, equipment_type)
     else:
-        key = choose_random(eval(equipment_type.upper() + "_DICT").keys())
+        key = choose_random(list(eval(equipment_type.upper() + "_DICT").keys()))
         dictionary = eval(equipment_type.upper() + "_DICT")[key]
     return eval(equipment_type)(dictionary)
 
 
-WEAPON_DICT = {"Coder Sword": {"attack": 20,},}
-ARMOR_DICT = {"Iron Plate": {"defense": 10,}}
-BOOTS_DICT = {"Leather Boots": {"speed": 5, "defense": 3},}
-HELM_DICT = {"Iron Helm": {"defense": 5, "spirit": 5, }}
+WEAPON_DICT = {"Coder Sword": {"name": "Coder Sword", "attack": 20, }, }
+ARMOR_DICT = {"Iron Plate": {"name": "Iron Plate", "defense": 10, }, }
+BOOTS_DICT = {"Leather Boots": {"name": "Leather Boots", "speed": 5, "defense": 3}, }
+HELM_DICT = {"Iron Helm": {"name": "Iron Helm", "defense": 5, "spirit": 5, }, }
 CAPE_DICT = {}
-SHIELD_DICT = {"Spiked Shield": {"attack": 5, "defense": 5,}}
+SHIELD_DICT = {"Spiked Shield": {"name": "Spiked Shield", "attack": 5, "defense": 5, }, }
 MEDALLION_DICT = {}
 ARTIFACT_DICT = {}
 
 
 class Equipment(object):
-    def __init__(self):
+    def __init__(self, dictionary):
         self.parent = None
         self.buy_value = 0
         self.sell_value = 0
@@ -2111,6 +2112,10 @@ class Equipment(object):
         self.luck = 0
         self.crit_rate = 1
         self.crit_damage = 1
+        self.level = 1
+        self.max_level = 1
+        for key in dictionary.keys():
+            setattr(self, key, dictionary[key])
 
     def equip(self, parent):
         self.parent = parent
@@ -2121,15 +2126,11 @@ class Equipment(object):
 
 class Weapon(Equipment):
     def __init__(self, dictionary):
-        super(Weapon, self).__init__()
-        self.name = None
+        super(Weapon, self).__init__(dictionary)
         self.attack = 0
         self.slot = "Weapon"
-        self.equipment = True
         self.attack_type = "Attack"
         self.hits = 1
-        for key in dictionary.keys():
-            setattr(self, key, dictionary[key])
 
     def recharge(self):
         if hasattr(self, 'charge') and hasattr(self, 'max_charge'):
@@ -2167,21 +2168,38 @@ class Weapon(Equipment):
 
 
 class Armor(Equipment):
-    def __init__(self, armor, level):
-        super(Armor, self).__init__()
-        self.name = armor
-        self.level = level
-        self.slot = "Armor"
-        self.equipment = True
+    def __init__(self, dictionary):
+        super(Armor, self).__init__(dictionary)
 
 
 class Boots(Equipment):
-    def __init__(self, boots, level):
-        super(Boots, self).__init__()
-        self.name = boots
-        self.level = level
-        self.slot = "Boots"
-        self.equipment = True
+    def __init__(self, dictionary):
+        super(Boots, self).__init__(dictionary)
+
+
+class Helm(Equipment):
+    def __init__(self, dictionary):
+        super(Helm, self).__init__(dictionary)
+
+
+class Shield(Equipment):
+    def __init__(self, dictionary):
+        super(Shield, self).__init__(dictionary)
+
+
+class Cape(Equipment):
+    def __init__(self, dictionary):
+        super(Cape, self).__init__(dictionary)
+
+
+class Artifact(Equipment):
+    def __init__(self, dictionary):
+        super(Artifact, self).__init__(dictionary)
+
+
+class Medallion(Equipment):
+    def __init__(self, dictionary):
+        super(Medallion, self).__init__(dictionary)
 
 
 class InventoryManager(object):
