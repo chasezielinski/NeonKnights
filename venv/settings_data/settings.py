@@ -2087,7 +2087,7 @@ def equipment_builder(region_index=None, region_type=None, equipment_type=None, 
     return eval(equipment_type)(dictionary)
 
 
-WEAPON_DICT = {"Coder Sword": {"name": "Coder Sword", "attack": 20, }, }
+WEAPON_DICT = {"Coder Sword": {"name": "Coder Sword", "attack": 20, "energy": True, }, }
 ARMOR_DICT = {"Iron Plate": {"name": "Iron Plate", "defense": 10, }, }
 BOOTS_DICT = {"Leather Boots": {"name": "Leather Boots", "speed": 5, "defense": 3}, }
 HELM_DICT = {"Iron Helm": {"name": "Iron Helm", "defense": 5, "spirit": 5, }, }
@@ -2123,14 +2123,52 @@ class Equipment(object):
     def unequip(self):
         self.parent = None
 
+    def player_hit(self, action, damage=None):
+        pass
+
+    def ally_hit(self, action, damage=None):
+        pass
+
+    def player_action(self, action, damage=None):
+        pass
+
+    def player_miss(self, action, damage=None):
+        pass
+
+    def player_dodge(self, action, damage=None):
+        pass
+
+    def player_ko(self, action, damage=None):
+        pass
+
+    def ally_ko(self, action, damage=None):
+        pass
+
+    def player_ko_enemy(self, action, damage=None):
+        pass
+
+    def ally_ko_enemy(self, action, damage=None):
+        pass
+
+    def end_turn(self):
+        pass
+
+    def start_turn(self):
+        pass
+
 
 class Weapon(Equipment):
     def __init__(self, dictionary):
+        self.energy = False
         super(Weapon, self).__init__(dictionary)
         self.attack = 0
         self.slot = "Weapon"
         self.attack_type = "Attack"
+        self.target_type = "Single"
         self.hits = 1
+        self.charge = 5
+        self.max_charge = 30
+        self.use_charge = 10
 
     def recharge(self):
         if hasattr(self, 'charge') and hasattr(self, 'max_charge'):
@@ -3110,10 +3148,17 @@ class BattleOverlay(object):
                     self.parent.turn_sub_state == "Skill":
                 pygame.draw.rect(surface, (150, 0, 150), BATTLE_MENUS['move_top_menu_rects']['border'], 2)
                 for i, option in enumerate(actions_dict.keys()):
+                    option_text = option
+                    if option == 'Attack':
+                        if "Weapon" in self.parent.player_index.equipment.keys():
+                            if self.parent.player_index.equipment["Weapon"].energy:
+                                if self.parent.player_index.equipment["Weapon"].charge < \
+                                        self.parent.player_index.equipment["Weapon"].use_charge:
+                                    option_text = "Recharge"
                     color = TEXT_COLOR
                     if i == self.parent.action_type_index:
                         color = SELECTED_COLOR
-                    tw(surface, option, color, BATTLE_MENUS['move_top_menu_rects'][option], TEXT_FONT)
+                    tw(surface, option_text, color, BATTLE_MENUS['move_top_menu_rects'][option], TEXT_FONT)
                 if self.parent.turn_sub_state == "Item":
                     for key in range(5):
                         if key + 1 > len(self.parent.persist['inventory']):
@@ -3313,6 +3358,28 @@ class NoActionSelected(BattleAction):
         return True
 
     def do_action(self):
+        self.end_action_timer = 1000
+
+    def target_set(self, source, battle_character):
+        self.target = battle_character
+        if self.parent.battle_action:
+            self.parent.battle_action.kill()
+        self.parent.battle_action = self
+        self.parent.parent.battle_actions.add(self)
+        self.parent.parent.battle_objects.add(self)
+
+
+class Recharge(BattleAction):
+    def __init__(self, parent, target=None):
+        super().__init__(parent, target=None)
+
+    def is_usable(self):
+        if self.parent.parent.persist['chargers'] > 0:
+            return True
+
+    def do_action(self):
+        self.parent.equipment['Weapon'].charge = self.parent.equipment['Weapon'].max_charge
+        self.parent.parent.persist['chargers'] -= 1
         self.end_action_timer = 1000
 
     def target_set(self, source, battle_character):

@@ -35,6 +35,10 @@ class Battle(BaseState):
         self.gold_reward = 0
         self.item_reward = []
         self.win_timer = 0
+        # instantiate battle objects
+        self.battle_overlay = settings.BattleOverlay(self)
+        self.message = settings.BattleMessage()
+        self.victory_display = settings.VictoryDisplay(self)
 
     def startup(self, persistent):
         self.persist = persistent
@@ -53,10 +57,6 @@ class Battle(BaseState):
             self.battle_characters.add(getattr(self, slot))
             self.enemy_characters.add(getattr(self, slot))
             self.battle_objects.add(getattr(self, slot))
-        # instantiate battle objects
-        self.battle_overlay = settings.BattleOverlay(self)
-        self.message = settings.BattleMessage()
-        self.victory_display = settings.VictoryDisplay(self)
 
     def handle_action(self, action):
         if action == "mouse_move":

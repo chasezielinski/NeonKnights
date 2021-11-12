@@ -134,7 +134,7 @@ class Node(pygame.sprite.Sprite):
 
     def click(self):
         self.selected = False
-        if self.rect.collidepoint(pygame.mouse.get_pos()) and self.parent.persist['current_position'] != self.index:
+        if self.rect.collidepoint(pygame.mouse.get_pos()) and self.parent.party.node.index != self.index:
             self.selected = True
             self.parent.selected_node = self
 
@@ -602,13 +602,14 @@ class Region(BaseState):
             if i == 0:
                 self.nodes.add(Node(self, value[0], value[1], neighbors_dict[i], edge_dict[i], i, "Boss"))
             elif i == 1:
-                self.party.node = Node(self, value[0], value[1], neighbors_dict[i], edge_dict[i], i, "Region Entry")
-                self.nodes.add(self.party.node)
+                self.nodes.add(Node(self, value[0], value[1], neighbors_dict[i], edge_dict[i], i, "Region Entry"))
             else:
                 node_type = settings.node_assign_2(self)
                 self.nodes.add(Node(self, value[0], value[1], neighbors_dict[i], edge_dict[i], i, node_type))
         for node in self.nodes.sprites():
             node.event = settings.event_caller(self, node)
+            if node.index == 1:
+                self.party.node = node
         self.persist['current_position'] = 1
         self.persist['region_generate'] = False
         for key in edge_dict.keys():
