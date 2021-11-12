@@ -2763,49 +2763,58 @@ class DamageParticle:
 class BattleCharacter(pygame.sprite.Sprite):
     def __init__(self, parent="None"):
         super().__init__()
+        self.flip_state_on_hit = False
+        self.flip_state_on_magic = False
+        self.flip_state_on_physical = False
+        self.shield_on_hit = 0
+        self.ward_on_hit = 0
         self.slot = "None"
         self.parent = parent
         self.action = None
         self.hover = False
         self.selected = False
         self.current_sprite = 0
-        self.dazed = 0
-        self.disabled = 0
-        self.stunned = 0
-        self.perplexed = 0
-        self.vigilant = 0
+        self.dazed = 0      # can't use ability
+        self.disabled = 0   # can't use attack
+        self.stunned = 0    # can't act
+        self.perplexed = 0  # can't use item
+        self.vigilant = 0   # defense up
         self.smitten = 0
-        self.faith = 0
-        self.brave = 0
-        self.calm = 0
-        self.haste = 0
-        self.turns = 0
-        self.quick = 0
-        self.lucky = 0
-        self.focus = 0
-        self.bleed = 0
-        self.toxic = 0
-        self.burn = 0
-        self.curse = 0
-        self.spite = 0
-        self.invincible = 0
-        self.shield = 0
-        self.ward = 0
-        self.frail = 0
-        self.terrify = 0
-        self.weak = 0
-        self.distract = 0
-        self.slow = 0
-        self.hex = 0
-        self.dull = 0
-        self.savage = 0
-        self.gentle = 0
-        self.regen = 0
+        self.faith = 0      # spirit up
+        self.brave = 0      # attack up
+        self.calm = 0       # magic up
+        self.haste = 0      # extra turn
+        self.turns = 0      # num turns
+        self.quick = 0      # speed up
+        self.lucky = 0      # luck up
+        self.focus = 0      # crit rate up
+        self.bleed = 0      # dot
+        self.toxic = 0      # dot
+        self.burn = 0       # dot
+        self.curse = 0      # damage bonus
+        self.spite = 0      # damage bonus
+        self.invincible = 0 # damage immune
+        self.shield = 0     # 1/2 damage physical or laser
+        self.ward = 0       # 1/2 damage magical or laser
+        self.frail = 0      # defense down
+        self.terrify = 0    # spirit down
+        self.weak = 0       # attack down
+        self.distract = 0   # magic down
+        self.slow = 0       # speed down
+        self.hex = 0        # luck down
+        self.dull = 0       # crit rate down
+        self.savage = 0     # crit damage up
+        self.gentle = 0     # crit damage down
+        self.regen = 0      # regen over time
         self.speed = 0
         self.state = "Idle"
         self.action_options = []
         self.attack_action = Attack(self)
         self.battle_action = None
+        self.tick_status = ['dazed', 'disabled', 'stunned', 'perplexed', 'vigilant', 'smitten', 'faith', 'brave',
+                            'calm', 'haste', 'turns', 'quick', 'lucky', 'focus', 'bleed', 'toxic', 'burn', 'curse',
+                            'spite', 'invincible', 'shield', 'ward', 'frail', 'terrify', 'weak', 'distract', 'slow',
+                            'hex', 'dull', 'savage', 'gentle', 'regen', 'speed']
 
     #       self.defend_action = Attack(self)
     #       self.run_action = Attack(self)
@@ -2887,6 +2896,44 @@ class BattleCharacter(pygame.sprite.Sprite):
         self.parent.battle_characters_ko.add(self)
         self.parent.battle_objects.add(self)
         self.battle_action.kill()
+        
+    def flip_state(self):
+        pass
+
+    def on_hit(self, action):
+        if self.shield_on_hit > 0:
+            if action.defend_stat == "defense" or action.defend_stat == "lowest":
+                self.shield += self.shield_on_hit
+                self.parent.damage_particle.add_particles(self.rect.centerx, self.rect.centery, 
+                                                          'shield +' + str(self.shield_on_hit).rjust(3), delay=100)
+        if self.ward_on_hit > 0:
+            if action.defend_stat == "spirit" or action.defend_stat == "lowest":
+                self.shield += self.ward_on_hit
+                self.parent.damage_particle.add_particles(self.rect.centerx, self.rect.centery, 
+                                                          'shield +' + str(self.ward_on_hit).rjust(3), delay=100)
+        if self.flip_state_on_hit:
+            self.flip_state()
+        if self.flip_state_on_magic:
+            if action.defend_stat == "defense" or action.defend_stat == "lowest":
+                self.flip_state()
+        if self.flip_state_on_physical:
+            if action.defend_stat == "spirit" or action.defend_stat == "lowest":
+                self.flip_state()
+    
+    def on_end_turn(self):
+        for effect in self.tick_status:
+            if getattr(self, effect) > 0:
+                if effect == "bleed":
+                    pass
+                elif effect == "toxic":
+                    pass
+                elif effect == "burn":
+                    pass
+                setattr(self, effect, getattr(self, effect) - 1)
+                if getattr(self, effect) == 0:
+                    self.parent.damage_particle.add_particles(self.rect.centerx, self.rect.centery,
+                                                              effect + " has worn off", delay=100)
+
 
 
 class PlayerCharacter(BattleCharacter):
