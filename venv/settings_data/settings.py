@@ -2774,45 +2774,45 @@ class BattleCharacter(pygame.sprite.Sprite):
         self.hover = False
         self.selected = False
         self.current_sprite = 0
-        self.dazed = 0      # can't use ability
-        self.disabled = 0   # can't use attack
-        self.stunned = 0    # can't act
+        self.dazed = 0  # can't use ability
+        self.disabled = 0  # can't use attack
+        self.stunned = 0  # can't act
         self.perplexed = 0  # can't use item
-        self.vigilant = 0   # defense up
+        self.vigilant = 0  # defense up
         self.smitten = 0
-        self.faith = 0      # spirit up
-        self.brave = 0      # attack up
-        self.calm = 0       # magic up
-        self.haste = 0      # extra turn
-        self.turns = 0      # num turns
-        self.quick = 0      # speed up
-        self.lucky = 0      # luck up
-        self.focus = 0      # crit rate up
-        self.bleed = 0      # dot
-        self.toxic = 0      # dot
-        self.burn = 0       # dot
-        self.curse = 0      # damage bonus
-        self.spite = 0      # damage bonus
-        self.invincible = 0 # damage immune
-        self.shield = 0     # 1/2 damage physical or laser
-        self.ward = 0       # 1/2 damage magical or laser
-        self.frail = 0      # defense down
-        self.terrify = 0    # spirit down
-        self.weak = 0       # attack down
-        self.distract = 0   # magic down
-        self.slow = 0       # speed down
-        self.hex = 0        # luck down
-        self.dull = 0       # crit rate down
-        self.savage = 0     # crit damage up
-        self.gentle = 0     # crit damage down
-        self.regen = 0      # regen over time
+        self.faith = 0  # spirit up
+        self.brave = 0  # attack up
+        self.calm = 0  # magic up
+        self.haste = 0  # extra turn
+        self.turns = 0  # num turns
+        self.quick = 0  # speed up
+        self.lucky = 0  # luck up
+        self.focus = 0  # crit rate up
+        self.bleed = 0  # dot
+        self.toxic = 0  # dot
+        self.burn = 0  # dot
+        self.curse = 0  # damage bonus
+        self.spite = 0  # damage bonus
+        self.invincible = 0  # damage immune
+        self.shield = 0  # 1/2 damage physical or laser
+        self.ward = 0  # 1/2 damage magical or laser
+        self.frail = 0  # defense down
+        self.terrify = 0  # spirit down
+        self.weak = 0  # attack down
+        self.distract = 0  # magic down
+        self.slow = 0  # speed down
+        self.hex = 0  # luck down
+        self.dull = 0  # crit rate down
+        self.savage = 0  # crit damage up
+        self.gentle = 0  # crit damage down
+        self.regen = 0  # regen over time
         self.speed = 0
         self.state = "Idle"
         self.action_options = []
         self.attack_action = Attack(self)
         self.battle_action = None
         self.tick_status = ['dazed', 'disabled', 'stunned', 'perplexed', 'vigilant', 'smitten', 'faith', 'brave',
-                            'calm', 'haste', 'turns', 'quick', 'lucky', 'focus', 'bleed', 'toxic', 'burn', 'curse',
+                            'calm', 'haste', 'turns', 'quick', 'lucky', 'focus', 'bleed', 'burn', 'toxic', 'curse',
                             'spite', 'invincible', 'shield', 'ward', 'frail', 'terrify', 'weak', 'distract', 'slow',
                             'hex', 'dull', 'savage', 'gentle', 'regen', 'speed']
 
@@ -2896,7 +2896,7 @@ class BattleCharacter(pygame.sprite.Sprite):
         self.parent.battle_characters_ko.add(self)
         self.parent.battle_objects.add(self)
         self.battle_action.kill()
-        
+
     def flip_state(self):
         pass
 
@@ -2904,12 +2904,12 @@ class BattleCharacter(pygame.sprite.Sprite):
         if self.shield_on_hit > 0:
             if action.defend_stat == "defense" or action.defend_stat == "lowest":
                 self.shield += self.shield_on_hit
-                self.parent.damage_particle.add_particles(self.rect.centerx, self.rect.centery, 
+                self.parent.damage_particle.add_particles(self.rect.centerx, self.rect.centery,
                                                           'shield +' + str(self.shield_on_hit).rjust(3), delay=100)
         if self.ward_on_hit > 0:
             if action.defend_stat == "spirit" or action.defend_stat == "lowest":
                 self.shield += self.ward_on_hit
-                self.parent.damage_particle.add_particles(self.rect.centerx, self.rect.centery, 
+                self.parent.damage_particle.add_particles(self.rect.centerx, self.rect.centery,
                                                           'shield +' + str(self.ward_on_hit).rjust(3), delay=100)
         if self.flip_state_on_hit:
             self.flip_state()
@@ -2919,21 +2919,25 @@ class BattleCharacter(pygame.sprite.Sprite):
         if self.flip_state_on_physical:
             if action.defend_stat == "spirit" or action.defend_stat == "lowest":
                 self.flip_state()
-    
+
     def on_end_turn(self):
         for effect in self.tick_status:
             if getattr(self, effect) > 0:
+                damage = None
                 if effect == "bleed":
-                    pass
-                elif effect == "toxic":
-                    pass
+                    damage = int(self.hp * 5 / 100)
                 elif effect == "burn":
-                    pass
+                    damage = int(self.max_hp * 5 / 100)
+                elif effect == "toxic":
+                    damage = int(self.hp * 5 / 100)
+                if damage is not None:
+                    self.hp -= damage
+                    self.parent.damage_particle.add_particles(self.rect.centerx, self.rect.centery,
+                                                              damage, delay=100)
                 setattr(self, effect, getattr(self, effect) - 1)
                 if getattr(self, effect) == 0:
                     self.parent.damage_particle.add_particles(self.rect.centerx, self.rect.centery,
-                                                              effect + " has worn off", delay=100)
-
+                                                              effect + " has worn off", delay=250)
 
 
 class PlayerCharacter(BattleCharacter):
