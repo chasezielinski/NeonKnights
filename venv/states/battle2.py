@@ -294,7 +294,7 @@ class Battle(BaseState):
                     break
             else:
                 if self.action_index > 9:
-                    self.state = "Pre_Turn"
+                    self.state = "End_Turn"
                     self.action_index = 0
                 else:
                     self.action_index += 1
@@ -312,14 +312,18 @@ class Battle(BaseState):
                     self.state = "Pre_Action"
                     self.action_index += 1
                 if self.action_index > 9:
-                    self.state = "Pre_Turn"
+                    self.state = "End_Turn"
                     self.action_index = 0
             else:
                 self.state = "Pre_Action"
                 self.action_index += 1
                 if self.action_index > 9:
-                    self.state = "Pre_Turn"
+                    self.state = "End_Turn"
                     self.action_index = 0
+        elif self.state == "End_Turn":
+            for character in self.battle_characters.sprites():
+                character.on_end_turn()
+                self.state = "Pre_Turn"
 
         elif self.state == "Victory_1":
             self.win_timer -= dt

@@ -2788,9 +2788,9 @@ class BattleCharacter(pygame.sprite.Sprite):
         self.quick = 0  # speed up
         self.lucky = 0  # luck up
         self.focus = 0  # crit rate up
-        self.bleed = 0  # dot
-        self.toxic = 0  # dot
-        self.burn = 0  # dot
+        self.bleed = 5  # dot
+        self.toxic = 5  # dot
+        self.burn = 5  # dot
         self.curse = 0  # damage bonus
         self.spite = 0  # damage bonus
         self.invincible = 0  # damage immune
