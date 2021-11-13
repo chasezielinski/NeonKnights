@@ -2929,15 +2929,17 @@ class BattleCharacter(pygame.sprite.Sprite):
                 elif effect == "burn":
                     damage = int(self.max_hp * 5 / 100)
                 elif effect == "toxic":
-                    damage = int(self.hp * 5 / 100)
+                    damage = int(self.max_hp-self.hp * 5 / 100)
                 if damage is not None:
                     self.hp -= damage
                     self.parent.damage_particle.add_particles(self.rect.centerx, self.rect.centery,
-                                                              damage, delay=100)
+                                                              damage, delay=500*self.parent.status_particle_index)
+                    self.parent.status_particle_index += 1
                 setattr(self, effect, getattr(self, effect) - 1)
                 if getattr(self, effect) == 0:
                     self.parent.damage_particle.add_particles(self.rect.centerx, self.rect.centery,
-                                                              effect + " has worn off", delay=250)
+                                                              effect + " has worn off", delay=500*self.parent.status_particle_index)
+                    self.parent.status_particle_index += 1
 
 
 class PlayerCharacter(BattleCharacter):

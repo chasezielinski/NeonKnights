@@ -39,6 +39,9 @@ class Battle(BaseState):
         self.battle_overlay = settings.BattleOverlay(self)
         self.message = settings.BattleMessage()
         self.victory_display = settings.VictoryDisplay(self)
+        self.status_particle_index = 0
+        self.timer = None
+        self.next_battle_state = None
 
     def startup(self, persistent):
         self.persist = persistent
@@ -244,7 +247,9 @@ class Battle(BaseState):
             self.done = True
 
     def delay(self, time, return_state):
-        pass
+        self.timer = time
+        self.next_battle_state = return_state
+        self.state = "Delay"
 
     def update(self, dt):
         for sprite in self.battle_characters:
@@ -321,9 +326,10 @@ class Battle(BaseState):
                     self.state = "End_Turn"
                     self.action_index = 0
         elif self.state == "End_Turn":
+            self.status_particle_index = 0
             for character in self.battle_characters.sprites():
                 character.on_end_turn()
-                self.state = "Pre_Turn"
+                self.delay(self.status_particle_index*500, "Pre_Turn")
 
         elif self.state == "Victory_1":
             self.win_timer -= dt
@@ -335,6 +341,13 @@ class Battle(BaseState):
 
         elif self.state == "Victory_3":
             pass
+
+        elif self.state == "Delay":
+            self.timer -= dt
+            if self.timer <= 0:
+                self.timer = None
+                self.state = self.next_battle_state
+                self.next_battle_state = None
 
     def stop_wait(self):
         if self.state == "Wait":
