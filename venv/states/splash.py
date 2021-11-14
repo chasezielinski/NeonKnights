@@ -16,6 +16,9 @@ class Splash(BaseState):
         self.persist["Transition"] = settings.ScreenTransition()
         self.persist["Transition"].set_black()
         self.persist["Transition"].fade_in(500)
+        self.persist['SFX'] = settings.SFXManager()
+        self.persist['FX'] = settings.FXManager()
+        self.persist['Music'] = settings.MusicManager()
 
     def update(self, dt):
         self.persist["Transition"].update(dt)
@@ -27,8 +30,12 @@ class Splash(BaseState):
                 self.persist["Transition"].fade_out(500)
         if self.time_active >= 2000:
             self.done = True
+        self.persist['SFX'].update(dt)
+        self.persist['FX'].update(dt)
+        self.persist['Music'].update(dt)
 
     def draw(self, surface):
         surface.fill(pygame.Color("black"))
         surface.blit(self.title, self.title_rect)
         self.persist["Transition"].draw(surface)
+        self.persist['FX'].draw(surface)

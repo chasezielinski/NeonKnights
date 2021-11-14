@@ -1472,7 +1472,12 @@ BATTLE_MENU_SPRITES = {
 
 }
 
-SOUND_EFFECTS = {
+SOUND_EFFECTS = {'Toggle_1': pygame.mixer.Sound(
+            r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sfx\397604__nightflame__menu-fx-01.wav"),
+        'Toggle_2': pygame.mixer.Sound(
+            r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sfx\503340__tahutoa__clicky-accept-menu-sound.wav"),
+        'Confirm_1': pygame.mixer.Sound(
+            r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sfx\403019__inspectorj__ui-confirmation-alert-c4.wav"),
     'Menu': {
         'Toggle_1': pygame.mixer.Sound(
             r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sfx\397604__nightflame__menu-fx-01.wav"),
@@ -1482,6 +1487,45 @@ SOUND_EFFECTS = {
             r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sfx\403019__inspectorj__ui-confirmation-alert-c4.wav"),
     },
 }
+
+
+class SFXManager(object):
+    def __init__(self):
+        self.sfx = []
+
+    def schedule_sfx(self, sound, delay=0, play=1):
+        self.sfx.append({'sound': sound, 'delay': delay, 'delay_reset': delay, 'play': play})
+
+    def update(self, dt):
+        for sfx in self.sfx:
+            sfx['delay'] -= dt
+            if sfx['delay'] <= 0:
+                if sfx['sound'] in list(SOUND_EFFECTS.keys()):
+                    SOUND_EFFECTS[sfx['sound']].play()
+                sfx['play'] -= 1
+                if sfx['play'] <= 0:
+                    self.sfx.remove(sfx)
+                else:
+                    sfx['delay'] = sfx['delay_reset']
+
+
+class FXManager(object):
+    def __init__(self):
+        pass
+
+    def update(self, dt):
+        pass
+
+    def draw(self, surface):
+        pass
+
+
+class MusicManager(object):
+    def __init__(self):
+        pass
+
+    def update(self, dt):
+        pass
 
 
 def draw_line_dashed(surface, color, start_pos, end_pos, width=1, dash_length=10, exclude_corners=True):

@@ -484,6 +484,11 @@ class CharacterSelect(BaseState):
             self.persist['party_abilities'] = PartyAbilityManager()
             self.done = True
 
+        self.persist["Transition"].update(dt)
+        self.persist['SFX'].update(dt)
+        self.persist['FX'].update(dt)
+        self.persist['Music'].update(dt)
+
     def get_event(self, event):
         if event.type == pygame.QUIT:
             self.quit = True
@@ -640,6 +645,7 @@ class CharacterSelect(BaseState):
             pass
 
         self.persist["Transition"].draw(surface)
+        self.persist['FX'].draw(surface)
 
     def startup(self, persistent):
         self.persist = persistent

@@ -53,15 +53,15 @@ class Menu(BaseState):
             self.quit = True
         elif event.type == pygame.KEYDOWN:
             if event.key == pygame.K_UP:
-                settings.SOUND_EFFECTS["Menu"]["Toggle_2"].play()
+                self.persist['SFX'].schedule_sfx("Toggle_2")
                 self.active_index -=1
                 self.active_index %= len(self.options)
             elif event.key == pygame.K_DOWN:
-                settings.SOUND_EFFECTS["Menu"]["Toggle_2"].play()
+                self.persist['SFX'].schedule_sfx("Toggle_2")
                 self.active_index +=1
                 self.active_index %= len(self.options)
             elif event.key == pygame.K_RETURN:
-                settings.SOUND_EFFECTS["Menu"]["Confirm_1"].play()
+                self.persist['SFX'].schedule_sfx("Confirm_1")
                 self.handle_action("return")
         elif event.type == pygame.MOUSEBUTTONDOWN:
             if event.button == 1:
@@ -71,6 +71,9 @@ class Menu(BaseState):
 
     def update(self, dt):
         self.persist["Transition"].update(dt)
+        self.persist['SFX'].update(dt)
+        self.persist['FX'].update(dt)
+        self.persist['Music'].update(dt)
 
     def draw(self, surface):
         surface.fill(pygame.Color("black"))
@@ -80,3 +83,4 @@ class Menu(BaseState):
                 color = settings.SELECTED_COLOR
             settings.tw(surface, option, color, settings.MAIN_MENU_RECTS["options"][index], settings.HEADING_FONT)
         self.persist["Transition"].draw(surface)
+        self.persist['FX'].draw(surface)
