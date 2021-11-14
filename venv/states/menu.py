@@ -14,6 +14,7 @@ class Menu(BaseState):
     def startup(self, persistent):
         self.persist = persistent
         self.persist["Transition"].fade_in(500)
+        self.persist["Music"].change_music("Title")
 
     def render_text(self, index):
         color = pygame.Color("red") if index == self.active_index else pygame.Color("white")
@@ -28,9 +29,11 @@ class Menu(BaseState):
             if self.active_index == 0:
                 self.done = True
                 self.next_state = "CHARACTER_SELECT"
+                self.persist['Music'].fade_out(1000)
             if self.active_index == 1:
                 self.done = True
                 self.next_state = "MAP_BOUNDS"
+                self.persist['Music'].fade_out(1000)
             elif self.active_index == 2:
                 self.quit = True
         elif action == "mouse_move":

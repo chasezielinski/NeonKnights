@@ -1472,6 +1472,9 @@ BATTLE_MENU_SPRITES = {
 
 }
 
+MUSIC = {'Title': r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\music\title.oga",
+         }
+
 SOUND_EFFECTS = {'Toggle_1': pygame.mixer.Sound(
             r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sfx\397604__nightflame__menu-fx-01.wav"),
         'Toggle_2': pygame.mixer.Sound(
@@ -1522,10 +1525,43 @@ class FXManager(object):
 
 class MusicManager(object):
     def __init__(self):
-        pass
+        self.channels = {}
+        self.region = None
+        self.mix_state = None
+        self.game_state = None
+        self.region_state = None
+        self.fade_event = []
+        self.music_schedule = []
 
     def update(self, dt):
-        pass
+        if not pygame.mixer.music.get_busy():
+            if self.music_schedule:
+                self.music_schedule[0][0] -= dt
+                if self.music_schedule[0][0] <= 0:
+                    pygame.mixer.music.load(self.music_schedule[0][1])
+                    pygame.mixer.music.play(-1, fade_ms=self.music_schedule[0][2])
+                    del self.music_schedule[0]
+
+    def set_state(self, region_state=None, game_state=None):
+        if game_state is not None and game_state != self.game_state:
+            self.game_state = game_state
+
+    def change_music(self, track, delay=0, fade_ms=2000):
+        if track in MUSIC.keys():
+            if isinstance(MUSIC[track], str):
+                if pygame.mixer.music.get_busy():
+                    pygame.mixer.music.fadeout(delay)
+                    self.music_schedule.append([delay, track, fade_ms])
+                else:
+                    pygame.mixer.music.load(MUSIC[track])
+                    pygame.mixer.music.play(-1, fade_ms=fade_ms)
+                    self.mix_state = "Single"
+            elif isinstance(MUSIC[track], dict):
+                self.channels = MUSIC[track]
+
+    def fade_out(self, delay=2000):
+        if self.mix_state == "Single":
+            pygame.mixer.music.fadeout(delay)
 
 
 def draw_line_dashed(surface, color, start_pos, end_pos, width=1, dash_length=10, exclude_corners=True):
