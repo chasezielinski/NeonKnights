@@ -3138,6 +3138,132 @@ class Slime(BattleCharacter):
         self.parent.gold_reward += self.gold_reward
 
 
+class DesertWurm(BattleCharacter):
+    def __init__(self, enemy_slot, region_index, n_enemy, parent):
+        super().__init__(parent)
+        self.name = "Slime" + enemy_slot[5:]
+        self.hover = False
+        self.slot = enemy_slot
+        self.sprites = [image_load(r"C:\Users\Chase\Dropbox\Pycharm\FinalRogue\venv\resources\sprites"
+                                   r"\Enemy\Slime\Slime128p1.png"),
+                        image_load(r"C:\Users\Chase\Dropbox\Pycharm\FinalRogue\venv\resources\sprites"
+                                   r"\Enemy\Slime\Slime128p2.png"),
+                        image_load(r"C:\Users\Chase\Dropbox\Pycharm\FinalRogue\venv\resources\sprites"
+                                   r"\Enemy\Slime\Slime128p3.png"),
+                        image_load(r"C:\Users\Chase\Dropbox\Pycharm\FinalRogue\venv\resources\sprites"
+                                   r"\Enemy\Slime\Slime128p4.png")]
+        self.idle_frames = [0, 1]
+        self.idle_weights = [3, 1]
+        self.idle_speed = 1000
+        self.idle_time = random_int(0, self.idle_speed)
+        self.idle_index = 0
+        self.idle_weights = weights_convert(self.idle_speed, self.idle_weights)
+        self.attack_frames = [2]
+        self.cast_frames = [3]
+        self.hit_frames = [2]
+        self.miss_frames = [3]
+        self.x = self.base_x = BATTLE_MENUS['enemy positions'][n_enemy][enemy_slot][0]
+        self.y = self.base_y = BATTLE_MENUS['enemy positions'][n_enemy][enemy_slot][1]
+        self.image = self.sprites[self.idle_frames[self.idle_index]]
+        self.rect = pygame.rect.Rect(self.x, self.y, self.image.get_width(), self.image.get_height())
+        self.hp = self.max_hp = [500, 700, 1000, 1400, 1900, 2500, 3100, 3700][region_index]
+        self.mp = self.max_mp = [100, 110, 120, 130, 140, 150, 160, 180][region_index]
+        self.strength = [20, 25, 30, 35, 40, 45, 50, 60][region_index]
+        self.magic = [10, 12, 14, 16, 18, 20, 22, 28][region_index]
+        self.defense = [20, 25, 30, 35, 40, 45, 50, 60][region_index]
+        self.spirit = [10, 12, 14, 16, 18, 20, 22, 28][region_index]
+        self.luck = [10, 12, 14, 16, 18, 20, 22, 28][region_index]
+        self.speed = [10, 12, 14, 16, 18, 20, 22, 28][region_index]
+        self.crit_rate = [1, 1, 1, 1, 1, 1.1, 1.1, 1.1][region_index]
+        self.crit_damage = [1, 1, 1, 1, 1, 1, 1, 1][region_index]
+        self.exp_reward = [200, 12, 14, 16, 18, 20, 22, 28][region_index]
+        self.supply_reward = random_int([0, 0, 0, 0, 0, 0, 0, 0][region_index], [1, 1, 1, 1, 2, 2, 2, 2][region_index])
+        self.elixir_reward = random_int([0, 0, 0, 0, 0, 0, 0, 0][region_index], [1, 1, 1, 1, 2, 2, 2, 2][region_index])
+        self.charger_reward = random_int([0, 0, 0, 0, 0, 0, 0, 0][region_index], [1, 1, 1, 1, 2, 2, 2, 2][region_index])
+        self.gold_reward = random_int([0, 0, 0, 0, 0, 0, 0, 0][region_index],
+                                      [10, 12, 14, 16, 18, 20, 22, 24][region_index])
+        self.action_options = []
+        self.item_reward = self.reward(region_index)
+        self.state = "Main" # "Burrow", "Hidden"
+
+    def reward(self, region_index):
+        if len([['none', 'common', 'rare'], [60, 37, 3]][region_index]) == 1:
+            if [['none', 'common', 'rare'], [60, 37, 3]][region_index][0] != 'none':
+                item = item_generate([['none', 'common', 'rare'], [60, 37, 3]][region_index])
+            else:
+                item = 'none'
+        else:
+            n = random_int(0, len([['none', 'common', 'rare'], [60, 37, 3]][region_index]))
+            if [['none', 'common', 'rare'], [60, 37, 3]][region_index][n - 1] != 'none':
+                item = item_generate([['none', 'common', 'rare'], [60, 37, 3]][region_index])
+            else:
+                item = 'none'
+        return item
+
+    def update(self, dt):
+        if self.state == "Idle":
+            self.idle_time += random_int(15, 20)
+            if self.idle_time > self.idle_weights[self.idle_index]:
+                self.idle_time -= self.idle_weights[self.idle_index]
+                self.idle_index += 1
+                if self.idle_index >= len(self.idle_frames):
+                    self.idle_index = 0
+            self.image = self.sprites[self.idle_frames[self.idle_index]]
+        elif self.state == "Attack":
+            self.image = self.sprites[self.attack_frames[0]]
+        elif self.state == "Cast":
+            self.image = self.sprites[self.cast_frames[0]]
+        elif self.state == "Hit":
+            self.image = self.sprites[self.hit_frames[0]]
+        elif self.state == "Miss":
+            self.image = self.sprites[self.miss_frames[0]]
+        self.rect = pygame.rect.Rect(self.x, self.y, self.image.get_width(), self.image.get_height())
+
+        self.action_options = []
+        if self.state == "Main":
+            self.action_options = [Attack(self), SandBreath(self), Impale(self), Burrow(self), Bolster(self),
+                                       DesertWrath(self)]
+
+    def ko(self):
+        self.kill()
+        self.parent.battle_characters_ko.add(self)
+        self.parent.battle_objects.add(self)
+        self.battle_action.kill()
+        self.parent.supply_reward += self.supply_reward
+        self.parent.charger_reward += self.charger_reward
+        self.parent.elixir_reward += self.elixir_reward
+        self.parent.exp_reward += self.exp_reward
+        self.parent.gold_reward += self.gold_reward
+
+    def flip_state(self, state):
+        self.action_options.clear()
+        if state == "Main":
+            self.action_options = [Attack(self), SandBreath(self), Impale(self), Burrow(self), Bolster(self),
+                                       DesertWrath(self)]
+            self.state = "Main"
+        elif state == "Burrow":
+            self.action_options = [TailSweep(self)]
+            self.state = "Burrow"
+        elif state == "Hidden":
+            self.action_options = [Emerge(self)]
+            self.state = "Hidden"
+
+    def give_options(self):
+        options = []
+#        if hasattr(self, 'action'):
+#            if getattr(self.action, 'name', "None") != "None":
+#                return [(self.slot, "None", ["None"], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0])]
+#        for action in self.action_options:
+#            if action.is_usable():
+#                action_outcomes = action.expected_value()
+#                for i in range(len(action_outcomes)):
+#                    options.append(action_outcomes[i])
+#        if options:
+#            return options
+#        else:
+#            return [(self.slot, "None", ["None"], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0])]
+
+
 class BattleOverlay(object):
     def __init__(self, parent):
         # point to parent and persist dictionary
@@ -3558,6 +3684,302 @@ class Attack(BattleAction):
         self.parent.battle_action = self
         self.parent.parent.battle_actions.add(self)
         self.parent.parent.battle_objects.add(self)
+
+
+class SandBreath(BattleAction):
+    def __init__(self, parent, target=None):
+        super().__init__(parent, target=None)
+        self.target_type = "Team"
+        self.attack_stat = "strength"
+        self.defend_stat = "defense"
+        self.power = 30
+        self.animation = "Slash_1"
+        self.name = "Sand Breath"
+        self.action_type = "Ability"
+        self.effects = [("daze", 3, 50), ("frail", 3, 50)]
+
+    def expected_value(self):
+        value_set = []
+        for character in self.parent.parent.battle_characters.sprites():
+            outcome = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+            damage_low, damage_high, p_hit, critical_low, critical_high, p_critical = \
+                attack_defense_calculate(self, self.parent, character, ev=True)
+            outcome[BATTLE_MENUS['battle_slot_index'][character.slot]] = \
+                ((damage_low + damage_high) * p_hit * (1 - p_critical) / (2 * character.hp)) + \
+                ((critical_low + critical_high) * p_hit * p_critical / (2 * character.hp))
+            value_set.append((self.parent, self, [character], outcome))
+        return value_set
+
+    def is_usable(self):
+        if self.parent.dazed > 0 or self.parent.stunned > 0:
+            return False
+        return True
+
+    def do_action(self):
+        for target in self.target:
+            damage = attack_defense_calculate(self, self.parent, target)
+            target.damage(damage, self, delay=100)
+        self.end_action_timer = 1000
+
+    def target_set(self, source, battle_character):
+        self.target = battle_character
+        if self.parent.battle_action:
+            self.parent.battle_action.cancel()
+        self.parent.battle_action = self
+        self.parent.parent.battle_actions.add(self)
+        self.parent.parent.battle_objects.add(self)
+
+
+class Impale(BattleAction):
+    def __init__(self, parent, target=None):
+        super().__init__(parent, target=None)
+        self.target_type = "Single"
+        self.attack_stat = "strength"
+        self.defend_stat = "defense"
+        self.power = 60
+        self.animation = "Slash_1"
+        self.name = "Impale"
+        self.action_type = "Ability"
+        self.effects = [("stun", 2, 25), ("bleed", 3, 75)]
+
+    def expected_value(self):
+        value_set = []
+        for character in self.parent.parent.battle_characters.sprites():
+            outcome = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+            damage_low, damage_high, p_hit, critical_low, critical_high, p_critical = \
+                attack_defense_calculate(self, self.parent, character, ev=True)
+            outcome[BATTLE_MENUS['battle_slot_index'][character.slot]] = \
+                ((damage_low + damage_high) * p_hit * (1 - p_critical) / (2 * character.hp)) + \
+                ((critical_low + critical_high) * p_hit * p_critical / (2 * character.hp))
+            value_set.append((self.parent, self, [character], outcome))
+        return value_set
+
+    def is_usable(self):
+        if self.parent.dazed > 0 or self.parent.stunned > 0:
+            return False
+        return True
+
+    def do_action(self):
+        for target in self.target:
+            damage = attack_defense_calculate(self, self.parent, target)
+            target.damage(damage, self, delay=100)
+        self.end_action_timer = 1000
+
+    def target_set(self, source, battle_character):
+        self.target = battle_character
+        if self.parent.battle_action:
+            self.parent.battle_action.cancel()
+        self.parent.battle_action = self
+        self.parent.parent.battle_actions.add(self)
+        self.parent.parent.battle_objects.add(self)
+
+
+class Burrow(BattleAction):
+    def __init__(self, parent, target=None):
+        super().__init__(parent, target=None)
+        self.target_type = "None"
+        self.attack_stat = "strength"
+        self.defend_stat = "defense"
+        self.power = 60
+        self.animation = "Slash_1"
+        self.name = "Burrow"
+        self.action_type = "Ability"
+
+    def expected_value(self):
+        value_set = []
+        for character in self.parent.parent.battle_characters.sprites():
+            outcome = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+            damage_low, damage_high, p_hit, critical_low, critical_high, p_critical = \
+                attack_defense_calculate(self, self.parent, character, ev=True)
+            outcome[BATTLE_MENUS['battle_slot_index'][character.slot]] = \
+                ((damage_low + damage_high) * p_hit * (1 - p_critical) / (2 * character.hp)) + \
+                ((critical_low + critical_high) * p_hit * p_critical / (2 * character.hp))
+            value_set.append((self.parent, self, [character], outcome))
+        return value_set
+
+    def is_usable(self):
+        return True
+
+    def do_action(self):
+        self.parent.state = "Burrow"
+        self.end_action_timer = 1000
+
+    def target_set(self, source, battle_character):
+        pass
+
+
+class TailSweep(BattleAction):
+    def __init__(self, parent, target=None):
+        super().__init__(parent, target=None)
+        self.target_type = "Team"
+        self.attack_stat = "strength"
+        self.defend_stat = "defense"
+        self.power = 60
+        self.animation = "Slash_1"
+        self.name = "Tail Sweep"
+        self.action_type = "Ability"
+
+    def expected_value(self):
+        value_set = []
+        for character in self.parent.parent.battle_characters.sprites():
+            outcome = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+            damage_low, damage_high, p_hit, critical_low, critical_high, p_critical = \
+                attack_defense_calculate(self, self.parent, character, ev=True)
+            outcome[BATTLE_MENUS['battle_slot_index'][character.slot]] = \
+                ((damage_low + damage_high) * p_hit * (1 - p_critical) / (2 * character.hp)) + \
+                ((critical_low + critical_high) * p_hit * p_critical / (2 * character.hp))
+            value_set.append((self.parent, self, [character], outcome))
+        return value_set
+
+    def is_usable(self):
+        return True
+
+    def do_action(self):
+        for target in self.target:
+            damage = attack_defense_calculate(self, self.parent, target)
+            target.damage(damage, self, delay=100)
+        self.parent.state = "Hidden"
+        self.end_action_timer = 1000
+
+    def target_set(self, source, battle_character):
+        self.target = battle_character
+        if self.parent.battle_action:
+            self.parent.battle_action.cancel()
+        self.parent.battle_action = self
+        self.parent.parent.battle_actions.add(self)
+        self.parent.parent.battle_objects.add(self)
+
+
+class Emerge(BattleAction):
+    def __init__(self, parent, target=None):
+        super().__init__(parent, target=None)
+        self.target_type = "Team"
+        self.attack_stat = "strength"
+        self.defend_stat = "defense"
+        self.power = 20
+        self.animation = "Slash_1"
+        self.name = "Sand Breath"
+        self.action_type = "Ability"
+        self.effects = [("stun", 2, 100)]
+
+    def expected_value(self):
+        value_set = []
+        for character in self.parent.parent.battle_characters.sprites():
+            outcome = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+            damage_low, damage_high, p_hit, critical_low, critical_high, p_critical = \
+                attack_defense_calculate(self, self.parent, character, ev=True)
+            outcome[BATTLE_MENUS['battle_slot_index'][character.slot]] = \
+                ((damage_low + damage_high) * p_hit * (1 - p_critical) / (2 * character.hp)) + \
+                ((critical_low + critical_high) * p_hit * p_critical / (2 * character.hp))
+            value_set.append((self.parent, self, [character], outcome))
+        return value_set
+
+    def is_usable(self):
+        return True
+
+    def do_action(self):
+        for target in self.target:
+            damage = attack_defense_calculate(self, self.parent, target)
+            target.damage(damage, self, delay=100)
+        self.parent.state = "Main"
+        self.end_action_timer = 1000
+
+    def target_set(self, source, battle_character):
+        self.target = battle_character
+        if self.parent.battle_action:
+            self.parent.battle_action.cancel()
+        self.parent.battle_action = self
+        self.parent.parent.battle_actions.add(self)
+        self.parent.parent.battle_objects.add(self)
+
+
+class Bolster(BattleAction):
+    def __init__(self, parent, target=None):
+        super().__init__(parent, target=None)
+        self.target_type = "Single"
+        self.attack_stat = "strength"
+        self.defend_stat = "defense"
+        self.power = 0
+        self.animation = "Slash_1"
+        self.name = "Bolster"
+        self.action_type = "Ability"
+        self.effects = [("Vigilant", 3, 100), ("Faith", 3, 100)]
+
+    def expected_value(self):
+        value_set = []
+        for character in self.parent.parent.battle_characters.sprites():
+            outcome = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+            damage_low, damage_high, p_hit, critical_low, critical_high, p_critical = \
+                attack_defense_calculate(self, self.parent, character, ev=True)
+            outcome[BATTLE_MENUS['battle_slot_index'][character.slot]] = \
+                ((damage_low + damage_high) * p_hit * (1 - p_critical) / (2 * character.hp)) + \
+                ((critical_low + critical_high) * p_hit * p_critical / (2 * character.hp))
+            value_set.append((self.parent, self, [character], outcome))
+        return value_set
+
+    def is_usable(self):
+        if self.parent.dazed > 0 or self.parent.stunned > 0:
+            return False
+        return True
+
+    def do_action(self):
+        for target in self.target:
+            damage = attack_defense_calculate(self, self.parent, target)
+            target.damage(damage, self, delay=100)
+        self.end_action_timer = 1000
+
+    def target_set(self, source, battle_character):
+        self.target = battle_character
+        if self.parent.battle_action:
+            self.parent.battle_action.cancel()
+        self.parent.battle_action = self
+        self.parent.parent.battle_actions.add(self)
+        self.parent.parent.battle_objects.add(self)
+
+
+class DesertWrath(BattleAction):
+    def __init__(self, parent, target=None):
+        super().__init__(parent, target=None)
+        self.target_type = "Single"
+        self.attack_stat = "strength"
+        self.defend_stat = "defense"
+        self.power = 10
+        self.animation = "Slash_1"
+        self.name = "Desert's Wrath"
+        self.action_type = "Ability"
+        self.effects = [("bleed", 2, 10), ("toxic", 2, 10), ("burn", 2, 10), ("curse", 2, 10), ("spite", 2, 10),
+                        ("hex", 2, 10), ("slow", 2, 10)]
+
+    def expected_value(self):
+        value_set = []
+        for character in self.parent.parent.battle_characters.sprites():
+            outcome = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+            damage_low, damage_high, p_hit, critical_low, critical_high, p_critical = \
+                attack_defense_calculate(self, self.parent, character, ev=True)
+            outcome[BATTLE_MENUS['battle_slot_index'][character.slot]] = \
+                ((damage_low + damage_high) * p_hit * (1 - p_critical) / (2 * character.hp)) + \
+                ((critical_low + critical_high) * p_hit * p_critical / (2 * character.hp))
+            value_set.append((self.parent, self, [character], outcome))
+        return value_set
+
+    def is_usable(self):
+        return True
+
+    def do_action(self):
+        for target in self.target:
+            damage = attack_defense_calculate(self, self.parent, target)
+            target.damage(damage, self, delay=100)
+        self.end_action_timer = 1000
+
+    def target_set(self, source, battle_character):
+        self.target = battle_character
+        if self.parent.battle_action:
+            self.parent.battle_action.cancel()
+        self.parent.battle_action = self
+        self.parent.parent.battle_actions.add(self)
+        self.parent.parent.battle_objects.add(self)
+
+
 
 
 ITEM_LIST = {"All": ["StimPack"],
