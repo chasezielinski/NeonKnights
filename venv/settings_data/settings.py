@@ -987,13 +987,14 @@ class Event(object):
             tw(surface, self.prompt, TEXT_COLOR, self.prompt_rect, TEXT_FONT)
             for index, option in enumerate(self.options):
                 color = TEXT_COLOR
-                if click_check([self.option_rect[0], self.option_rect[1] + (index * Y * 5 / 100),
-                                self.option_rect[2], self.option_rect[3]]):
+                if index == self.option_index:
                     color = SELECTED_COLOR
-                tw(surface, "1. " + option[0], color, [self.option_rect[0], self.option_rect[1] + (index * Y * 5 / 100),
-                                                       self.option_rect[2], self.option_rect[3]], TEXT_FONT)
+                tw(surface, str(index+1) + ". " + option[0], color, [self.option_rect[0], self.option_rect[1] +
+                                                              (index * Y * 5 / 100), self.option_rect[2],
+                                                              self.option_rect[3]], TEXT_FONT)
 
     def handle_action(self, action):
+        print(self.option_index)
         if action == "click":
             if self.state == "Prompt":
                 for index, option in enumerate(self.options):
@@ -1007,7 +1008,15 @@ class Event(object):
                         if "options" in outcome.keys():
                             setattr(self, "options", outcome["options"])
 
-        if action == "return":
+        elif action == "mouse_move":
+            self.option_index = -1
+            if len(self.options) > 0:
+                for index, option in enumerate(self.options):
+                    if click_check([self.option_rect[0], self.option_rect[1] + (index * Y * 5 / 100),
+                                    self.option_rect[2], self.option_rect[3]]):
+                        self.option_index = index
+
+        elif action == "return":
             outcome = choose_random_weighted(self.options[self.option_index][1], self.options[self.option_index][2])
             if "state" in outcome.keys():
                 setattr(self, "state", outcome["state"])
@@ -1015,6 +1024,16 @@ class Event(object):
                 setattr(self, "prompt", outcome["prompt"])
             if "options" in outcome.keys():
                 setattr(self, "options", outcome["options"])
+
+        elif action == "down":
+            self.option_index += 1
+            if len(self.options) != 0:
+                self.option_index %= len(self.options)
+
+        elif action == "up":
+            self.option_index -= 1
+            if len(self.options) != 0:
+                self.option_index %= len(self.options)
 
     def battle(self):
         self.parent.parent.persist['enemies'] = self.enemies
