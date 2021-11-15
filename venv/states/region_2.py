@@ -3,6 +3,7 @@ import random
 import copy
 import network_generator
 import pygame
+import pytweening
 import settings
 from base import BaseState
 import pytweening as pt
@@ -116,15 +117,19 @@ class Node(pygame.sprite.Sprite):
                 self.animation_index = 0
         self.image = self.images[math.floor(self.animation_index)]
 
-        if self.index in self.parent.party.node.neighbors:
-            self.travel = True
+        if self.parent.party.node is not None:
+            if self.index in self.parent.party.node.neighbors:
+                self.travel = True
+            else:
+                self.travel = False
         else:
             self.travel = False
         self.hover = False
         if self.rect.collidepoint(pygame.mouse.get_pos()):
             self.hover = True
-        if self.index in self.parent.party.node.neighbors:
-            self.seen = True
+        if self.parent.party.node is not None:
+            if self.index in self.parent.party.node.neighbors:
+                self.seen = True
 
     def cleanup(self):
         self.kill()
@@ -169,6 +174,68 @@ class Path(object):
                                    (self.node_2.x + 16, self.node_2.y + 16), 5)
 
 
+class Cursor(object):
+    def __init__(self, parent):
+        self.x = 0
+        self.y = 0
+        self.parent = parent
+        self.visible = False
+        self.target_x = None
+        self.target_y = None
+        self.target_node = None
+        self.position_queue = []
+        self.move_speed = 0
+
+    def snap(self):
+        distance = 1000
+        for node in self.parent.nodes.sprites():
+            calc = math.sqrt((self.x - node.x)**2 + (self.y - node.y)**2)
+            if calc < distance:
+                self.target_node = node
+                distance = calc
+        for i in range(10):
+            x = self.x - ((self.x - self.target_node.x) * pytweening.easeInExpo(i/10))
+            y = self.y - ((self.y - self.target_node.y) * pytweening.easeInExpo(i/10))
+            self.position_queue.append([x, y])
+
+    def move(self, dt):
+        flag = True
+        if list(pygame.key.get_pressed())[79]:
+            self.x += dt/5
+            flag = False
+        if list(pygame.key.get_pressed())[80]:
+            self.x -= dt/5
+            flag = False
+        if list(pygame.key.get_pressed())[81]:
+            self.y += dt/5
+            flag = False
+        if list(pygame.key.get_pressed())[82]:
+            self.y -= dt/5
+            flag = False
+        if flag:
+            self.parent.state = "Browse"
+            self.snap()
+
+    def update(self, dt):
+        if not self.visible:
+            self.move_speed += dt/15
+            self.x = self.parent.party.x
+            self.y = self.parent.party.y
+        elif self.parent.state == "Browse":
+            self.move_speed = 0
+            if self.position_queue:
+                self.x = self.position_queue[0][0]
+                self.y = self.position_queue[0][1]
+                del self.position_queue[0]
+            else:
+                self.x = self.target_node.x
+                self.y = self.target_node.y
+
+    def draw(self, surface):
+        if self.visible:
+            pygame.draw.rect(surface, (0, 0, 0), [self.x, self.y, 32, 32], 4, border_radius=4)
+
+
 class Party(pygame.sprite.Sprite):
     def __init__(self, parent):
         pygame.sprite.Sprite.__init__(self)
@@ -195,12 +262,13 @@ class Party(pygame.sprite.Sprite):
             self.animation_index += 1
             self.animation_index %= len(self.images)
             self.image = self.images[self.animation_index]
-
-        self.x = self.node.x - self.width
-        self.y = self.node.y - self.height
+        if self.node is not None:
+            self.x = self.node.x - self.width
+            self.y = self.node.y - self.height
 
     def draw(self, surface):
         surface.blit(self.image, (self.x, self.y))
+
 
 
 class TravelButton(object):
@@ -275,7 +343,7 @@ class ShopButton(object):
             settings.tw(surface, "SHOP", (125, 125, 50), self.text_rect, settings.TEXT_FONT)
 
     def update(self, dt):
-        if self.parent.party.node.type == "Shop":
+        if getattr(self.parent.party.node, 'type', None) == "Shop":
             self.state = "Active"
         else:
             self.state = "Hidden"
@@ -303,7 +371,7 @@ class ExitButton(object):
             settings.tw(surface, "EXIT", (125, 50, 50), self.text_rect, settings.TEXT_FONT)
 
     def update(self, dt):
-        if self.parent.party.node.type == "Boss":
+        if getattr(self.parent.party.node, 'type', None) == "Boss":
             self.state = "Active"
         else:
             self.state = "Hidden"
@@ -443,6 +511,7 @@ class Region(BaseState):
         self.nodes = pygame.sprite.Group()
         self.selected_node = None
         self.party = Party(self)
+        self.cursor = Cursor(self)
         self.buttons = [TravelButton(self), Resources(self), StatusBar(self), ShopButton(self), ExitButton(self)]
         self.equip_menu = settings.EquipMenu(self)
         self.skill_menu = settings.SkillTreeMenu(self)
@@ -472,6 +541,11 @@ class Region(BaseState):
             elif action == "mouse_move":
                 pos = (int(pygame.mouse.get_pos()[0] * 100 / 1280), int(pygame.mouse.get_pos()[1] * 100 / 720))
                 print(pos)
+            elif action == "t":
+                self.travel()
+            elif action == "left" or action == "up" or action == "right" or action == "down":
+                self.state = "Cursor_Move"
+                self.cursor.visible = True
 
         elif self.state == "Event":
             if self.state == "Event":
@@ -526,6 +600,7 @@ class Region(BaseState):
     def update(self, dt):
         self.nodes.update(dt)
         self.party.update(dt)
+        self.cursor.update(dt)
         for path in self.paths:
             path.update(dt)
         for button in self.buttons:
@@ -536,6 +611,8 @@ class Region(BaseState):
             self.equip_menu.update(dt)
         elif self.state == "Skill_Tree":
             self.skill_menu.update(dt)
+        elif self.state == "Cursor_Move":
+            self.cursor.move(dt)
 
     def draw(self, surface):
         surface.fill(pygame.Color("black"))
@@ -549,6 +626,7 @@ class Region(BaseState):
         surface.blit(self.overlay_image, (0, 0))
         for button in self.buttons:
             button.draw(surface)
+        self.cursor.draw(surface)
         if self.state == "Event":
             self.party.node.event.draw(surface)
         elif self.state == "Equip":

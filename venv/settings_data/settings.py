@@ -2031,8 +2031,11 @@ class SkillTreeMenu(object):
         self.parent.persist['characters'][self.player_index].right_tree.handle_action(action)
         if action == "mouse_move":
             pass
+        elif action == "escape":
+            self.parent.state = "Browse"
         elif action == "click":
-            pass
+            if not click_check(self.bg_1_rect):
+                self.parent.state = "Browse"
         elif action == "wheel_up":
             pass
         elif action == "wheel_down":
