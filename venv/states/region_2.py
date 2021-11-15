@@ -200,29 +200,39 @@ class Cursor(object):
 
     def move(self, dt):
         flag = True
+        dir = [0, 0]
         if list(pygame.key.get_pressed())[79]:
-            self.x += dt/5
+            dir[0] += 1
             flag = False
         if list(pygame.key.get_pressed())[80]:
-            self.x -= dt/5
+            dir[0] -= 1
             flag = False
         if list(pygame.key.get_pressed())[81]:
-            self.y += dt/5
+            dir[1] += 1
             flag = False
         if list(pygame.key.get_pressed())[82]:
-            self.y -= dt/5
+            dir[1] -= 1
             flag = False
         if flag:
+            self.move_speed = 0
             self.parent.state = "Browse"
             self.snap()
+        else:
+            if (dir[0]**2 + dir[1]**2) == 2:
+                dir_factor = 1.41
+            else:
+                dir_factor = 1
+            if dir[1] != 0:
+                self.y += (dt * self.move_speed / (self.move_speed + 500))/(dir[1] * dir_factor * 2)
+            if dir[0] != 0:
+                self.x += (dt * self.move_speed / (self.move_speed + 500))/(dir[0] * dir_factor * 2)
+            self.move_speed += dt
 
     def update(self, dt):
         if not self.visible:
-            self.move_speed += dt/15
             self.x = self.parent.party.x
             self.y = self.parent.party.y
         elif self.parent.state == "Browse":
-            self.move_speed = 0
             if self.position_queue:
                 self.x = self.position_queue[0][0]
                 self.y = self.position_queue[0][1]
@@ -234,6 +244,16 @@ class Cursor(object):
     def draw(self, surface):
         if self.visible:
             pygame.draw.rect(surface, (0, 0, 0), [self.x, self.y, 32, 32], 4, border_radius=4)
+
+    def handle_action(self, action):
+        if action == 'return':
+            if self.visible and self.target_node is not None:
+                for node in self.parent.nodes.sprites():
+                    node.selected = False
+                self.target_node.selected = True
+                self.parent.selected_node = self.target_node
+                self.visible = False
+
 
 
 class Party(pygame.sprite.Sprite):
@@ -268,7 +288,6 @@ class Party(pygame.sprite.Sprite):
 
     def draw(self, surface):
         surface.blit(self.image, (self.x, self.y))
-
 
 
 class TravelButton(object):
@@ -546,6 +565,8 @@ class Region(BaseState):
             elif action == "left" or action == "up" or action == "right" or action == "down":
                 self.state = "Cursor_Move"
                 self.cursor.visible = True
+            elif action == 'return':
+                self.cursor.handle_action(action)
 
         elif self.state == "Event":
             if self.state == "Event":
