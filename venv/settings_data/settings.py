@@ -962,12 +962,7 @@ class Event(object):
             if self.timer < 0:
                 self.timer = 0
         if self.state == "Prompt":
-            for index, option in enumerate(self.options):
-                if click_check([self.option_rect[0], self.option_rect[1] + (index * Y * 5 / 100),
-                                self.option_rect[2], self.option_rect[3]]):
-                    self.option_index = index
-                else:
-                    self.option_index = -1
+            pass
         elif self.state == "Delay":
             if self.timer == 0:
                 self.state = self.next_state
@@ -994,7 +989,6 @@ class Event(object):
                                                               self.option_rect[3]], TEXT_FONT)
 
     def handle_action(self, action):
-        print(self.option_index)
         if action == "click":
             if self.state == "Prompt":
                 for index, option in enumerate(self.options):
@@ -1025,15 +1019,63 @@ class Event(object):
             if "options" in outcome.keys():
                 setattr(self, "options", outcome["options"])
 
+        elif action == "1":
+            if len(self.options) >= 1:
+                self.option_index = 0
+                self.handle_action("return")
+
+        elif action == "2":
+            if len(self.options) >= 2:
+                self.option_index = 1
+                self.handle_action("return")
+
+        elif action == "3":
+            if len(self.options) >= 3:
+                self.option_index = 2
+                self.handle_action("return")
+
+        elif action == "4":
+            if len(self.options) >= 4:
+                self.option_index = 3
+                self.handle_action("return")
+
+        elif action == "5":
+            if len(self.options) >= 5:
+                self.option_index = 4
+                self.handle_action("return")
+
+        elif action == "6":
+            if len(self.options) >= 6:
+                self.option_index = 5
+                self.handle_action("return")
+
+        elif action == "7":
+            if len(self.options) >= 7:
+                self.option_index = 6
+                self.handle_action("return")
+
+        elif action == "8":
+            if len(self.options) >= 8:
+                self.option_index = 7
+                self.handle_action("return")
+
+        elif action == "9":
+            if len(self.options) >= 9:
+                self.option_index = 8
+                self.handle_action("return")
+
         elif action == "down":
+            print(self.option_index)
             self.option_index += 1
             if len(self.options) != 0:
                 self.option_index %= len(self.options)
 
         elif action == "up":
+            print(self.option_index)
             self.option_index -= 1
             if len(self.options) != 0:
                 self.option_index %= len(self.options)
+        print(self.option_index)
 
     def battle(self):
         self.parent.parent.persist['enemies'] = self.enemies
