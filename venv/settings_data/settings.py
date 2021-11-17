@@ -969,6 +969,7 @@ class Event(object):
         elif self.state == "Reward":
             self.reward()
         elif self.state == "Exit":
+            self.parent.event = shop_builder(self.parent)
             self.parent.parent.state = "Browse"
         elif self.state == "Battle":
             self.battle()
