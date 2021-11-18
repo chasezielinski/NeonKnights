@@ -3969,9 +3969,9 @@ class KiBlast(BattleAction):
     def do_action(self):
         for target in self.target:
             damage = attack_defense_calculate(self, self.parent, target)
-            target.damage(damage, self, delay=100)
+            target.damage(damage, self, delay=2000)
         self.parent.parent.persist['FX'].add_effect(self.animation_sprites, self.animation_frames, self.frame_times, self.delay, self.animation_type)
-        self.end_action_timer = 2000
+        self.end_action_timer = 3000
 
     def target_set(self, source, battle_character):
         target = []
