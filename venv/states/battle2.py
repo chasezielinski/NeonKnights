@@ -45,6 +45,7 @@ class Battle(BaseState):
 
     def startup(self, persistent):
         self.persist = persistent
+        self.victory_display = settings.VictoryDisplay(self)
         # point Battle to player character sprite objects and add them to proper Groups
         for player in self.persist['characters']:
             setattr(self, player.slot, player)
