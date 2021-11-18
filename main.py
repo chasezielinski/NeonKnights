@@ -1,6 +1,9 @@
 import sys
 import pygame
-import settings
+# initialize the game
+# create the screen
+screen = pygame.display.set_mode((1280, 720))
+
 from menu import Menu
 # from states.game_over import GameOver
 from splash import Splash
@@ -12,9 +15,6 @@ from battle2 import Battle
 from map_bounds import MapBounds
 from region_select import RegionSelect
 
-# initialize the game
-# create the screen
-screen = pygame.display.set_mode((settings.X, settings.Y))
 
 # enumerate states
 states = {
@@ -31,7 +31,7 @@ states = {
     #    "PAUSE": Pause(),
 }
 
-icon = settings.image_load('sword.png')
+icon = pygame.image.load('sword.png')
 pygame.display.set_icon(icon)
 
 # Title and Icon

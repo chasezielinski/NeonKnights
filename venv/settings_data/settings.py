@@ -111,7 +111,7 @@ FIGHTER_LEFT_TREE = ["Brute",
                                                            "if you have sufficient skill points.",
                                             "Cost": "1 Skill Point"}]]]
 
-FIGHTER_CENTER_TREE = ["Kight",
+FIGHTER_CENTER_TREE = ["Knight",
                        [[0, 1, "Skill_1", 1, {"Name": "Skill_1",
                                               "Ability_Type": "Ability",
                                               "Description": "This is a skill. You can unlock it by clicking here, "
@@ -1605,15 +1605,56 @@ class SFXManager(object):
                     sfx['delay'] = sfx['delay_reset']
 
 
-class FXManager(object):
-    def __init__(self):
-        pass
+class Effect(pygame.sprite.Sprite):
+    def __init__(self, sprites, frames, frame_times, delay, animation_type, pos):
+        super().__init__()
+        self.sprites = sprites[0]
+        self.frames = frames
+        self.frame_times = frame_times[0]
+        self.delay = delay
+        self.animation_type = animation_type
+        self.timer = frame_times[0][0]
+        self.frame_index = 0
+        self.image = self.sprites[self.frames[0]]
+        self.pos = pos
+        self.state = "Hidden"
 
     def update(self, dt):
-        pass
+        self.rect = pygame.Rect(self.pos[0], self.pos[1], self.image.get_width(), self.image.get_height())
+        if self.state == "Hidden":
+            self.delay -= dt
+            if self.delay <= 0:
+                self.state = "Display"
+        elif self.state == "Display":
+            self.timer -= dt
+            if self.timer <= 0:
+                self.frame_index += 1
+                if self.frame_index == len(self.frames):
+                    self.state = "Done"
+                else:
+                    self.image = self.sprites[self.frames[self.frame_index]]
+                    self.timer = self.frame_times[self.frame_index]
 
     def draw(self, surface):
-        pass
+        if self.state == "Display":
+            surface.blit(self.image, self.pos)
+
+
+class FXManager(object):
+    def __init__(self):
+        self.effects = pygame.sprite.Group()
+
+    def update(self, dt):
+        for effect in self.effects.sprites():
+            effect.update(dt)
+            if effect.state == "Done":
+                effect.kill()
+
+    def draw(self, surface):
+        self.effects.draw(surface)
+
+    def add_effect(self, sprites, frames, frame_times, delay, animation_type, pos=(0,0)):
+        self.effects.add(Effect(sprites, frames, frame_times, delay, animation_type, pos))
 
 
 class MusicManager(object):
@@ -2416,32 +2457,6 @@ class Medallion(Equipment):
         super(Medallion, self).__init__(dictionary)
 
 
-class InventoryManager(object):
-    def __init__(self, persist):
-        self.persist = persist
-        self.players = ['player_a', 'player_b', 'player_c']
-        self.player = {'player_a': {'head': 'none', 'body': 'none', 'right': 'none', 'hip': 'none', 'back': 'none',
-                                    'left': 'none', 'neck': 'none', 'feet': 'none'},
-                       'player_b': {'head': 'none', 'body': 'none', 'right': 'none', 'hip': 'none', 'back': 'none',
-                                    'left': 'none', 'neck': 'none', 'feet': 'none'},
-                       'player_c': {'head': 'none', 'body': 'none', 'right': 'none', 'hip': 'none', 'back': 'none',
-                                    'left': 'none', 'neck': 'none', 'feet': 'none'},
-                       }
-        self.does_exist = {'player_a': False,
-                           'player_b': False,
-                           'player_c': False,
-                           }
-        self.is_class = {'player_a': 'none',
-                         'player_b': 'none',
-                         'player_c': 'none',
-                         }
-        self.allowable = {'player_a': [],
-                          'player_b': [],
-                          'player_c': [],
-                          }
-        self.inventory = []
-
-
 battle_characters = {
     "Fighter": {'sprites': [image_load(r"C:\Users\Chase\Dropbox\Pycharm\FinalRogue\venv\resources\sprites"
                                        r"\Character\Battle\Fighter\Fighter_Battle128p1.png"),
@@ -3165,6 +3180,7 @@ class PlayerCharacter(BattleCharacter):
         self.equipment = {}
         self.techniques = self.base_techniques = BASE_STATS[char_class.upper() + "_BASE_STATS"][
             char_class.upper() + "_BASE_TECHNIQUES"]
+        self.abilities = [KiBlast(self)]
         self.crit_rate = self.base_crit_rate = 1
         self.crit_damage = self.base_crit_damage = 1
         self.level = 1
@@ -3443,6 +3459,9 @@ class DesertWurm(BattleCharacter):
 class BattleOverlay(object):
     def __init__(self, parent):
         # point to parent and persist dictionary
+        self.skill_display_index = 0
+        self.skill_relative = -1
+        self.skill_index = -1
         self.parent = parent
         # target reticle flash variables
         self.reticle_color = None
@@ -3492,6 +3511,43 @@ class BattleOverlay(object):
             elif action == "return":
                 pass
 
+        elif self.parent.turn_sub_state == "Skill":
+            if action == "mouse_move":
+                for key in range(5):
+                    if click_check(BATTLE_MENUS['skill_menu_rects'][key]):
+                        self.skill_relative = key
+                        self.skill_index = key + self.skill_display_index
+                        break
+                    else:
+                        self.skill_relative = -1
+                        self.skill_index = -1
+            elif action == "click":
+                if self.skill_index >= 0:
+                    self.parent.selected_action = self.parent.player_index.abilities[self.skill_index]
+                    self.parent.turn_sub_state = "Target"
+                else:
+                    self.parent.turn_sub_state = "Browse"
+            elif action == "up":
+                if self.skill_relative < 0 or self.skill_relative > 4:
+                    self.skill_relative = 0
+                if self.skill_relative == 0 and self.skill_display_index > 0:
+                    self.skill_display_index -= 1
+                elif self.skill_relative > 0:
+                    self.skill_relative -= 1
+                self.skill_index = self.skill_relative + self.skill_display_index
+            elif action == "down":
+                if self.skill_relative < 0 or self.skill_relative > 4:
+                    self.skill_relative = 0
+                if self.skill_relative == 4 and self.skill_index < len(self.parent.player_index.abilities) - 1:
+                    self.skill_display_index += 1
+                elif self.skill_relative < 4:
+                    self.skill_relative += 1
+                self.skill_index = self.skill_relative + self.skill_display_index
+            elif action == "backspace":
+                pass
+            elif action == "return":
+                pass
+
     def update(self, dt):
         self.reticle_color_update(dt)
 
@@ -3516,7 +3572,7 @@ class BattleOverlay(object):
                     tw(surface, option_text, color, BATTLE_MENUS['move_top_menu_rects'][option], TEXT_FONT)
                 if self.parent.turn_sub_state == "Item":
                     for key in range(5):
-                        if key + 1 > len(self.parent.persist['inventory']):
+                        if key+self.item_display_index + 1 > len(self.parent.persist['inventory']):
                             color = (50, 50, 50)
                             if key == self.item_relative:
                                 color = (100, 100, 100)
@@ -3525,7 +3581,20 @@ class BattleOverlay(object):
                             color = TEXT_COLOR
                             if key == self.item_relative:
                                 color = SELECTED_COLOR
-                            tw(surface, self.parent.persist['inventory'][self.item_index].name, color,
+                            tw(surface, self.parent.persist['inventory'][key+self.item_display_index].name, color,
+                               BATTLE_MENUS['item_menu_rects'][key], TEXT_FONT)
+                if self.parent.turn_sub_state == "Skill":
+                    for key in range(5):
+                        if key + self.skill_display_index + 1 > len(self.parent.player_index.abilities):
+                            color = (50, 50, 50)
+                            if key == self.skill_relative:
+                                color = (100, 100, 100)
+                            tw(surface, "-".rjust(5), color, BATTLE_MENUS['item_menu_rects'][key], TEXT_FONT)
+                        else:
+                            color = TEXT_COLOR
+                            if key == self.skill_relative:
+                                color = SELECTED_COLOR
+                            tw(surface, self.parent.player_index.abilities[key + self.skill_display_index].name, color,
                                BATTLE_MENUS['item_menu_rects'][key], TEXT_FONT)
 
             elif self.parent.turn_sub_state == "Browse":
@@ -3862,6 +3931,64 @@ class Attack(BattleAction):
         self.parent.parent.battle_objects.add(self)
 
 
+class KiBlast(BattleAction):
+    def __init__(self, parent, target=None):
+        super().__init__(parent, target=None)
+        self.parent = parent
+        self.target_type = "Team"
+        self.attack_stat = "strength"
+        self.defend_stat = "defense"
+        self.power = 40
+        self.name = "Ki Blast"
+        self.action_type = "Ability"
+        self.animation_sprites = SpriteSheet(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Battle\Effects"
+                               r"\attack_all_enemy_animation_1_720p.png").load_strip([0, 0, 1280, 720], 19, (255, 55, 202)),
+        self.animation_frames = [0, 1, 2, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18]
+        self.frame_times = [50, 50, 50, 50, 50, 50, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 50, 50, 50, 150, 100],
+        self.delay = 100
+        self.animation_type = 'screen'
+        self.mp_cost = 2
+
+    def expected_value(self):
+        value_set = []
+        for character in self.parent.parent.battle_characters.sprites():
+            outcome = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+            damage_low, damage_high, p_hit, critical_low, critical_high, p_critical = \
+                attack_defense_calculate(self, self.parent, character, ev=True)
+            outcome[BATTLE_MENUS['battle_slot_index'][character.slot]] = \
+                ((damage_low + damage_high) * p_hit * (1 - p_critical) / (2 * character.hp)) + \
+                ((critical_low + critical_high) * p_hit * p_critical / (2 * character.hp))
+            value_set.append((self.parent, self, [character], outcome))
+        return value_set
+
+    def is_usable(self):
+        if self.parent.dazed > 0 or self.parent.stunned > 0 or self.parent.mp < self.mp_cost:
+            return False
+        return True
+
+    def do_action(self):
+        for target in self.target:
+            damage = attack_defense_calculate(self, self.parent, target)
+            target.damage(damage, self, delay=100)
+        self.parent.parent.persist['FX'].add_effect(self.animation_sprites, self.animation_frames, self.frame_times, self.delay, self.animation_type)
+        self.end_action_timer = 2000
+
+    def target_set(self, source, battle_character):
+        target = []
+        if isinstance(battle_character, PlayerCharacter):
+            for character in self.parent.parent.player_characters.sprites():
+                target.append(character)
+        else:
+            for character in self.parent.parent.enemy_characters.sprites():
+                target.append(character)
+        self.target = target
+        if self.parent.battle_action:
+            self.parent.battle_action.cancel()
+        self.parent.battle_action = self
+        self.parent.parent.battle_actions.add(self)
+        self.parent.parent.battle_objects.add(self)
+
+
 class SandBreath(BattleAction):
     def __init__(self, parent, target=None):
         super().__init__(parent, target=None)
@@ -4154,8 +4281,6 @@ class DesertWrath(BattleAction):
         self.parent.battle_action = self
         self.parent.parent.battle_actions.add(self)
         self.parent.parent.battle_objects.add(self)
-
-
 
 
 ITEM_LIST = {"All": ["StimPack"],

@@ -1,7 +1,7 @@
 import pygame
 import settings
 from base import BaseState
-from settings import PartyAbilityManager, InventoryManager, PlayerCharacter
+from settings import PartyAbilityManager, PlayerCharacter
 
 
 class CharacterSelect(BaseState):
@@ -478,7 +478,6 @@ class CharacterSelect(BaseState):
             self.persist['region_type'] = "None"
             self.persist['inventory'] = [settings.StimPack(), settings.StimPack(), settings.StimPack(),
                                          settings.StimPack(), settings.StimPack()]
-            self.persist['inventory manager'] = InventoryManager(self)
             settings.character_initial(self.persist['characters'][0], self.options[self.active_index])
             self.persist['equip menu indices'] = settings.REGION_MENUS['equip menu']['equip menu indices']
             self.persist['party_abilities'] = PartyAbilityManager()

@@ -154,10 +154,14 @@ class Battle(BaseState):
                     for i, option in enumerate(settings.actions_dict.keys()):
                         if settings.click_check(settings.BATTLE_MENUS['move_top_menu_rects'][option]):
                             if option == "Skill":
-                                if self.player_index.action_options:
+                                print('here')
+                                if self.player_index.abilities:
+                                    print('here2')
                                     if not self.player_index.dazed > 0 \
                                             and not self.player_index.stunned > 0:
-                                        for action in self.player_index.action_options:
+                                        print('here3')
+                                        for action in self.player_index.abilities:
+                                            print('here4')
                                             if action.is_usable():
                                                 self.turn_sub_state = "Skill"
                                                 check = False
@@ -198,6 +202,7 @@ class Battle(BaseState):
                         self.turn_sub_state = "Browse"
 
             elif self.turn_sub_state == "Skill":
+                self.battle_overlay.handle_action(action)
                 if action == "backspace":
                     self.turn_sub_state = "Move_Select"
 
@@ -349,6 +354,7 @@ class Battle(BaseState):
                 self.timer = None
                 self.state = self.next_battle_state
                 self.next_battle_state = None
+        self.persist['FX'].update(dt)
 
     def stop_wait(self):
         if self.state == "Wait":
@@ -365,6 +371,7 @@ class Battle(BaseState):
         self.message.draw(surface)
         for action in self.battle_actions.sprites():
             action.draw_text(surface)
+        self.persist['FX'].draw(surface)
         if self.state == "Victory_2":
             self.victory_display.draw(surface)
 
