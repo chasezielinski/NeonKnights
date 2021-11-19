@@ -261,8 +261,7 @@ class Battle(BaseState):
         for sprite in self.battle_characters:
             if sprite.hp <= 0:
                 sprite.ko()
-        if not self.state == "Victory_1" and not self.state == "Victory_2" and not \
-                self.state == "Defeat" and not self.state == "Clean_Up":
+        if self.state not in ["Victory_1", "Victory_2", "Defeat", "Clean_Up", "Delay", "Wait"]:
             if len(self.player_characters.sprites()) <= 0:
                 self.state = "Defeat"
             elif len(self.enemy_characters.sprites()) <= 0:
