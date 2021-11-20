@@ -1682,8 +1682,11 @@ class MusicManager(object):
         self.battle = pygame.mixer.Channel(3)
         self.event = pygame.mixer.Channel(4)
         self.dungeon = pygame.mixer.Channel(5)
+        self.channel_fade = []
 
     def update(self, dt, parent=None):
+        if parent is not None:
+            print(parent.state)
         if self.state is 'music':
             if not pygame.mixer.music.get_busy():
                 if self.music_schedule:
@@ -1697,44 +1700,59 @@ class MusicManager(object):
                 self.state = 'layer'
                 self.fade_out()
         elif self.state is 'layer':
-            print('here')
+            if self.channel_fade:
+                for event in self.channel_fade:
+                    event[3] -= dt
+                    if event[3] <= 0:
+                        event[3] = 0
+                    new_volume = event[2] - (event[3]/event[4])
+                    if new_volume < 0:
+                        new_volume *= -1
+                    event[0].set_volume(new_volume)
+                    if event[3] <= 0:
+                        self.channel_fade.remove(event)
             if self.region is not parent.persist['region_type']:
                 self.layer_fade_out()
                 self.set_region(parent.persist['region_type'])
             if parent.state == "Event":
                 if isinstance(parent.party.node.event, Shop) and self.region_state != "Shop":
                     self.fade_to_shop()
-                else:
+                elif self.region_state != "Event" and not isinstance(parent.party.node.event, Shop):
                     self.fade_to_event()
             elif parent.state == "Browse" and self.region_state != "Browse":
                 self.fade_to_map()
 
+    def set_fade_event(self, channel, target, time=1000, delay=0):
+        start_volume = channel.get_volume()
+        if start_volume != target:
+            self.channel_fade.append([channel, start_volume, target, time, time, delay])
+
     def fade_to_shop(self):
         self.region_state = "Shop"
-        self.constant.set_volume(1)
-        self.map.set_volume(0)
-        self.shop.set_volume(1)
-        self.battle.set_volume(0)
-        self.event.set_volume(0)
-        self.dungeon.set_volume(0)
+        self.set_fade_event(self.constant, 1)
+        self.set_fade_event(self.map, 0)
+        self.set_fade_event(self.shop, 1)
+        self.set_fade_event(self.battle, 0)
+        self.set_fade_event(self.event, 0)
+        self.set_fade_event(self.dungeon, 0)
 
     def fade_to_map(self):
-        self.region_state = "Map"
-        self.constant.set_volume(1)
-        self.map.set_volume(1)
-        self.shop.set_volume(0)
-        self.battle.set_volume(0)
-        self.event.set_volume(0)
-        self.dungeon.set_volume(0)
+        self.region_state = "Browse"
+        self.set_fade_event(self.constant, 1)
+        self.set_fade_event(self.map, 1)
+        self.set_fade_event(self.shop, 0)
+        self.set_fade_event(self.battle, 0)
+        self.set_fade_event(self.event, 0)
+        self.set_fade_event(self.dungeon, 0)
 
     def fade_to_event(self):
         self.region_state = "Event"
-        self.constant.set_volume(1)
-        self.map.set_volume(0)
-        self.shop.set_volume(1)
-        self.battle.set_volume(0)
-        self.event.set_volume(0)
-        self.dungeon.set_volume(0)
+        self.set_fade_event(self.constant, 1)
+        self.set_fade_event(self.map, 0)
+        self.set_fade_event(self.shop, 0)
+        self.set_fade_event(self.battle, 0)
+        self.set_fade_event(self.event, 0)
+        self.set_fade_event(self.dungeon, 0)
 
     def layer_fade_out(self):
         if self.constant.get_busy():
