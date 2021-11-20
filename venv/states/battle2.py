@@ -277,6 +277,7 @@ class Battle(BaseState):
         self.battle_overlay.update(dt)
         self.damage_particle.update(dt)
         self.message.update(dt)
+        self.persist['Music'].update(dt, self)
         if self.state == "Pre_Battle":
             self.state = "Pre_Turn"
         elif self.state == "Pre_Turn":
@@ -354,6 +355,7 @@ class Battle(BaseState):
                 self.state = self.next_battle_state
                 self.next_battle_state = None
         self.persist['FX'].update(dt)
+        self.persist['SFX'].update(dt)
 
     def stop_wait(self):
         if self.state == "Wait":

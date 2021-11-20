@@ -642,6 +642,7 @@ class Region(BaseState):
         self.nodes.update(dt)
         self.party.update(dt)
         self.cursor.update(dt)
+        self.persist['Music'].update(dt, self)
         for path in self.paths:
             path.update(dt)
         for button in self.buttons:

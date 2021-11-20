@@ -1566,6 +1566,11 @@ BATTLE_MENU_SPRITES = {
 }
 
 MUSIC = {'Title': r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\music\title.oga",
+         'Desert': {'constant': pygame.mixer.Sound(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\music\Desert_Layer\constant-Constant.wav"),
+                    'shop': pygame.mixer.Sound(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\music\Desert_Layer\shop-Shop.wav"),
+                    'map': pygame.mixer.Sound(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\music\Desert_Layer\map-Map.wav"),
+                    'battle': pygame.mixer.Sound(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\music\Desert_Layer\battle-Battle.wav"),
+                    }
          }
 
 SOUND_EFFECTS = {'Toggle_1': pygame.mixer.Sound(
@@ -1574,6 +1579,10 @@ SOUND_EFFECTS = {'Toggle_1': pygame.mixer.Sound(
             r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sfx\503340__tahutoa__clicky-accept-menu-sound.wav"),
         'Confirm_1': pygame.mixer.Sound(
             r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sfx\403019__inspectorj__ui-confirmation-alert-c4.wav"),
+        'Blast_1': pygame.mixer.Sound(
+            r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sfx\blast_1.wav"),
+        'Attack_1': pygame.mixer.Sound(
+            r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sfx\attack_1.wav"),
     'Menu': {
         'Toggle_1': pygame.mixer.Sound(
             r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sfx\397604__nightflame__menu-fx-01.wav"),
@@ -1666,15 +1675,96 @@ class MusicManager(object):
         self.region_state = None
         self.fade_event = []
         self.music_schedule = []
+        self.state = 'music'
+        self.constant = pygame.mixer.Channel(0)
+        self.map = pygame.mixer.Channel(1)
+        self.shop = pygame.mixer.Channel(2)
+        self.battle = pygame.mixer.Channel(3)
+        self.event = pygame.mixer.Channel(4)
+        self.dungeon = pygame.mixer.Channel(5)
 
-    def update(self, dt):
-        if not pygame.mixer.music.get_busy():
-            if self.music_schedule:
-                self.music_schedule[0][0] -= dt
-                if self.music_schedule[0][0] <= 0:
-                    pygame.mixer.music.load(self.music_schedule[0][1])
-                    pygame.mixer.music.play(-1, fade_ms=self.music_schedule[0][2])
-                    del self.music_schedule[0]
+    def update(self, dt, parent=None):
+        if self.state is 'music':
+            if not pygame.mixer.music.get_busy():
+                if self.music_schedule:
+                    self.music_schedule[0][0] -= dt
+                    if self.music_schedule[0][0] <= 0:
+                        pygame.mixer.music.load(self.music_schedule[0][1])
+                        pygame.mixer.music.play(-1, fade_ms=self.music_schedule[0][2])
+                        del self.music_schedule[0]
+            if parent is not None:
+                self.music_schedule.clear()
+                self.state = 'layer'
+                self.fade_out()
+        elif self.state is 'layer':
+            print('here')
+            if self.region is not parent.persist['region_type']:
+                self.layer_fade_out()
+                self.set_region(parent.persist['region_type'])
+            if parent.state == "Event":
+                if isinstance(parent.party.node.event, Shop) and self.region_state != "Shop":
+                    self.fade_to_shop()
+                else:
+                    self.fade_to_event()
+            elif parent.state == "Browse" and self.region_state != "Browse":
+                self.fade_to_map()
+
+    def fade_to_shop(self):
+        self.region_state = "Shop"
+        self.constant.set_volume(1)
+        self.map.set_volume(0)
+        self.shop.set_volume(1)
+        self.battle.set_volume(0)
+        self.event.set_volume(0)
+        self.dungeon.set_volume(0)
+
+    def fade_to_map(self):
+        self.region_state = "Map"
+        self.constant.set_volume(1)
+        self.map.set_volume(1)
+        self.shop.set_volume(0)
+        self.battle.set_volume(0)
+        self.event.set_volume(0)
+        self.dungeon.set_volume(0)
+
+    def fade_to_event(self):
+        self.region_state = "Event"
+        self.constant.set_volume(1)
+        self.map.set_volume(0)
+        self.shop.set_volume(1)
+        self.battle.set_volume(0)
+        self.event.set_volume(0)
+        self.dungeon.set_volume(0)
+
+    def layer_fade_out(self):
+        if self.constant.get_busy():
+            self.constant.fadeout(2000)
+        if self.map.get_busy():
+            self.map.fadeout(2000)
+        if self.shop.get_busy():
+            self.shop.fadeout(2000)
+        if self.battle.get_busy():
+            self.battle.fadeout(2000)
+        if self.event.get_busy():
+            self.event.fadeout(2000)
+        if self.dungeon.get_busy():
+            self.dungeon.fadeout(2000)
+
+    def set_region(self, region):
+        self.region = region
+        self.region_state = "Browse"
+        self.constant.play(MUSIC[region]['constant'], -1, fade_ms=2000)
+        self.constant.set_volume(1)
+        self.map.play(MUSIC[region]['map'], -1, fade_ms=2000)
+        self.map.set_volume(1)
+        self.shop.play(MUSIC[region]['shop'], -1)
+        self.shop.set_volume(0)
+        self.battle.play(MUSIC[region]['battle'], -1)
+        self.battle.set_volume(0)
+        self.event.play(MUSIC[region]['constant'], -1)
+        self.event.set_volume(0)
+        self.dungeon.play(MUSIC[region]['constant'], -1)
+        self.dungeon.set_volume(0)
 
     def set_state(self, region_state=None, game_state=None):
         if game_state is not None and game_state != self.game_state:
@@ -3920,6 +4010,7 @@ class Attack(BattleAction):
         for target in self.target:
             damage = attack_defense_calculate(self, self.parent, target)
             target.damage(damage, self, delay=100)
+            self.parent.parent.persist['SFX'].schedule_sfx('Attack_1')
         self.end_action_timer = 1000
 
     def target_set(self, source, battle_character):
@@ -3971,6 +4062,7 @@ class KiBlast(BattleAction):
             damage = attack_defense_calculate(self, self.parent, target)
             target.damage(damage, self, delay=2000)
         self.parent.parent.persist['FX'].add_effect(self.animation_sprites, self.animation_frames, self.frame_times, self.delay, self.animation_type)
+        self.parent.parent.persist['SFX'].schedule_sfx('Blast_1')
         self.end_action_timer = 3000
 
     def target_set(self, source, battle_character):
