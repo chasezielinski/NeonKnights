@@ -642,7 +642,6 @@ class Region(BaseState):
         self.nodes.update(dt)
         self.party.update(dt)
         self.cursor.update(dt)
-        self.persist['Music'].update(dt, self)
         for path in self.paths:
             path.update(dt)
         for button in self.buttons:
@@ -655,6 +654,7 @@ class Region(BaseState):
             self.skill_menu.update(dt)
         elif self.state == "Cursor_Move":
             self.cursor.move(dt)
+        self.persist['Music'].update(dt, self)
 
     def draw(self, surface):
         surface.fill(pygame.Color("black"))
