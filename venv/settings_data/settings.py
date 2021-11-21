@@ -1686,7 +1686,7 @@ class MusicManager(object):
 
     def update(self, dt, parent=None):
         if parent is not None:
-            print(parent.state)
+            pass
         if self.state is 'music':
             if not pygame.mixer.music.get_busy():
                 if self.music_schedule:
