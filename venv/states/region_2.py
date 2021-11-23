@@ -655,6 +655,7 @@ class Region(BaseState):
         elif self.state == "Cursor_Move":
             self.cursor.move(dt)
         self.persist['Music'].update(dt, self)
+        self.persist['SFX'].update(dt)
 
     def draw(self, surface):
         surface.fill(pygame.Color("black"))

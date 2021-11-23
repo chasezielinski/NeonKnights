@@ -940,6 +940,7 @@ class Shop(object):
                 if len(self.shop_inventory) > i:
                     if click_check(self.item_rects[i]):
                         self.buy()
+                        self.parent.parent.persist['SFX'].schedule_sfx('Shop_Buy_1')
                         break
 
     def buy(self):
@@ -979,13 +980,21 @@ class Event(object):
         self.enemies = None
         self.prompt = None
         self.options = None
-        self.supply_reward = None
-        self.gold_reward = None
-        self.elixir_reward = None
-        self.charger_reward = None
+        self.rewards = None
+        self.cost = None
         self.item_reward = None
+        self.display_cost_reward = False
         for key in parameter_dictionary.keys():
-            setattr(self, key, parameter_dictionary[key])
+            if key == "cost":
+                self.cost = {}
+                for k in parameter_dictionary[key].keys():
+                    self.cost[k] = eval(parameter_dictionary[key][k])
+            elif key == "rewards":
+                self.rewards = {}
+                for k in parameter_dictionary[key].keys():
+                    self.rewards[k] = eval(parameter_dictionary[key][k])
+            else:
+                setattr(self, key, parameter_dictionary[key])
 
     def update(self, dt):
         if self.timer > 0:
@@ -999,6 +1008,7 @@ class Event(object):
                 self.state = self.next_state
         elif self.state == "Reward":
             self.reward()
+            self.pay_cost()
         elif self.state == "Exit":
             self.parent.event = shop_builder(self.parent)
             self.parent.parent.state = "Browse"
@@ -1019,6 +1029,46 @@ class Event(object):
                 tw(surface, str(index+1) + ". " + option[0], color, [self.option_rect[0], self.option_rect[1] +
                                                               (index * Y * 5 / 100), self.option_rect[2],
                                                               self.option_rect[3]], TEXT_FONT)
+        if self.display_cost_reward:
+            index = int(len(self.prompt)/45)
+            cost_keys = list(self.cost.keys())
+            rewards_keys = list(self.rewards.keys())
+            cost_text1 = ''
+            cost_text2 = ''
+            cost_text3 = ''
+            cost_text4 = ''
+            cost_text5 = ''
+            if len(cost_keys) > 0:
+                cost_text1 = f'Give:    {cost_keys[0]}: {self.cost[cost_keys[0]]}'
+                if len(cost_keys) > 1:
+                    cost_text2 = f' {cost_keys[1]}: {self.cost[cost_keys[1]]}'
+                    if len(cost_keys) > 2:
+                        cost_text3 = f' {cost_keys[2]}: {self.cost[cost_keys[2]]}'
+                        if len(cost_keys) > 3:
+                            cost_text4 = f' {cost_keys[3]}: {self.cost[cost_keys[3]]}'
+                            if len(cost_keys) > 4:
+                                cost_text5 = f' {cost_keys[4]}: {self.cost[cost_keys[4]]}'
+            cost_text = cost_text1 + cost_text2 + cost_text3 + cost_text4 + cost_text5
+            tw(surface, cost_text, TEXT_COLOR, [X*18/100, (Y*17/100) + Y*5*index/100, X*60/100, Y*15/100], TEXT_FONT)
+            rewards_text1 = ''
+            rewards_text2 = ''
+            rewards_text3 = ''
+            rewards_text4 = ''
+            rewards_text5 = ''
+            if len(rewards_keys) > 0:
+                rewards_text1 = f'Recieve:    {rewards_keys[0]}: {self.rewards[rewards_keys[0]]}'
+                if len(rewards_keys) > 1:
+                    rewards_text2 = f' {rewards_keys[1]}: {self.rewards[rewards_keys[1]]}'
+                    if len(rewards_keys) > 2:
+                        rewards_text3 = f' {rewards_keys[2]}: {self.rewards[rewards_keys[2]]}'
+                        if len(rewards_keys) > 3:
+                            rewards_text4 = f' {rewards_keys[3]}: {self.rewards[rewards_keys[3]]}'
+                            if len(rewards_keys) > 4:
+                                rewards_text5 = f' {rewards_keys[4]}: {self.rewards[rewards_keys[4]]}'
+            rewards_text = rewards_text1 + rewards_text2 + rewards_text3 + rewards_text4 + rewards_text5
+            print(rewards_text)
+            tw(surface, rewards_text, TEXT_COLOR,
+               [X * 18 / 100, (Y * 17 / 100) + Y * 5 * (index + 2) / 100, X * 60 / 100, Y * 15 / 100], TEXT_FONT)
 
     def handle_action(self, action):
         if action == "click":
@@ -1026,13 +1076,31 @@ class Event(object):
                 for index, option in enumerate(self.options):
                     if click_check([self.option_rect[0], self.option_rect[1] + (index * Y * 5 / 100),
                                     self.option_rect[2], self.option_rect[3]]):
-                        outcome = choose_random_weighted(self.options[index][1], self.options[index][2])
-                        if "state" in outcome.keys():
-                            setattr(self, "state", outcome["state"])
-                        if "prompt" in outcome.keys():
-                            setattr(self, "prompt", outcome["prompt"])
-                        if "options" in outcome.keys():
-                            setattr(self, "options", outcome["options"])
+                        if len(option) > 3:
+                            for key in self.cost.keys():
+                                if self.parent.parent.persist[key] < self.cost[key]:
+                                    break
+                            else:
+                                outcome = choose_random_weighted(self.options[index][1], self.options[index][2])
+                                if "state" in outcome.keys():
+                                    setattr(self, "state", outcome["state"])
+                                if "prompt" in outcome.keys():
+                                    setattr(self, "prompt", outcome["prompt"])
+                                if "options" in outcome.keys():
+                                    setattr(self, "options", outcome["options"])
+                                if self.display_cost_reward:
+                                    self.display_cost_reward = False
+
+                        else:
+                            outcome = choose_random_weighted(self.options[index][1], self.options[index][2])
+                            if "state" in outcome.keys():
+                                setattr(self, "state", outcome["state"])
+                            if "prompt" in outcome.keys():
+                                setattr(self, "prompt", outcome["prompt"])
+                            if "options" in outcome.keys():
+                                setattr(self, "options", outcome["options"])
+                            if self.display_cost_reward:
+                                self.display_cost_reward = False
 
         elif action == "mouse_move":
             self.option_index = -1
@@ -1116,14 +1184,9 @@ class Event(object):
         self.parent.parent.done = True
 
     def reward(self):
-        if self.gold_reward is not None:
-            self.parent.parent.persist['gold'] += self.gold_reward
-        if self.charger_reward is not None:
-            self.parent.parent.persist['chargers'] += self.charger_reward
-        if self.elixir_reward is not None:
-            self.parent.parent.persist['elixirs'] += self.elixir_reward
-        if self.supply_reward is not None:
-            self.parent.parent.persist['supplies'] += self.supply_reward
+        if self.rewards is not None:
+            for key in self.rewards.keys():
+                self.parent.parent.persist[key] += self.rewards[key]
         if self.item_reward is not None:
             if isinstance(self.item_reward, list):
                 for item in self.item_reward:
@@ -1131,6 +1194,11 @@ class Event(object):
             else:
                 self.parent.parent.persist['inventory'].append(self.item_reward)
         self.exit()
+
+    def pay_cost(self):
+        if self.cost is not None:
+            for key in self.cost.keys():
+                self.parent.parent.persist[key] -= self.cost[key]
 
     def exit(self):
         self.timer = 250
@@ -1175,7 +1243,10 @@ def event_caller(parent, node):
                                                           region_type + "_Weights"])
         return Event(node, parameter_dictionary)
     elif node.type == "Event":
-        return EmptyNode(node)
+        parameter_dictionary = choose_random_weighted(event_dictionary["All"] + event_dictionary[region_type],
+                                                      event_dictionary["All_Weights"] + event_dictionary[
+                                                          region_type + "_Weights"])
+        return Event(node, parameter_dictionary)
     elif node.type == "Dungeon":
         return EmptyNode(node)
     elif node.type == "Shop":
@@ -1216,6 +1287,31 @@ def shop_builder(node):
     return Shop(node, shop_name, supplies, elixirs, chargers, items, characters)
 
 
+class Dialogue(object):
+    def __init__(self, info):
+        """valid info entries:
+            id: unique identifier for use of linking dialog trees by options
+            prompt: text to be printed to describe, instruct, or otherwise inform the player about their options
+            options: dict of options given to the player, value is a list of possible outcomes and probabilities
+            cost/2/3/n: if an option requires a cost, describe it in a dict here
+            reward/2/3/n: dict of rewards for an outcome
+            enemies: list of enemies for a battle outcome
+            character: if a character will join as reward, put it here
+            option_flag: if an option has a requirement to be displayed, put it here"""
+        for key, value in info.items():
+            setattr(self, key, value)
+
+
+class DialogueBranch(Dialogue):
+    def __init__(self, info):
+        super().__init__(info)
+
+
+class DialogueTree(Dialogue):
+    def __init__(self, info):
+        super().__init__(info)
+
+
 encounter_dictionary = {
     "All": [
         {"prompt": "A pair of aggressive slime monsters try to block your path.",
@@ -1233,8 +1329,21 @@ shop_dictionary = {
     "All": [
         {"prompt": "A small shop that might have something useful.",
          "options": [["Check it out.", [{"state": "Shop"}], [1]],
-                     ["Not interested.", [{"state": "Exit"}], [1]]],
-         "enemies": ["Slime", "Slime"]}],
+                     ["Not interested.", [{"state": "Exit"}], [1]]],}],
+    "All_Weights": [1],
+    "Desert": [],
+    "Desert_Weights": [], }
+
+event_dictionary = {
+    "All": [
+        {"prompt": "You come across a small camp. The inhabitants explain that they're in need of chargers and are "
+                   "willing to trade for them.",
+         "cost": {"chargers": 'random.randint(1, 3)'},
+         "rewards": {"supplies": 'random.randint(1, 3)', "elixirs": 'random.randint(1, 3)', "gold": 'random.randint(0, 50)'},
+         "options": [["Seems like a fair deal.", [{"state": "Reward"}], [1], "cost"],
+                     ["Not interested.", [{"prompt": "The group grumble among themselves as they head back to their camp.",
+                                           "options": [["Continue on.", [{"state": "Exit"}], [1]]]}], [1]]],
+         "display_cost_reward": True}],
     "All_Weights": [1],
     "Desert": [],
     "Desert_Weights": [], }
@@ -1579,6 +1688,8 @@ SOUND_EFFECTS = {'Toggle_1': pygame.mixer.Sound(
             r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sfx\503340__tahutoa__clicky-accept-menu-sound.wav"),
         'Confirm_1': pygame.mixer.Sound(
             r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sfx\403019__inspectorj__ui-confirmation-alert-c4.wav"),
+        'Shop_Buy_1': pygame.mixer.Sound(
+            r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sfx\shop_buy_1.wav"),
         'Blast_1': pygame.mixer.Sound(
             r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sfx\blast_1.wav"),
         'Attack_1': pygame.mixer.Sound(
@@ -1686,7 +1797,9 @@ class MusicManager(object):
 
     def update(self, dt, parent=None):
         if parent is not None:
-            pass
+            if self.game_state != type(parent).__name__:
+                self.game_state = type(parent).__name__
+                eval('self.fade_to_' + self.game_state.lower())()
         if self.state is 'music':
             if not pygame.mixer.music.get_busy():
                 if self.music_schedule:
@@ -1711,16 +1824,16 @@ class MusicManager(object):
                     event[0].set_volume(new_volume)
                     if event[3] <= 0:
                         self.channel_fade.remove(event)
-            if self.region is not parent.persist['region_type']:
-                self.layer_fade_out()
-                self.set_region(parent.persist['region_type'])
-            if parent.state == "Event":
-                if isinstance(parent.party.node.event, Shop) and self.region_state != "Shop":
-                    self.fade_to_shop()
-                elif self.region_state != "Event" and not isinstance(parent.party.node.event, Shop):
-                    self.fade_to_event()
-            elif parent.state == "Browse" and self.region_state != "Browse":
-                self.fade_to_map()
+            if self.game_state == "Region":
+                if self.region is not parent.persist['region_type']:
+                    self.set_region(parent.persist['region_type'])
+                if parent.state == "Event":
+                    if isinstance(parent.party.node.event, Shop) and self.region_state != "Shop":
+                        self.fade_to_shop()
+                    elif self.region_state != "Event" and not isinstance(parent.party.node.event, Shop):
+                        self.fade_to_event()
+                elif parent.state == "Browse" and self.region_state != "Browse":
+                    self.fade_to_region()
 
     def set_fade_event(self, channel, target, time=1000, delay=0):
         start_volume = channel.get_volume()
@@ -1736,7 +1849,7 @@ class MusicManager(object):
         self.set_fade_event(self.event, 0)
         self.set_fade_event(self.dungeon, 0)
 
-    def fade_to_map(self):
+    def fade_to_region(self):
         self.region_state = "Browse"
         self.set_fade_event(self.constant, 1)
         self.set_fade_event(self.map, 1)
@@ -1751,6 +1864,14 @@ class MusicManager(object):
         self.set_fade_event(self.map, 0)
         self.set_fade_event(self.shop, 0)
         self.set_fade_event(self.battle, 0)
+        self.set_fade_event(self.event, 0)
+        self.set_fade_event(self.dungeon, 0)
+
+    def fade_to_battle(self):
+        self.set_fade_event(self.constant, 1)
+        self.set_fade_event(self.map, 0)
+        self.set_fade_event(self.shop, 0)
+        self.set_fade_event(self.battle, 1)
         self.set_fade_event(self.event, 0)
         self.set_fade_event(self.dungeon, 0)
 
@@ -1771,18 +1892,20 @@ class MusicManager(object):
     def set_region(self, region):
         self.region = region
         self.region_state = "Browse"
-        self.constant.play(MUSIC[region]['constant'], -1, fade_ms=2000)
-        self.constant.set_volume(1)
-        self.map.play(MUSIC[region]['map'], -1, fade_ms=2000)
-        self.map.set_volume(1)
-        self.shop.play(MUSIC[region]['shop'], -1)
-        self.shop.set_volume(0)
+        self.constant.play(MUSIC[region]['constant'], -1)
+        self.set_fade_event(self.constant, 0, 10, 10)
+        self.set_fade_event(self.constant, 1, 1000, 100)
+        self.map.play(MUSIC[region]['map'], -1)
+        self.set_fade_event(self.map, 0, 10, 10)
+        self.set_fade_event(self.map, 1, 1000, 100)
+        self.shop.play(MUSIC[region]['shop'], -1,)
+        self.set_fade_event(self.shop, 0, 10, 10)
         self.battle.play(MUSIC[region]['battle'], -1)
-        self.battle.set_volume(0)
+        self.set_fade_event(self.battle, 0, 10, 10)
         self.event.play(MUSIC[region]['constant'], -1)
-        self.event.set_volume(0)
+        self.set_fade_event(self.event, 0, 10, 10)
         self.dungeon.play(MUSIC[region]['constant'], -1)
-        self.dungeon.set_volume(0)
+        self.set_fade_event(self.dungeon, 0, 10, 10)
 
     def set_state(self, region_state=None, game_state=None):
         if game_state is not None and game_state != self.game_state:
