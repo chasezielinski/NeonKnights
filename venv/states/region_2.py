@@ -255,7 +255,6 @@ class Cursor(object):
                 self.visible = False
 
 
-
 class Party(pygame.sprite.Sprite):
     def __init__(self, parent):
         pygame.sprite.Sprite.__init__(self)
@@ -628,6 +627,8 @@ class Region(BaseState):
                 self.handle_action("9")
             elif event.key == pygame.K_0:
                 self.handle_action("0")
+            elif event.key == pygame.K_SPACE:
+                self.handle_action("space")
         elif event.type == pygame.MOUSEBUTTONDOWN:
             if event.button == 1:
                 self.handle_action("click")

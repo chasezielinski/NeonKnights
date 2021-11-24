@@ -971,7 +971,9 @@ class Event(object):
         self.state = "Prompt"
         self.option_index = -1
         self.bg_1_rect = [X * 17 / 100, Y * 7 / 100, X * 60 / 100, Y * 88 / 100]
-        self.bg_2_rect = [X * 17 / 100, Y * 8 / 100, X * 59 / 100, Y * 86 / 100]
+        self.bg_2_rect = [X * 18 / 100, Y * 8 / 100, X * 59 / 100, Y * 86 / 100]
+        self.pos = [X * 17/100, Y * 7/100]
+        self.pos_origin = (X * 17/100, Y * 7/100)
         self.prompt_rect = [X * 18 / 100, Y * 9 / 100, X * 57 / 100, Y * 84 / 100]
         self.option_rect = [X * 18 / 100, Y * 55 / 100, X * 57 / 100, Y * 5 / 100]
         self.option_offset = 5
@@ -984,6 +986,7 @@ class Event(object):
         self.cost = None
         self.item_reward = None
         self.display_cost_reward = False
+        self.shake_queue = []
         for key in parameter_dictionary.keys():
             if key == "cost":
                 self.cost = {}
@@ -996,11 +999,51 @@ class Event(object):
             else:
                 setattr(self, key, parameter_dictionary[key])
 
+    def restore_position(self):
+        if self.pos[0] != self.pos_origin[0]:
+            if -0.001 > self.pos[0] - self.pos_origin[0] > 0.001:
+                self.pos[0] = self.pos_origin[0]
+            else:
+                self.pos[0] = self.pos[0] + (0.1 * (self.pos_origin[0] - self.pos[0]))
+        if self.pos[1] != self.pos_origin[1]:
+            if -0.001 > self.pos[1] - self.pos_origin[1] > 0.001:
+                self.pos[1] = self.pos_origin[1]
+            else:
+                self.pos[1] = self.pos[1] + (0.1 * (self.pos_origin[1] - self.pos[1]))
+
+    def update_position(self):
+        self.bg_1_rect = [self.pos[0], self.pos[1], X * 60 / 100, Y * 88 / 100]
+        self.bg_2_rect = [self.pos[0] + (X * 1 / 100), self.pos[1] + (Y * 1 / 100), X * 58 / 100, Y * 86 / 100]
+        self.prompt_rect = [self.pos[0] + (X * 1 / 100), self.pos[1] + (Y * 2 / 100), X * 57 / 100, Y * 84 / 100]
+        self.option_rect = [self.pos[0] + (X * 1 / 100), self.pos[1] + (Y * 48 / 100), X * 57 / 100, Y * 5 / 100]
+
+    def update_timer(self, dt):
+        self.timer -= dt
+        if self.timer < 0:
+            self.timer = 0
+
+    def shake(self, n=6, delay=150, magnitude=15):
+        for i in range(n):
+            x = random_int(-1, 1) * magnitude
+            y = random_int(-1, 1) * magnitude
+            self.shake_queue.append([(x, y), delay])
+            self.parent.parent.persist['SFX'].schedule_sfx("Thump_1", 100)
+
+    def shake_tick(self, dt):
+        self.shake_queue[0][1] -= dt
+        if self.shake_queue[0][1] <= 0:
+            self.pos[0] += self.shake_queue[0][0][0]
+            self.pos[1] += self.shake_queue[0][0][1]
+            del self.shake_queue[0]
+
     def update(self, dt):
+        self.update_position()
+        if self.pos[0] != self.pos_origin[0] or self.pos[1] != self.pos_origin[1]:
+            self.restore_position()
         if self.timer > 0:
-            self.timer -= dt
-            if self.timer < 0:
-                self.timer = 0
+            self.update_timer(dt)
+        if self.shake_queue:
+            self.shake_tick(dt)
         if self.state == "Prompt":
             pass
         elif self.state == "Delay":
@@ -1048,13 +1091,9 @@ class Event(object):
                             cost_text4 = f' {cost_keys[3]}: {self.cost[cost_keys[3]]}'
                             if len(cost_keys) > 4:
                                 cost_text5 = f' {cost_keys[4]}: {self.cost[cost_keys[4]]}'
-            cost_text = cost_text1 + cost_text2 + cost_text3 + cost_text4 + cost_text5
-            tw(surface, cost_text, TEXT_COLOR, [X*18/100, (Y*17/100) + Y*5*index/100, X*60/100, Y*15/100], TEXT_FONT)
-            rewards_text1 = ''
-            rewards_text2 = ''
-            rewards_text3 = ''
-            rewards_text4 = ''
-            rewards_text5 = ''
+            cost_text = cost_text1 + cost_text2 + cost_text3 + cost_text4 + cost_text5 #[X * 17/100, Y * 7/100]
+            tw(surface, cost_text, TEXT_COLOR, [self.pos[0] + (X*1/100), (Y*10/100) + Y*5*index/100 + self.pos[1], X*60/100, Y*15/100], TEXT_FONT)
+            rewards_text1 = rewards_text2 = rewards_text3 = rewards_text4 = rewards_text5 = ''
             if len(rewards_keys) > 0:
                 rewards_text1 = f'Recieve:    {rewards_keys[0]}: {self.rewards[rewards_keys[0]]}'
                 if len(rewards_keys) > 1:
@@ -1068,7 +1107,7 @@ class Event(object):
             rewards_text = rewards_text1 + rewards_text2 + rewards_text3 + rewards_text4 + rewards_text5
             print(rewards_text)
             tw(surface, rewards_text, TEXT_COLOR,
-               [X * 18 / 100, (Y * 17 / 100) + Y * 5 * (index + 2) / 100, X * 60 / 100, Y * 15 / 100], TEXT_FONT)
+               [self.pos[0] + (X*1/100), (Y * 10 / 100) + self.pos[1] + Y * 5 * (index + 2) / 100, X * 60 / 100, Y * 15 / 100], TEXT_FONT)
 
     def handle_action(self, action):
         if action == "click":
@@ -1165,17 +1204,17 @@ class Event(object):
                 self.handle_action("return")
 
         elif action == "down":
-            print(self.option_index)
             self.option_index += 1
             if len(self.options) != 0:
                 self.option_index %= len(self.options)
 
         elif action == "up":
-            print(self.option_index)
             self.option_index -= 1
             if len(self.options) != 0:
                 self.option_index %= len(self.options)
-        print(self.option_index)
+
+        elif action == "space":
+            self.shake()
 
     def battle(self):
         self.parent.parent.persist['enemies'] = self.enemies
@@ -1679,6 +1718,7 @@ MUSIC = {'Title': r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\mu
                     'shop': pygame.mixer.Sound(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\music\Desert_Layer\shop-Shop.wav"),
                     'map': pygame.mixer.Sound(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\music\Desert_Layer\map-Map.wav"),
                     'battle': pygame.mixer.Sound(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\music\Desert_Layer\battle-Battle.wav"),
+                    'event': pygame.mixer.Sound(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\music\Desert_Layer\event-Event.wav"),
                     }
          }
 
@@ -1694,6 +1734,8 @@ SOUND_EFFECTS = {'Toggle_1': pygame.mixer.Sound(
             r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sfx\blast_1.wav"),
         'Attack_1': pygame.mixer.Sound(
             r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sfx\attack_1.wav"),
+        'Thump_1': pygame.mixer.Sound(
+            r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sfx\thump_1.wav"),
     'Menu': {
         'Toggle_1': pygame.mixer.Sound(
             r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sfx\397604__nightflame__menu-fx-01.wav"),
@@ -1708,6 +1750,8 @@ SOUND_EFFECTS = {'Toggle_1': pygame.mixer.Sound(
 class SFXManager(object):
     def __init__(self):
         self.sfx = []
+        self.sfx_channels = [pygame.mixer.Channel(0), pygame.mixer.Channel(1), pygame.mixer.Channel(2),
+                             pygame.mixer.Channel(3), pygame.mixer.Channel(4), pygame.mixer.Channel(5)]
 
     def schedule_sfx(self, sound, delay=0, play=1):
         self.sfx.append({'sound': sound, 'delay': delay, 'delay_reset': delay, 'play': play})
@@ -1717,7 +1761,10 @@ class SFXManager(object):
             sfx['delay'] -= dt
             if sfx['delay'] <= 0:
                 if sfx['sound'] in list(SOUND_EFFECTS.keys()):
-                    SOUND_EFFECTS[sfx['sound']].play()
+                    for channel in self.sfx_channels:
+                        if not channel.get_busy():
+                            channel.play(SOUND_EFFECTS[sfx['sound']])
+                            break
                 sfx['play'] -= 1
                 if sfx['play'] <= 0:
                     self.sfx.remove(sfx)
@@ -1787,12 +1834,24 @@ class MusicManager(object):
         self.fade_event = []
         self.music_schedule = []
         self.state = 'music'
-        self.constant = pygame.mixer.Channel(0)
-        self.map = pygame.mixer.Channel(1)
-        self.shop = pygame.mixer.Channel(2)
-        self.battle = pygame.mixer.Channel(3)
-        self.event = pygame.mixer.Channel(4)
-        self.dungeon = pygame.mixer.Channel(5)
+        self.constant = pygame.mixer.Channel(6)
+        self.map = pygame.mixer.Channel(7)
+        self.shop = pygame.mixer.Channel(8)
+        self.battle = pygame.mixer.Channel(9)
+        self.event = pygame.mixer.Channel(10)
+        self.dungeon = pygame.mixer.Channel(11)
+        self.map.set_volume(0)
+        self.event.set_volume(0)
+        self.battle.set_volume(0)
+        self.shop.set_volume(0)
+        self.dungeon.set_volume(0)
+        self.constant.set_volume(0)
+        self.map_sound = None
+        self.shop_sound = None
+        self.battle_sound = None
+        self.event_sound = None
+        self.dungeon_sound = None
+        self.constant_sound = None
         self.channel_fade = []
 
     def update(self, dt, parent=None):
@@ -1861,10 +1920,10 @@ class MusicManager(object):
     def fade_to_event(self):
         self.region_state = "Event"
         self.set_fade_event(self.constant, 1)
-        self.set_fade_event(self.map, 0)
+        self.set_fade_event(self.map, 1)
         self.set_fade_event(self.shop, 0)
         self.set_fade_event(self.battle, 0)
-        self.set_fade_event(self.event, 0)
+        self.set_fade_event(self.event, 1)
         self.set_fade_event(self.dungeon, 0)
 
     def fade_to_battle(self):
@@ -1876,36 +1935,29 @@ class MusicManager(object):
         self.set_fade_event(self.dungeon, 0)
 
     def layer_fade_out(self):
-        if self.constant.get_busy():
-            self.constant.fadeout(2000)
-        if self.map.get_busy():
-            self.map.fadeout(2000)
-        if self.shop.get_busy():
-            self.shop.fadeout(2000)
-        if self.battle.get_busy():
-            self.battle.fadeout(2000)
-        if self.event.get_busy():
-            self.event.fadeout(2000)
-        if self.dungeon.get_busy():
-            self.dungeon.fadeout(2000)
+        self.set_fade_event(self.constant, 0)
+        self.set_fade_event(self.map, 0)
+        self.set_fade_event(self.shop, 0)
+        self.set_fade_event(self.battle, 0)
+        self.set_fade_event(self.event, 0)
+        self.set_fade_event(self.dungeon, 0)
 
     def set_region(self, region):
         self.region = region
         self.region_state = "Browse"
-        self.constant.play(MUSIC[region]['constant'], -1)
-        self.set_fade_event(self.constant, 0, 10, 10)
-        self.set_fade_event(self.constant, 1, 1000, 100)
-        self.map.play(MUSIC[region]['map'], -1)
-        self.set_fade_event(self.map, 0, 10, 10)
-        self.set_fade_event(self.map, 1, 1000, 100)
-        self.shop.play(MUSIC[region]['shop'], -1,)
-        self.set_fade_event(self.shop, 0, 10, 10)
-        self.battle.play(MUSIC[region]['battle'], -1)
-        self.set_fade_event(self.battle, 0, 10, 10)
-        self.event.play(MUSIC[region]['constant'], -1)
-        self.set_fade_event(self.event, 0, 10, 10)
-        self.dungeon.play(MUSIC[region]['constant'], -1)
-        self.set_fade_event(self.dungeon, 0, 10, 10)
+        self.map_sound = MUSIC[region]['map']
+        self.shop_sound = MUSIC[region]['shop']
+        self.battle_sound = MUSIC[region]['battle']
+        self.event_sound = MUSIC[region]['event']
+        self.dungeon_sound = MUSIC[region]['constant']
+        self.constant_sound = MUSIC[region]['constant']
+        self.map.play(self.map_sound, -1, fade_ms=2000)
+        self.event.play(self.event_sound, -1, fade_ms=2000)
+        self.battle.play(self.battle_sound, -1, fade_ms=2000)
+        self.shop.play(self.shop_sound, -1, fade_ms=2000)
+        self.dungeon.play(self.dungeon_sound, -1, fade_ms=2000)
+        self.constant.play(self.constant_sound, -1, fade_ms=2000)
+        self.fade_to_region()
 
     def set_state(self, region_state=None, game_state=None):
         if game_state is not None and game_state != self.game_state:

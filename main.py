@@ -15,7 +15,7 @@ from battle2 import Battle
 from map_bounds import MapBounds
 from region_select import RegionSelect
 
-
+pygame.mixer.set_num_channels(16)
 # enumerate states
 states = {
     "MENU": Menu(),
