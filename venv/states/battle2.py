@@ -19,6 +19,7 @@ class Battle(BaseState):
         self.battle_actions = pygame.sprite.Group()
         self.battle_animations = pygame.sprite.Group()
         self.damage_particle = settings.DamageParticle()
+        self.action_card_manager = ActionCardManger()
         # instantiate state variables and menu index variables
         self.state = "Pre_Battle"
         self.turn_sub_state = "Browse"
@@ -42,6 +43,7 @@ class Battle(BaseState):
         self.status_particle_index = 0
         self.timer = None
         self.next_battle_state = None
+        self.print_timer = 200
 
     def startup(self, persistent):
         self.persist = persistent
@@ -76,11 +78,11 @@ class Battle(BaseState):
                 if action == "click":
                     # check for click on player character sprite or action queue sprite
                     for i, sprite in enumerate(self.battle_characters.sprites()):
-                        if getattr(sprite, 'slot', 'none') in self.player_slots:
+                        if isinstance(sprite, settings.PlayerCharacter):
                             if sprite.rect.collidepoint(pygame.mouse.get_pos()):
                                 self.player_index = sprite
-                                print(self.player_index.speed)
                                 self.turn_sub_state = "Move_Select"
+                                self.action_card_manager.set_main_actions()
                     # check for click on end turn button
                     if settings.click_check(settings.BATTLE_MENUS['turn_end_rect']):
                         self.turn_sub_state = "Confirm"
@@ -154,14 +156,10 @@ class Battle(BaseState):
                     for i, option in enumerate(settings.actions_dict.keys()):
                         if settings.click_check(settings.BATTLE_MENUS['move_top_menu_rects'][option]):
                             if option == "Skill":
-                                print('here')
                                 if self.player_index.abilities:
-                                    print('here2')
                                     if not self.player_index.dazed > 0 \
                                             and not self.player_index.stunned > 0:
-                                        print('here3')
                                         for action in self.player_index.abilities:
-                                            print('here4')
                                             if action.is_usable():
                                                 self.turn_sub_state = "Skill"
                                                 check = False
@@ -258,6 +256,11 @@ class Battle(BaseState):
         self.state = "Delay"
 
     def update(self, dt):
+        self.print_timer -= dt
+        if self.print_timer <= 0:
+            #print(pygame.mouse.get_pos())
+            #print((pygame.mouse.get_pos()[0]*100/settings.X ,pygame.mouse.get_pos()[1]*100/settings.Y))
+            self.print_timer = 200
         for sprite in self.battle_characters:
             if sprite.hp <= 0:
                 sprite.ko()
@@ -268,7 +271,7 @@ class Battle(BaseState):
                 self.state = "Victory_1"
                 self.win_timer = 2000
                 for player in self.player_characters.sprites():
-                    player.exp += self.exp_reward/len(self.player_characters.sprites())
+                    player.exp += self.exp_reward / len(self.player_characters.sprites())
                 self.persist['gold'] += self.gold_reward
                 self.persist['supplies'] += self.supply_reward
                 self.persist['chargers'] += self.charger_reward
@@ -277,6 +280,7 @@ class Battle(BaseState):
         self.battle_overlay.update(dt)
         self.damage_particle.update(dt)
         self.message.update(dt)
+        self.action_card_manager.update(dt)
         self.persist['Music'].update(dt, self)
         if self.state == "Pre_Battle":
             self.state = "Pre_Turn"
@@ -335,7 +339,7 @@ class Battle(BaseState):
             self.status_particle_index = 0
             for character in self.battle_characters.sprites():
                 character.on_end_turn()
-                self.delay(self.status_particle_index*500, "Pre_Turn")
+                self.delay(self.status_particle_index * 500, "Pre_Turn")
 
         elif self.state == "Victory_1":
             self.win_timer -= dt
@@ -369,6 +373,7 @@ class Battle(BaseState):
         self.damage_particle.draw(surface)
         self.battle_overlay.draw(surface)
         self.battle_actions.draw(surface)
+        self.action_card_manager.draw(surface)
         self.message.draw(surface)
         for action in self.battle_actions.sprites():
             action.draw_text(surface)
@@ -433,14 +438,148 @@ class Battle(BaseState):
                             sprite.queue = b[0]
                             sprite_2.queue = a[0]
 
-    class ActionCard(object):
-        def __init__(self):
-            self.active = False
-            self.hover = False
-            self.name = str
-            self.index = 0
-            self.layer = 0
-            self.selected = False
-            self.pos = [0, 0]
+    def ability_click(self):
+        if self.player_index.abilities:
+            if not self.player_index.dazed > 0 \
+                    and not self.player_index.stunned > 0:
+                for action in self.player_index.abilities:
+                    if action.is_usable():
+                        self.turn_sub_state = "Skill"
+                        break
+
+    def attack_click(self):
+        pass
+
+    def defend_click(self):
+        pass
+
+    def item_click(self):
+        pass
+
+    def run_click(self):
+        pass
 
 
+class ActionCardManger(object):
+    def __init__(self):
+        self.action_cards = []
+        self.card_rect = (31*settings.X/100, 74*settings.Y/100, 66*settings.X/100, 26*settings.Y/100)
+        self.timer = 200
+
+    def update(self, dt):
+        if self.action_cards:
+            self.timer -= dt
+            if self.timer <= 0:
+                self.timer = 1000
+                for card in self.action_cards:
+                    print(f"{card.name}, {card.distance_x_mouse}")
+            lowest = self.action_cards[0]
+            for i, action_card in enumerate(self.action_cards):
+                action_card.update(dt)
+                if action_card.distance_x_mouse < lowest.distance_x_mouse:
+                    lowest = action_card
+            if lowest.hover:
+                lowest.layer = -1
+            for i, action_card in enumerate(self.action_cards):
+                action_card.toggle_position()
+
+    def draw(self, surface):
+        if self.action_cards:
+            self.action_cards.sort(reverse=True)
+            for action_card in self.action_cards:
+                action_card.draw(surface)
+
+    def set_main_actions(self):
+        self.action_cards.append(ActionCard(self, "Attack", "self.parent.parent.attack_click()", 0))
+        self.action_cards.append(ActionCard(self, "Defend", "self.parent.parent.defend_click()", 1))
+        self.action_cards.append(ActionCard(self, "Ability", "self.parent.parent.ability_click()", 2))
+        self.action_cards.append(ActionCard(self, "Item", "self.parent.parent.item_click()", 3))
+        self.action_cards.append(ActionCard(self, "Run", "self.parent.parent.run_click()", 4))
+        self.action_cards.append(ActionCard(self, "Attack", "self.parent.parent.attack_click()", 5))
+        self.action_cards.append(ActionCard(self, "Defend", "self.parent.parent.defend_click()", 6))
+        self.action_cards.append(ActionCard(self, "Ability", "self.parent.parent.ability_click()", 7))
+        self.action_cards.append(ActionCard(self, "Item", "self.parent.parent.item_click()", 8))
+        self.action_cards.append(ActionCard(self, "Run", "self.parent.parent.run_click()", 9))
+        self.set_action_card_positions()
+
+    def set_ability_actions(self):
+        pass
+
+    def set_item_actions(self):
+        pass
+
+    def set_action_card_positions(self):
+        for action_card in self.action_cards:
+            action_card.set_position(len(self.action_cards))
+
+
+class ActionCard(object):
+    def __init__(self, parent, name, function, index):
+        self.parent = parent
+        self.name = name
+        self.function = function
+        self.active = False
+        self.hover = False
+        self.name = name
+        self.index = index
+        self.layer = index
+        self.selected = False
+        self.pos = (0, 0)
+        self.size = (15*settings.X/100, 26*settings.Y/100)
+        self.distance_x_mouse = int
+
+    def update(self, dt):
+        self.distance_x_mouse = (self.pos[0] + self.size[0]/2) - pygame.mouse.get_pos()[0]
+        if self.distance_x_mouse < 0:
+            self.distance_x_mouse *= -1
+        self.hover = False
+        if settings.click_check(self.pos + self.size):
+            self.hover = True
+        self.layer = self.index
+
+    def toggle_position(self):
+        if self.hover and self.layer == -1:
+            self.pos = self.pos[0], self.parent.card_rect[1] - 2*settings.Y/100
+        else:
+            self.pos = self.pos[0], self.parent.card_rect[1]
+
+    def draw(self, surface):
+        pygame.draw.rect(surface, (50, 50, 50), self.pos + self.size, border_radius=8)
+        pygame.draw.rect(surface, (150, 150, 150), self.pos + self.size, width=5, border_radius=8)
+        text_rect = [self.pos[0]+(1*settings.X/100), self.pos[1]+(1*settings.Y/100), self.size[0]-(2*settings.X/100), self.size[1]]
+        settings.tw(surface, self.name, settings.TEXT_COLOR, text_rect, settings.TEXT_FONT)
+
+    def select(self):
+        eval(self.function)
+
+    def set_position(self, number_cards):
+        max_card_with_no_overlap = math.floor(self.parent.card_rect[2]/self.size[0])
+        if number_cards <= max_card_with_no_overlap:
+            self.pos = self.get_position()
+        else:
+            self.pos = self.get_overlap_position(number_cards)
+
+    def get_position(self):
+        return self.parent.card_rect[0] + self.index * self.size[0], self.parent.card_rect[1]
+
+    def get_overlap_position(self, number_cards):
+        offset = self.parent.card_rect[2]/number_cards
+        return self.parent.card_rect[0] + self.index * offset, self.parent.card_rect[1]
+
+    def __lt__(self, other):
+        return self.layer < other.layer
+
+    def __gt__(self, other):
+        return self.layer > other.layer
+
+    def __eq__(self, other):
+        return self.layer == other.layer
+
+    def __le__(self, other):
+        return self.layer <= other.layer
+
+    def __ge__(self, other):
+        return self.layer >= other.layer
+
+    def __ne__(self, other):
+        return self.layer != other.layer
