@@ -432,3 +432,15 @@ class Battle(BaseState):
                         elif a[1] == b[1] and settings.random_int(0, 100) > 50:
                             sprite.queue = b[0]
                             sprite_2.queue = a[0]
+
+    class ActionCard(object):
+        def __init__(self):
+            self.active = False
+            self.hover = False
+            self.name = str
+            self.index = 0
+            self.layer = 0
+            self.selected = False
+            self.pos = [0, 0]
+
+
