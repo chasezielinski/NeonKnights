@@ -671,7 +671,7 @@ class Hero(Character):
         self.luck = persist['characters'][player_holder].luck
         self.speed = persist['characters'][player_holder].speed
         self.name = persist['characters'][player_holder].name
-        self.skills = persist['characters'][player_holder].techniques
+        self.skills = persist['characters'][player_holder].abilities
         self.crit_rate = persist['characters'][player_holder].crit_rate
         self.crit_damage = persist['characters'][player_holder].crit_damage
         self.attack_type = persist['characters'][player_holder].attack_type

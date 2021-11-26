@@ -20,8 +20,7 @@ class Battle(BaseState):
         self.battle_actions = pygame.sprite.Group()
         self.battle_animations = pygame.sprite.Group()
         self.damage_particle = settings.DamageParticle()
-        self.action_card_manager = ActionCardManger()
-        self.pointer = Pointer(self)
+        self.action_card_manager = ActionCardManger(self)
         # instantiate state variables and menu index variables
         self.state = "Pre_Battle"
         self.turn_sub_state = "Browse"
@@ -82,6 +81,7 @@ class Battle(BaseState):
                         sprite.hover = True
 
         if self.state == "Turn":
+            self.action_card_manager.handle_action(action)
             if self.turn_sub_state == "Browse":
                 if action == "click":
                     # check for click on player character sprite or action queue sprite
@@ -97,115 +97,116 @@ class Battle(BaseState):
                 if action == "t":
                     self.turn_sub_state = "Confirm"
             elif self.turn_sub_state == "Move_Select":
-                if action == "mouse_move":
-                    # check for mouse hover over move action types
-                    flag = False
-                    for i, option in enumerate(settings.actions_dict.keys()):
-                        if settings.click_check(settings.BATTLE_MENUS['move_top_menu_rects'][option]):
-                            if self.action_type_index != i:
-                                settings.SOUND_EFFECTS["Menu"]["Toggle_1"].play()
-                            self.action_type_index = i
-                            flag = True
-                    if not flag:
-                        self.action_type_index = -1
-                elif action == "up":
-                    settings.SOUND_EFFECTS["Menu"]["Toggle_1"].play()
-                    self.action_type_index -= 1
-                    self.action_type_index %= len(settings.actions_dict.keys())
-                elif action == "down":
-                    settings.SOUND_EFFECTS["Menu"]["Toggle_1"].play()
-                    self.action_type_index += 1
-                    self.action_type_index %= len(settings.actions_dict.keys())
-                elif action == "return":
-                    if self.action_type_index == -1:
-                        pass
-                    elif settings.actions_dict.keys()[self.action_type_index] == "Skill":
-                        if self.player_index.action_options:
-                            if not self.player_index.dazed > 0 \
-                                    and not self.player_index.stunned > 0:
-                                for action in self.player_index.action_options:
-                                    if action.is_usable():
-                                        self.turn_sub_state = "Skill"
-                                        break
-                                else:
-                                    pass
-                    elif settings.actions_dict.keys()[self.action_type_index] == "Item":
-                        if self.persist['inventory']:
-                            if not self.player_index.perplexed > 0 \
-                                    and not self.player_index.stunned > 0:
-                                for item in self.persist['inventory']:
-                                    if item.is_usable():
-                                        self.turn_sub_state = "Item"
-                                        break
-                                else:
-                                    pass
-                    elif settings.actions_dict.keys()[self.action_type_index] == "Attack":
-                        if hasattr(self.player_index, 'attack_action') \
-                                and not self.player_index.disabled > 0 \
-                                and not self.player_index.stunned > 0:
-                            self.selected_action = self.player_index.attack_action
-                            self.turn_sub_state = "Target"
-                    elif settings.actions_dict.keys()[self.action_type_index] == "Defend":
-                        if hasattr(self.player_index, 'defend_action') \
-                                and not self.player_index.smitten > 0 \
-                                and not self.player_index.stunned > 0:
-                            self.selected_action = self.player_index.defend_action
-                            self.turn_sub_state = "Target"
-                    elif settings.actions_dict.keys()[self.action_type_index] == "Run":
-                        if hasattr(self.player_index, 'run_action') \
-                                and not self.player_index.trapped > 0 \
-                                and not self.player_index.stunned > 0:
-                            self.selected_action = self.player_index.run_action
-                            self.turn_sub_state = "Target"
-                elif action == "backspace":
-                    self.turn_sub_state = "Browse"
-                elif action == "click":
-                    check = True
-                    for i, option in enumerate(settings.actions_dict.keys()):
-                        if settings.click_check(settings.BATTLE_MENUS['move_top_menu_rects'][option]):
-                            if option == "Skill":
-                                if self.player_index.abilities:
-                                    if not self.player_index.dazed > 0 \
-                                            and not self.player_index.stunned > 0:
-                                        for action in self.player_index.abilities:
-                                            if action.is_usable():
-                                                self.turn_sub_state = "Skill"
-                                                check = False
-                                                break
-                                        else:
-                                            pass
-                            elif option == "Item":
-                                if self.persist['inventory']:
-                                    if not self.player_index.perplexed > 0 \
-                                            and not self.player_index.stunned > 0:
-                                        for item in self.persist['inventory']:
-                                            if settings.BattleConsumable.__instancecheck__(item):
-                                                self.turn_sub_state = "Item"
-                                                check = False
-                                                break
-                            elif option == "Attack":
-                                if hasattr(self.player_index, 'attack_action') \
-                                        and not self.player_index.disabled > 0 \
-                                        and not self.player_index.stunned > 0:
-                                    self.selected_action = self.player_index.attack_action
-                                    self.turn_sub_state = "Target"
-                                    check = False
-                            elif option == "Run":
-                                if hasattr(self.player_index, 'run_action') \
-                                        and not self.player_index.trapped > 0 \
-                                        and not self.player_index.stunned > 0:
-                                    self.selected_action = self.player_index.run_action
-                                    self.turn_sub_state = "Target"
-                                    check = False
-                            elif option == "Defend":
-                                if hasattr(self.player_index, 'defend_action') \
-                                        and not self.player_index.smitten > 0 \
-                                        and not self.player_index.stunned > 0:
-                                    self.selected_action = self.player_index.defend_action
-                                    self.turn_sub_state = "Target"
-                                    check = False
-                    if check:
-                        self.turn_sub_state = "Browse"
+                pass
+                # if action == "mouse_move":
+                #     # check for mouse hover over move action types
+                #     flag = False
+                #     for i, option in enumerate(settings.actions_dict.keys()):
+                #         if settings.click_check(settings.BATTLE_MENUS['move_top_menu_rects'][option]):
+                #             if self.action_type_index != i:
+                #                 settings.SOUND_EFFECTS["Menu"]["Toggle_1"].play()
+                #             self.action_type_index = i
+                #             flag = True
+                #     if not flag:
+                #         self.action_type_index = -1
+                # elif action == "up":
+                #     settings.SOUND_EFFECTS["Menu"]["Toggle_1"].play()
+                #     self.action_type_index -= 1
+                #     self.action_type_index %= len(settings.actions_dict.keys())
+                # elif action == "down":
+                #     settings.SOUND_EFFECTS["Menu"]["Toggle_1"].play()
+                #     self.action_type_index += 1
+                #     self.action_type_index %= len(settings.actions_dict.keys())
+                # elif action == "return":
+                #     if self.action_type_index == -1:
+                #         pass
+                #     elif settings.actions_dict.keys()[self.action_type_index] == "Skill":
+                #         if self.player_index.action_options:
+                #             if not self.player_index.dazed > 0 \
+                #                     and not self.player_index.stunned > 0:
+                #                 for action in self.player_index.action_options:
+                #                     if action.is_usable():
+                #                         self.turn_sub_state = "Skill"
+                #                         break
+                #                 else:
+                #                     pass
+                #     elif settings.actions_dict.keys()[self.action_type_index] == "Item":
+                #         if self.persist['inventory']:
+                #             if not self.player_index.perplexed > 0 \
+                #                     and not self.player_index.stunned > 0:
+                #                 for item in self.persist['inventory']:
+                #                     if item.is_usable():
+                #                         self.turn_sub_state = "Item"
+                #                         break
+                #                 else:
+                #                     pass
+                #     elif settings.actions_dict.keys()[self.action_type_index] == "Attack":
+                #         if hasattr(self.player_index, 'attack_action') \
+                #                 and not self.player_index.disabled > 0 \
+                #                 and not self.player_index.stunned > 0:
+                #             self.selected_action = self.player_index.attack_action
+                #             self.turn_sub_state = "Target"
+                #     elif settings.actions_dict.keys()[self.action_type_index] == "Defend":
+                #         if hasattr(self.player_index, 'defend_action') \
+                #                 and not self.player_index.smitten > 0 \
+                #                 and not self.player_index.stunned > 0:
+                #             self.selected_action = self.player_index.defend_action
+                #             self.turn_sub_state = "Target"
+                #     elif settings.actions_dict.keys()[self.action_type_index] == "Run":
+                #         if hasattr(self.player_index, 'run_action') \
+                #                 and not self.player_index.trapped > 0 \
+                #                 and not self.player_index.stunned > 0:
+                #             self.selected_action = self.player_index.run_action
+                #             self.turn_sub_state = "Target"
+                # elif action == "backspace":
+                #     self.turn_sub_state = "Browse"
+                # elif action == "click":
+                #     check = True
+                #     for i, option in enumerate(settings.actions_dict.keys()):
+                #         if settings.click_check(settings.BATTLE_MENUS['move_top_menu_rects'][option]):
+                #             if option == "Skill":
+                #                 if self.player_index.abilities:
+                #                     if not self.player_index.dazed > 0 \
+                #                             and not self.player_index.stunned > 0:
+                #                         for action in self.player_index.abilities:
+                #                             if action.is_usable():
+                #                                 self.turn_sub_state = "Skill"
+                #                                 check = False
+                #                                 break
+                #                         else:
+                #                             pass
+                #             elif option == "Item":
+                #                 if self.persist['inventory']:
+                #                     if not self.player_index.perplexed > 0 \
+                #                             and not self.player_index.stunned > 0:
+                #                         for item in self.persist['inventory']:
+                #                             if settings.BattleConsumable.__instancecheck__(item):
+                #                                 self.turn_sub_state = "Item"
+                #                                 check = False
+                #                                 break
+                #             elif option == "Attack":
+                #                 if hasattr(self.player_index, 'attack_action') \
+                #                         and not self.player_index.disabled > 0 \
+                #                         and not self.player_index.stunned > 0:
+                #                     self.selected_action = self.player_index.attack_action
+                #                     self.turn_sub_state = "Target"
+                #                     check = False
+                #             elif option == "Run":
+                #                 if hasattr(self.player_index, 'run_action') \
+                #                         and not self.player_index.trapped > 0 \
+                #                         and not self.player_index.stunned > 0:
+                #                     self.selected_action = self.player_index.run_action
+                #                     self.turn_sub_state = "Target"
+                #                     check = False
+                #             elif option == "Defend":
+                #                 if hasattr(self.player_index, 'defend_action') \
+                #                         and not self.player_index.smitten > 0 \
+                #                         and not self.player_index.stunned > 0:
+                #                     self.selected_action = self.player_index.defend_action
+                #                     self.turn_sub_state = "Target"
+                #                     check = False
+                #     if check:
+                #         self.turn_sub_state = "Browse"
 
             elif self.turn_sub_state == "Skill":
                 self.battle_overlay.handle_action(action)
@@ -289,7 +290,6 @@ class Battle(BaseState):
         self.damage_particle.update(dt)
         self.message.update(dt)
         self.action_card_manager.update(dt)
-        self.pointer.update(dt)
         self.persist['Music'].update(dt, self)
         if self.state == "Pre_Battle":
             self.state = "Pre_Turn"
@@ -301,8 +301,7 @@ class Battle(BaseState):
                 options.append(enemy.give_options())
             choices = settings.utility_select(options)
             for choice in choices:
-                if choice[1] != "None":
-                    choice[1].target_set(choice[0], choice[2])
+                choice[1].target_set(choice[0], choice[2])
             self.sort_actions()
             self.state = "Turn"
             self.turn_sub_state = "Browse"
@@ -384,8 +383,6 @@ class Battle(BaseState):
         self.battle_actions.draw(surface)
         self.action_card_manager.draw(surface)
         self.message.draw(surface)
-        if self.state == "Pointer":
-            self.pointer.draw(surface)
         for action in self.battle_actions.sprites():
             action.draw_text(surface)
         self.persist['FX'].draw(surface)
@@ -429,6 +426,9 @@ class Battle(BaseState):
                 self.handle_action("wheel_up")
             elif event.button == 5:
                 self.handle_action("wheel_down")
+        elif event.type == pygame.MOUSEBUTTONUP:
+            if event.button == 1:
+                self.handle_action("un-click")
         elif event.type == pygame.MOUSEMOTION:
             self.handle_action("mouse_move")
 
@@ -474,60 +474,103 @@ class Battle(BaseState):
 
 
 class ActionCardManger(object):
-    def __init__(self):
+    def __init__(self, parent):
+        self.parent = parent
         self.action_cards = []
         self.card_rect = (31*settings.X/100, 74*settings.Y/100, 66*settings.X/100, 26*settings.Y/100)
         self.timer = 200
+        self.state = "Main"
+        self.pointer = Pointer(self)
+        self.pointer_states = ["Target"]
+        self.selected_action = None
 
     def update(self, dt):
-        if self.action_cards:
-            self.timer -= dt
-            if self.timer <= 0:
-                self.timer = 1000
-                for card in self.action_cards:
-                    print(f"{card.name}, {card.distance_x_mouse}")
-            lowest = self.action_cards[0]
-            for i, action_card in enumerate(self.action_cards):
-                action_card.update(dt)
-                if action_card.distance_x_mouse < lowest.distance_x_mouse:
-                    lowest = action_card
-            if lowest.hover:
-                lowest.layer = -1
-            for i, action_card in enumerate(self.action_cards):
-                action_card.toggle_position()
+        if self.state in self.pointer_states:
+            self.pointer.update(dt)
+        if self.action_cards and self.state in ["Main", "Ability", "Item"]:
+            self.determine_layering(dt)
 
     def draw(self, surface):
+        if self.state in self.pointer_states:
+            self.pointer.draw(surface)
         if self.action_cards:
             self.action_cards.sort(reverse=True)
             for action_card in self.action_cards:
                 action_card.draw(surface)
 
+    def determine_layering(self, dt):
+        lowest = self.action_cards[0]
+        for i, action_card in enumerate(self.action_cards):
+            action_card.update(dt)
+            if action_card.distance_x_mouse < lowest.distance_x_mouse:
+                lowest = action_card
+        if lowest.hover:
+            lowest.layer = -1
+            self.selected_action = lowest
+        else:
+            self.selected_action = None
+        for i, action_card in enumerate(self.action_cards):
+            action_card.toggle_position()
+
+    def target(self):
+        self.state = "Target"
+
     def set_main_actions(self):
-        self.action_cards.append(ActionCard(self, "Attack", "self.parent.parent.attack_click()", 0))
-        self.action_cards.append(ActionCard(self, "Defend", "self.parent.parent.defend_click()", 1))
-        self.action_cards.append(ActionCard(self, "Ability", "self.parent.parent.ability_click()", 2))
-        self.action_cards.append(ActionCard(self, "Item", "self.parent.parent.item_click()", 3))
-        self.action_cards.append(ActionCard(self, "Run", "self.parent.parent.run_click()", 4))
-        self.action_cards.append(ActionCard(self, "Attack", "self.parent.parent.attack_click()", 5))
-        self.action_cards.append(ActionCard(self, "Defend", "self.parent.parent.defend_click()", 6))
-        self.action_cards.append(ActionCard(self, "Ability", "self.parent.parent.ability_click()", 7))
-        self.action_cards.append(ActionCard(self, "Item", "self.parent.parent.item_click()", 8))
-        self.action_cards.append(ActionCard(self, "Run", "self.parent.parent.run_click()", 9))
+        self.action_cards.clear()
+        self.action_cards.append(ActionCard(self, "Attack", "self.parent.target()", 0, self.parent.player_index.attack_action))
+        self.action_cards.append(ActionCard(self, "Defend", "self.parent.target()", 1, self.parent.player_index.defend_action))
+        self.action_cards.append(ActionCard(self, "Ability", "self.parent.set_ability_actions()", 2))
+        self.action_cards.append(ActionCard(self, "Item", "self.parent.set_item_actions()", 3))
+        self.action_cards.append(ActionCard(self, "Run", "self.parent.target()", 4, self.parent.player_index.run_action))
+        self.action_cards.append(ActionCard(self, "Back", "self.parent.menu_back()", 5))
         self.set_action_card_positions()
 
     def set_ability_actions(self):
-        pass
+        self.state = "Ability"
+        self.action_cards.clear()
+        for i, ability in enumerate(self.parent.player_index.abilities):
+            self.action_cards.append(ActionCard(self, ability.name, "self.parent.target()", i, ability))
+        self.action_cards.append(ActionCard(self, "Back", "self.parent.menu_back()", len(self.parent.player_index.abilities)))
+        self.set_action_card_positions()
 
     def set_item_actions(self):
         pass
+
+    def menu_back(self):
+        if self.state in ["Target"]:
+            self.state = "Main"
+            self.set_main_actions()
+            self.selected_action = None
+        elif self.state == "Main":
+            self.parent.turn_sub_state = "Browse"
+            self.action_cards.clear()
+        elif self.state == "Ability":
+            self.state = "Main"
+            self.set_main_actions()
 
     def set_action_card_positions(self):
         for action_card in self.action_cards:
             action_card.set_position(len(self.action_cards))
 
+    def handle_action(self, action):
+        if action == "click" and self.action_cards:
+            for card in self.action_cards:
+                card.handle_action(action)
+        elif action == "un-click":
+            if self.selected_action is not None and self.state == "Target":
+                for sprite in self.parent.battle_characters.sprites():
+                    if sprite.rect.collidepoint(pygame.mouse.get_pos()):
+                        self.selected_action.battle_action.target_set(None, [sprite])
+                        self.menu_back()
+                        self.menu_back()
+                        break
+                else:
+                    self.menu_back()
+
 
 class ActionCard(object):
-    def __init__(self, parent, name, function, index):
+    def __init__(self, parent, name, function, index, battle_action=None):
+        self.battle_action = battle_action
         self.parent = parent
         self.name = name
         self.function = function
@@ -540,6 +583,11 @@ class ActionCard(object):
         self.pos = (0, 0)
         self.size = (15*settings.X/100, 26*settings.Y/100)
         self.distance_x_mouse = int
+
+    def handle_action(self, action):
+        if action == "click":
+            if self.layer == -1 and settings.click_check(self.pos + self.size):
+                self.select()
 
     def update(self, dt):
         self.distance_x_mouse = (self.pos[0] + self.size[0]/2) - pygame.mouse.get_pos()[0]
@@ -564,6 +612,7 @@ class ActionCard(object):
 
     def select(self):
         eval(self.function)
+        self.parent.pointer.set_anchor((self.pos[0] + self.size[0]/2, self.pos[1]))
 
     def set_position(self, number_cards):
         max_card_with_no_overlap = math.floor(self.parent.card_rect[2]/self.size[0])
@@ -602,23 +651,25 @@ class Pointer(object):
     def __init__(self, parent):
         self.parent = parent
         self.point_1 = (200, 500)
-        self.point_2 = (100, 100)
+        self.point_2 = (50, 400)
+        self.pointer_spline_point = (100, 300)
         self.n_points = 10
         self.points = []
-        self.triangle_pointer = Wireframe(self, [(0, 0), (20, 5), (20, -5)])
-        self.pointer_spline_point = self.point_2
+        self.triangle_pointer = Wireframe(self, [(0, 0), (40, 10), (40, -10)])
 
     def update(self, dt):
-        if self.parent.state == "Pointer":
-            self.points = bezier(np.arange(0, 1, 1/self.n_points), [self.point_1, self.point_2, pygame.mouse.get_pos()])
-            self.triangle_pointer.update(dt)
+        self.points = bezier(np.arange(0, 1, 1/self.n_points), [self.point_1, self.point_2, self.pointer_spline_point, pygame.mouse.get_pos()])
+        self.triangle_pointer.update(dt)
+        self.pointer_spline_point = pygame.mouse.get_pos()[0] - 200, pygame.mouse.get_pos()[1]
 
     def draw(self, surface):
-        if self.parent.state == "Pointer":
-            if self.points:
-                for point in self.points:
-                    pygame.draw.circle(surface, (100, 20, 20), point, 10, 4)
-                self.triangle_pointer.draw(surface)
+        if self.points:
+            for point in self.points:
+                pygame.draw.circle(surface, (100, 20, 20), point, 10, 4)
+            self.triangle_pointer.draw(surface)
+
+    def set_anchor(self, point):
+        self.point_1 = point
 
 
 def bezier(weights, points):
@@ -652,12 +703,11 @@ class Wireframe(object):
         self.draw_points = points
 
     def update(self, dt):
-        print(self.theta)
         self.pos = pygame.mouse.get_pos()
         self.draw_points = []
         for point in self.points:
             self.draw_points.append(self.point_transform(point))
-        self.theta = angle_find((-1, 0), difference_vector(self.parent.pointer_spline_point, self.pos))
+        self.theta = angle_find((-1, 0), difference_vector(self.pos, self.parent.pointer_spline_point))
 
     def draw(self, surface):
         draw_wireframe(surface, self.draw_points)
@@ -671,15 +721,18 @@ class Wireframe(object):
 
 def draw_wireframe(surface, points, width=4):
     for i, point in enumerate(points):
-        pygame.draw.line(surface, (100, 100, 100), point, points[i-1], width)
+        pygame.draw.line(surface, (200, 200, 200), point, points[i-1], width)
 
 
 def angle_find(v1, v2):
-    unit1 = v1 / np.linalg.norm(v1)
-    unit2 = v2 / np.linalg.norm(v2)
-    dot_product = np.dot(unit1, unit2)
-    return np.arccos(dot_product)
+    cosine_theta = np.dot(v1, v2)
+    sine_theta = np.cross(v1, v2)
+    return np.arctan2(sine_theta, cosine_theta)
 
 
 def difference_vector(v1, v2):
-    return v2[0] - v1[0], v2[1] - v1[1]
+    return v1[0] - v2[0], v1[1] - v2[1]
+
+
+def length(v1):
+    return math.sqrt(v1[0]**2 + v1[1]**2)

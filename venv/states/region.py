@@ -1232,9 +1232,9 @@ class Region(BaseState):
                 getattr(self.persist['characters'][player], 'base_' + 'techniques'))
             for slot in self.persist['characters'][player].equipment.keys():
                 if hasattr(self.persist['characters'][player].equipment[slot], 'techniques'):
-                    for value in self.persist['characters'][player].equipment[slot].techniques:
-                        if value not in self.persist['characters'][player].techniques:
-                            self.persist['characters'][player].techniques.append(value)
+                    for value in self.persist['characters'][player].equipment[slot].abilities:
+                        if value not in self.persist['characters'][player].abilities:
+                            self.persist['characters'][player].abilities.append(value)
         for player in self.persist['characters']:
             setattr(self.persist['characters'][player], 'attack_type',
                     getattr(self.persist['characters'][player], 'base_' + 'attack_type'))

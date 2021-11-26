@@ -6,6 +6,7 @@ import pygame
 import names
 import pytweening
 from threading import Timer
+from dataclasses import dataclass
 
 pygame.init()
 pygame.mixer.init()
@@ -297,7 +298,7 @@ class SpriteSheet:
 
     def load_strip(self, rect, image_count, colorkey=None):
         """Load a whole strip of images and return them as a list."""
-        tups = [(rect[0]+rect[2]*x, rect[1], rect[2], rect[3]) for x in range(image_count)]
+        tups = [(rect[0] + rect[2] * x, rect[1], rect[2], rect[3]) for x in range(image_count)]
         return self.images_at(tups, colorkey)
 
 
@@ -972,8 +973,8 @@ class Event(object):
         self.option_index = -1
         self.bg_1_rect = [X * 17 / 100, Y * 7 / 100, X * 60 / 100, Y * 88 / 100]
         self.bg_2_rect = [X * 18 / 100, Y * 8 / 100, X * 59 / 100, Y * 86 / 100]
-        self.pos = [X * 17/100, Y * 7/100]
-        self.pos_origin = (X * 17/100, Y * 7/100)
+        self.pos = [X * 17 / 100, Y * 7 / 100]
+        self.pos_origin = (X * 17 / 100, Y * 7 / 100)
         self.prompt_rect = [X * 18 / 100, Y * 9 / 100, X * 57 / 100, Y * 84 / 100]
         self.option_rect = [X * 18 / 100, Y * 55 / 100, X * 57 / 100, Y * 5 / 100]
         self.option_offset = 5
@@ -1069,11 +1070,11 @@ class Event(object):
                 color = TEXT_COLOR
                 if index == self.option_index:
                     color = SELECTED_COLOR
-                tw(surface, str(index+1) + ". " + option[0], color, [self.option_rect[0], self.option_rect[1] +
-                                                              (index * Y * 5 / 100), self.option_rect[2],
-                                                              self.option_rect[3]], TEXT_FONT)
+                tw(surface, str(index + 1) + ". " + option[0], color, [self.option_rect[0], self.option_rect[1] +
+                                                                       (index * Y * 5 / 100), self.option_rect[2],
+                                                                       self.option_rect[3]], TEXT_FONT)
         if self.display_cost_reward:
-            index = int(len(self.prompt)/45)
+            index = int(len(self.prompt) / 45)
             cost_keys = list(self.cost.keys())
             rewards_keys = list(self.rewards.keys())
             cost_text1 = ''
@@ -1091,8 +1092,10 @@ class Event(object):
                             cost_text4 = f' {cost_keys[3]}: {self.cost[cost_keys[3]]}'
                             if len(cost_keys) > 4:
                                 cost_text5 = f' {cost_keys[4]}: {self.cost[cost_keys[4]]}'
-            cost_text = cost_text1 + cost_text2 + cost_text3 + cost_text4 + cost_text5 #[X * 17/100, Y * 7/100]
-            tw(surface, cost_text, TEXT_COLOR, [self.pos[0] + (X*1/100), (Y*10/100) + Y*5*index/100 + self.pos[1], X*60/100, Y*15/100], TEXT_FONT)
+            cost_text = cost_text1 + cost_text2 + cost_text3 + cost_text4 + cost_text5  # [X * 17/100, Y * 7/100]
+            tw(surface, cost_text, TEXT_COLOR,
+               [self.pos[0] + (X * 1 / 100), (Y * 10 / 100) + Y * 5 * index / 100 + self.pos[1], X * 60 / 100,
+                Y * 15 / 100], TEXT_FONT)
             rewards_text1 = rewards_text2 = rewards_text3 = rewards_text4 = rewards_text5 = ''
             if len(rewards_keys) > 0:
                 rewards_text1 = f'Recieve:    {rewards_keys[0]}: {self.rewards[rewards_keys[0]]}'
@@ -1107,7 +1110,8 @@ class Event(object):
             rewards_text = rewards_text1 + rewards_text2 + rewards_text3 + rewards_text4 + rewards_text5
             print(rewards_text)
             tw(surface, rewards_text, TEXT_COLOR,
-               [self.pos[0] + (X*1/100), (Y * 10 / 100) + self.pos[1] + Y * 5 * (index + 2) / 100, X * 60 / 100, Y * 15 / 100], TEXT_FONT)
+               [self.pos[0] + (X * 1 / 100), (Y * 10 / 100) + self.pos[1] + Y * 5 * (index + 2) / 100, X * 60 / 100,
+                Y * 15 / 100], TEXT_FONT)
 
     def handle_action(self, action):
         if action == "click":
@@ -1368,7 +1372,7 @@ shop_dictionary = {
     "All": [
         {"prompt": "A small shop that might have something useful.",
          "options": [["Check it out.", [{"state": "Shop"}], [1]],
-                     ["Not interested.", [{"state": "Exit"}], [1]]],}],
+                     ["Not interested.", [{"state": "Exit"}], [1]]], }],
     "All_Weights": [1],
     "Desert": [],
     "Desert_Weights": [], }
@@ -1378,10 +1382,12 @@ event_dictionary = {
         {"prompt": "You come across a small camp. The inhabitants explain that they're in need of chargers and are "
                    "willing to trade for them.",
          "cost": {"chargers": 'random.randint(1, 3)'},
-         "rewards": {"supplies": 'random.randint(1, 3)', "elixirs": 'random.randint(1, 3)', "gold": 'random.randint(0, 50)'},
+         "rewards": {"supplies": 'random.randint(1, 3)', "elixirs": 'random.randint(1, 3)',
+                     "gold": 'random.randint(0, 50)'},
          "options": [["Seems like a fair deal.", [{"state": "Reward"}], [1], "cost"],
-                     ["Not interested.", [{"prompt": "The group grumble among themselves as they head back to their camp.",
-                                           "options": [["Continue on.", [{"state": "Exit"}], [1]]]}], [1]]],
+                     ["Not interested.",
+                      [{"prompt": "The group grumble among themselves as they head back to their camp.",
+                        "options": [["Continue on.", [{"state": "Exit"}], [1]]]}], [1]]],
          "display_cost_reward": True}],
     "All_Weights": [1],
     "Desert": [],
@@ -1714,28 +1720,33 @@ BATTLE_MENU_SPRITES = {
 }
 
 MUSIC = {'Title': r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\music\title.oga",
-         'Desert': {'constant': pygame.mixer.Sound(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\music\Desert_Layer\constant-Constant.wav"),
-                    'shop': pygame.mixer.Sound(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\music\Desert_Layer\shop-Shop.wav"),
-                    'map': pygame.mixer.Sound(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\music\Desert_Layer\map-Map.wav"),
-                    'battle': pygame.mixer.Sound(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\music\Desert_Layer\battle-Battle.wav"),
-                    'event': pygame.mixer.Sound(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\music\Desert_Layer\event-Event.wav"),
+         'Desert': {'constant': pygame.mixer.Sound(
+             r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\music\Desert_Layer\constant-Constant.wav"),
+                    'shop': pygame.mixer.Sound(
+                        r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\music\Desert_Layer\shop-Shop.wav"),
+                    'map': pygame.mixer.Sound(
+                        r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\music\Desert_Layer\map-Map.wav"),
+                    'battle': pygame.mixer.Sound(
+                        r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\music\Desert_Layer\battle-Battle.wav"),
+                    'event': pygame.mixer.Sound(
+                        r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\music\Desert_Layer\event-Event.wav"),
                     }
          }
 
 SOUND_EFFECTS = {'Toggle_1': pygame.mixer.Sound(
-            r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sfx\397604__nightflame__menu-fx-01.wav"),
-        'Toggle_2': pygame.mixer.Sound(
-            r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sfx\503340__tahutoa__clicky-accept-menu-sound.wav"),
-        'Confirm_1': pygame.mixer.Sound(
-            r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sfx\403019__inspectorj__ui-confirmation-alert-c4.wav"),
-        'Shop_Buy_1': pygame.mixer.Sound(
-            r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sfx\shop_buy_1.wav"),
-        'Blast_1': pygame.mixer.Sound(
-            r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sfx\blast_1.wav"),
-        'Attack_1': pygame.mixer.Sound(
-            r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sfx\attack_1.wav"),
-        'Thump_1': pygame.mixer.Sound(
-            r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sfx\thump_1.wav"),
+    r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sfx\397604__nightflame__menu-fx-01.wav"),
+    'Toggle_2': pygame.mixer.Sound(
+        r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sfx\503340__tahutoa__clicky-accept-menu-sound.wav"),
+    'Confirm_1': pygame.mixer.Sound(
+        r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sfx\403019__inspectorj__ui-confirmation-alert-c4.wav"),
+    'Shop_Buy_1': pygame.mixer.Sound(
+        r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sfx\shop_buy_1.wav"),
+    'Blast_1': pygame.mixer.Sound(
+        r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sfx\blast_1.wav"),
+    'Attack_1': pygame.mixer.Sound(
+        r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sfx\attack_1.wav"),
+    'Thump_1': pygame.mixer.Sound(
+        r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sfx\thump_1.wav"),
     'Menu': {
         'Toggle_1': pygame.mixer.Sound(
             r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sfx\397604__nightflame__menu-fx-01.wav"),
@@ -1820,7 +1831,7 @@ class FXManager(object):
     def draw(self, surface):
         self.effects.draw(surface)
 
-    def add_effect(self, sprites, frames, frame_times, delay, animation_type, pos=(0,0)):
+    def add_effect(self, sprites, frames, frame_times, delay, animation_type, pos=(0, 0)):
         self.effects.add(Effect(sprites, frames, frame_times, delay, animation_type, pos))
 
 
@@ -1877,7 +1888,7 @@ class MusicManager(object):
                     event[3] -= dt
                     if event[3] <= 0:
                         event[3] = 0
-                    new_volume = event[2] - (event[3]/event[4])
+                    new_volume = event[2] - (event[3] / event[4])
                     if new_volume < 0:
                         new_volume *= -1
                     event[0].set_volume(new_volume)
@@ -2183,9 +2194,9 @@ def character_ability_update(persist):
                 getattr(player, 'base_' + 'techniques'))
         for slot in player.equipment.keys():
             if hasattr(player.equipment[slot], 'techniques'):
-                for value in player.equipment[slot].techniques:
-                    if value not in player.techniques:
-                        player.techniques.append(value)
+                for value in player.equipment[slot].abilities:
+                    if value not in player.abilities:
+                        player.abilities.append(value)
     for player in persist['characters']:
         setattr(player, 'attack_type',
                 getattr(player, 'base_' + 'attack_type'))
@@ -3281,6 +3292,7 @@ class BattleCharacter(pygame.sprite.Sprite):
         self.gentle = 0  # crit damage down
         self.regen = 0  # regen over time
         self.speed = 0
+        self.defend = 0
         self.state = "Idle"
         self.action_options = []
         self.attack_action = Attack(self)
@@ -3289,9 +3301,8 @@ class BattleCharacter(pygame.sprite.Sprite):
                             'calm', 'haste', 'turns', 'quick', 'lucky', 'focus', 'bleed', 'burn', 'toxic', 'curse',
                             'spite', 'invincible', 'shield', 'ward', 'frail', 'terrify', 'weak', 'distract', 'slow',
                             'hex', 'dull', 'savage', 'gentle', 'regen', 'speed']
-
-    #       self.defend_action = Attack(self)
-    #       self.run_action = Attack(self)
+        self.defend_action = Defend(self)
+        self.run_action = Run(self)
 
     def update(self, dt):
         pass
@@ -3362,8 +3373,6 @@ class BattleCharacter(pygame.sprite.Sprite):
         #        self.parent.battle_objects.add(self.action)
         if options:
             return options
-        else:
-            return [(self.slot, "None", ["None"], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0])]
 
     def ko(self):
         self.kill()
@@ -3403,16 +3412,17 @@ class BattleCharacter(pygame.sprite.Sprite):
                 elif effect == "burn":
                     damage = int(self.max_hp * 5 / 100)
                 elif effect == "toxic":
-                    damage = int((self.max_hp-self.hp) * 5 / 100)
+                    damage = int((self.max_hp - self.hp) * 5 / 100)
                 if damage is not None:
                     self.hp -= damage
                     self.parent.damage_particle.add_particles(self.rect.centerx, self.rect.centery,
-                                                              damage, delay=500*self.parent.status_particle_index)
+                                                              damage, delay=500 * self.parent.status_particle_index)
                     self.parent.status_particle_index += 1
                 setattr(self, effect, getattr(self, effect) - 1)
                 if getattr(self, effect) == 0:
                     self.parent.damage_particle.add_particles(self.rect.centerx, self.rect.centery,
-                                                              effect + " has worn off", delay=500*self.parent.status_particle_index)
+                                                              effect + " has worn off",
+                                                              delay=500 * self.parent.status_particle_index)
                     self.parent.status_particle_index += 1
 
 
@@ -3461,7 +3471,7 @@ class PlayerCharacter(BattleCharacter):
         self.base_attack_type = self.attack_type = BASE_STATS[char_class.upper() + "_BASE_STATS"][
             char_class.upper() + "_BASE_ATTACK_TYPE"]
         self.equipment = {}
-        self.techniques = self.base_techniques = BASE_STATS[char_class.upper() + "_BASE_STATS"][
+        self.abilities = self.base_abilities = BASE_STATS[char_class.upper() + "_BASE_STATS"][
             char_class.upper() + "_BASE_TECHNIQUES"]
         self.abilities = [KiBlast(self)]
         self.crit_rate = self.base_crit_rate = 1
@@ -3505,7 +3515,7 @@ class PlayerCharacter(BattleCharacter):
             parent.battle_actions.add(self.battle_action)
             parent.battle_objects.add(self.battle_action)
         elif self.battle_action.turns == 0:
-            if self.battle_action == "None":
+            if self.battle_action:
                 return
             else:
                 self.battle_action.kill()
@@ -3565,7 +3575,6 @@ class Slime(BattleCharacter):
         self.action_options = []
         self.action_options.append(Attack(self))
         self.action_options.append(SlimeBall(self))
-        self.action_options.append(NoActionSelected(self))
         self.item_reward = self.reward(region_index)
 
     def reward(self, region_index):
@@ -3659,7 +3668,7 @@ class DesertWurm(BattleCharacter):
                                       [10, 12, 14, 16, 18, 20, 22, 24][region_index])
         self.action_options = []
         self.item_reward = self.reward(region_index)
-        self.state = "Main" # "Burrow", "Hidden"
+        self.state = "Main"  # "Burrow", "Hidden"
 
     def reward(self, region_index):
         if len([['none', 'common', 'rare'], [60, 37, 3]][region_index]) == 1:
@@ -3697,7 +3706,7 @@ class DesertWurm(BattleCharacter):
         self.action_options = []
         if self.state == "Main":
             self.action_options = [Attack(self), SandBreath(self), Impale(self), Burrow(self), Bolster(self),
-                                       DesertWrath(self)]
+                                   DesertWrath(self)]
 
     def ko(self):
         self.kill()
@@ -3714,7 +3723,7 @@ class DesertWurm(BattleCharacter):
         self.action_options.clear()
         if state == "Main":
             self.action_options = [Attack(self), SandBreath(self), Impale(self), Burrow(self), Bolster(self),
-                                       DesertWrath(self)]
+                                   DesertWrath(self)]
             self.state = "Main"
         elif state == "Burrow":
             self.action_options = [TailSweep(self)]
@@ -3725,6 +3734,8 @@ class DesertWurm(BattleCharacter):
 
     def give_options(self):
         options = []
+
+
 #        if hasattr(self, 'action'):
 #            if getattr(self.action, 'name', "None") != "None":
 #                return [(self.slot, "None", ["None"], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0])]
@@ -3838,49 +3849,9 @@ class BattleOverlay(object):
         pygame.draw.rect(surface, (50, 50, 50), [0, Y * 75 / 100, X, Y * 25 / 100])
         pygame.draw.rect(surface, (50, 50, 50), [X * 80 / 100, 0, X * 20 / 100, Y])
         if self.parent.state == "Turn":
-            if self.parent.turn_sub_state == "Move_Select" or self.parent.turn_sub_state == "Item" or \
-                    self.parent.turn_sub_state == "Skill":
-                pygame.draw.rect(surface, (150, 0, 150), BATTLE_MENUS['move_top_menu_rects']['border'], 2)
-                for i, option in enumerate(actions_dict.keys()):
-                    option_text = option
-                    if option == 'Attack':
-                        if "Weapon" in self.parent.player_index.equipment.keys():
-                            if self.parent.player_index.equipment["Weapon"].energy:
-                                if self.parent.player_index.equipment["Weapon"].charge < \
-                                        self.parent.player_index.equipment["Weapon"].use_charge:
-                                    option_text = "Recharge"
-                    color = TEXT_COLOR
-                    if i == self.parent.action_type_index:
-                        color = SELECTED_COLOR
-                    tw(surface, option_text, color, BATTLE_MENUS['move_top_menu_rects'][option], TEXT_FONT)
-                if self.parent.turn_sub_state == "Item":
-                    for key in range(5):
-                        if key+self.item_display_index + 1 > len(self.parent.persist['inventory']):
-                            color = (50, 50, 50)
-                            if key == self.item_relative:
-                                color = (100, 100, 100)
-                            tw(surface, "-".rjust(5), color, BATTLE_MENUS['item_menu_rects'][key], TEXT_FONT)
-                        else:
-                            color = TEXT_COLOR
-                            if key == self.item_relative:
-                                color = SELECTED_COLOR
-                            tw(surface, self.parent.persist['inventory'][key+self.item_display_index].name, color,
-                               BATTLE_MENUS['item_menu_rects'][key], TEXT_FONT)
-                if self.parent.turn_sub_state == "Skill":
-                    for key in range(5):
-                        if key + self.skill_display_index + 1 > len(self.parent.player_index.abilities):
-                            color = (50, 50, 50)
-                            if key == self.skill_relative:
-                                color = (100, 100, 100)
-                            tw(surface, "-".rjust(5), color, BATTLE_MENUS['item_menu_rects'][key], TEXT_FONT)
-                        else:
-                            color = TEXT_COLOR
-                            if key == self.skill_relative:
-                                color = SELECTED_COLOR
-                            tw(surface, self.parent.player_index.abilities[key + self.skill_display_index].name, color,
-                               BATTLE_MENUS['item_menu_rects'][key], TEXT_FONT)
+            pass
 
-            elif self.parent.turn_sub_state == "Browse":
+            if self.parent.turn_sub_state == "Browse":
                 pygame.draw.rect(surface, (150, 150, 20), BATTLE_MENUS['turn_end_rect'], 5, 12)
                 tw(surface, "END TURN", TEXT_COLOR, BATTLE_MENUS['turn_end_rect'],
                    HEADING_FONT)
@@ -4050,10 +4021,42 @@ class BattleAction(pygame.sprite.Sprite):
     def cancel(self):
         self.kill()
 
+    def __lt__(self, other):
+        if self.priority and not other.priority:
+            return False
+        elif not self.priority and other.priority:
+            return True
+        else:
+            return self.speed < other.speed
+
+    def __gt__(self, other):
+        if self.priority and not other.priority:
+            return True
+        elif not self.priority and other.priority:
+            return False
+        else:
+            return self.speed > other.speed
+
+    def __le__(self, other):
+        if self.priority and not other.priority:
+            return False
+        elif not self.priority and other.priority:
+            return True
+        else:
+            return self.speed <= other.speed
+
+    def __ge__(self, other):
+        if self.priority and not other.priority:
+            return True
+        elif not self.priority and other.priority:
+            return False
+        else:
+            return self.speed >= other.speed
+
 
 class NoActionSelected(BattleAction):
     def __init__(self, parent, target=None):
-        super().__init__(parent, target=None)
+        super(NoActionSelected, self).__init__(parent, target=None)
 
     def expected_value(self):
         value_set = []
@@ -4076,9 +4079,49 @@ class NoActionSelected(BattleAction):
         self.parent.parent.battle_objects.add(self)
 
 
+class Run(BattleAction):
+    def __init__(self, parent, target=None):
+        super(Run, self).__init__(parent, target=None)
+
+    def is_usable(self):
+        return True
+
+    def do_action(self):
+        self.end_action_timer = 1000
+
+    def target_set(self, source, battle_character):
+        self.target = None
+        if self.parent.battle_action:
+            self.parent.battle_action.kill()
+        self.parent.battle_action = self
+        self.parent.parent.battle_actions.add(self)
+        self.parent.parent.battle_objects.add(self)
+
+
+class Defend(BattleAction):
+    def __init__(self, parent, target=None):
+        super(Defend, self).__init__(parent, target=None)
+        self.priority = True
+
+    def is_usable(self):
+        return True
+
+    def do_action(self):
+        self.parent.defend += 1
+        self.end_action_timer = 1000
+
+    def target_set(self, source, battle_character):
+        self.target = None
+        if self.parent.battle_action:
+            self.parent.battle_action.kill()
+        self.parent.battle_action = self
+        self.parent.parent.battle_actions.add(self)
+        self.parent.parent.battle_objects.add(self)
+
+
 class Recharge(BattleAction):
     def __init__(self, parent, target=None):
-        super().__init__(parent, target=None)
+        super(Recharge, self).__init__(parent, target=None)
 
     def is_usable(self):
         if self.parent.parent.persist['chargers'] > 0:
@@ -4100,7 +4143,7 @@ class Recharge(BattleAction):
 
 class SlimeBall(BattleAction):
     def __init__(self, parent, target=None):
-        super().__init__(parent, target=None)
+        super(SlimeBall, self).__init__(parent, target=None)
         self.target_type = "Single"
         self.attack_stat = "strength"
         self.defend_stat = "defense"
@@ -4217,7 +4260,7 @@ class Attack(BattleAction):
 
 class KiBlast(BattleAction):
     def __init__(self, parent, target=None):
-        super().__init__(parent, target=None)
+        super(KiBlast, self).__init__(parent, target=None)
         self.parent = parent
         self.target_type = "Team"
         self.attack_stat = "strength"
@@ -4225,10 +4268,12 @@ class KiBlast(BattleAction):
         self.power = 40
         self.name = "Ki Blast"
         self.action_type = "Ability"
-        self.animation_sprites = SpriteSheet(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Battle\Effects"
-                               r"\attack_all_enemy_animation_1_720p.png").load_strip([0, 0, 1280, 720], 19, (255, 55, 202)),
+        self.animation_sprites = SpriteSheet(
+            r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Battle\Effects"
+            r"\attack_all_enemy_animation_1_720p.png").load_strip([0, 0, 1280, 720], 19, (255, 55, 202)),
         self.animation_frames = [0, 1, 2, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18]
-        self.frame_times = [50, 50, 50, 50, 50, 50, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 50, 50, 50, 150, 100],
+        self.frame_times = [50, 50, 50, 50, 50, 50, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 50, 50, 50,
+                            150, 100],
         self.delay = 100
         self.animation_type = 'screen'
         self.mp_cost = 2
@@ -4254,7 +4299,8 @@ class KiBlast(BattleAction):
         for target in self.target:
             damage = attack_defense_calculate(self, self.parent, target)
             target.damage(damage, self, delay=2000)
-        self.parent.parent.persist['FX'].add_effect(self.animation_sprites, self.animation_frames, self.frame_times, self.delay, self.animation_type)
+        self.parent.parent.persist['FX'].add_effect(self.animation_sprites, self.animation_frames, self.frame_times,
+                                                    self.delay, self.animation_type)
         self.parent.parent.persist['SFX'].schedule_sfx('Blast_1')
         self.end_action_timer = 3000
 
@@ -4276,7 +4322,7 @@ class KiBlast(BattleAction):
 
 class SandBreath(BattleAction):
     def __init__(self, parent, target=None):
-        super().__init__(parent, target=None)
+        super(SandBreath, self).__init__(parent, target=None)
         self.target_type = "Team"
         self.attack_stat = "strength"
         self.defend_stat = "defense"
@@ -4320,7 +4366,7 @@ class SandBreath(BattleAction):
 
 class Impale(BattleAction):
     def __init__(self, parent, target=None):
-        super().__init__(parent, target=None)
+        super(Impale, self).__init__(parent, target=None)
         self.target_type = "Single"
         self.attack_stat = "strength"
         self.defend_stat = "defense"
@@ -4364,7 +4410,7 @@ class Impale(BattleAction):
 
 class Burrow(BattleAction):
     def __init__(self, parent, target=None):
-        super().__init__(parent, target=None)
+        super(Burrow, self).__init__(parent, target=None)
         self.target_type = "None"
         self.attack_stat = "strength"
         self.defend_stat = "defense"
@@ -4398,7 +4444,7 @@ class Burrow(BattleAction):
 
 class TailSweep(BattleAction):
     def __init__(self, parent, target=None):
-        super().__init__(parent, target=None)
+        super(TailSweep, self).__init__(parent, target=None)
         self.target_type = "Team"
         self.attack_stat = "strength"
         self.defend_stat = "defense"
@@ -4440,7 +4486,7 @@ class TailSweep(BattleAction):
 
 class Emerge(BattleAction):
     def __init__(self, parent, target=None):
-        super().__init__(parent, target=None)
+        super(Emerge, self).__init__(parent, target=None)
         self.target_type = "Team"
         self.attack_stat = "strength"
         self.defend_stat = "defense"
@@ -4483,7 +4529,7 @@ class Emerge(BattleAction):
 
 class Bolster(BattleAction):
     def __init__(self, parent, target=None):
-        super().__init__(parent, target=None)
+        super(Bolster, self).__init__(parent, target=None)
         self.target_type = "Single"
         self.attack_stat = "strength"
         self.defend_stat = "defense"
@@ -4527,7 +4573,7 @@ class Bolster(BattleAction):
 
 class DesertWrath(BattleAction):
     def __init__(self, parent, target=None):
-        super().__init__(parent, target=None)
+        super(DesertWrath, self).__init__(parent, target=None)
         self.target_type = "Single"
         self.attack_stat = "strength"
         self.defend_stat = "defense"
