@@ -1,7 +1,8 @@
 import pygame
 import math
 import settings
-import pytweening
+import pytweening as pt
+import numpy as np
 from base import BaseState
 
 
@@ -20,6 +21,7 @@ class Battle(BaseState):
         self.battle_animations = pygame.sprite.Group()
         self.damage_particle = settings.DamageParticle()
         self.action_card_manager = ActionCardManger()
+        self.pointer = Pointer(self)
         # instantiate state variables and menu index variables
         self.state = "Pre_Battle"
         self.turn_sub_state = "Browse"
@@ -65,6 +67,12 @@ class Battle(BaseState):
             self.battle_objects.add(getattr(self, slot))
 
     def handle_action(self, action):
+        if self.state != "Pointer":
+            if action == ",":
+                self.state = "Pointer"
+        elif self.state == "Pointer":
+            if action == ",":
+                self.state = "Turn"
         if action == "mouse_move":
             # mouse hover check
             for sprite in self.battle_objects.sprites():
@@ -281,6 +289,7 @@ class Battle(BaseState):
         self.damage_particle.update(dt)
         self.message.update(dt)
         self.action_card_manager.update(dt)
+        self.pointer.update(dt)
         self.persist['Music'].update(dt, self)
         if self.state == "Pre_Battle":
             self.state = "Pre_Turn"
@@ -375,6 +384,8 @@ class Battle(BaseState):
         self.battle_actions.draw(surface)
         self.action_card_manager.draw(surface)
         self.message.draw(surface)
+        if self.state == "Pointer":
+            self.pointer.draw(surface)
         for action in self.battle_actions.sprites():
             action.draw_text(surface)
         self.persist['FX'].draw(surface)
@@ -403,6 +414,8 @@ class Battle(BaseState):
                 self.handle_action("n")
             elif event.key == pygame.K_t:
                 self.handle_action("t")
+            elif event.key == pygame.K_COMMA:
+                self.handle_action(",")
             elif event.key == pygame.K_BACKSPACE:
                 self.handle_action("backspace")
             elif event.key == pygame.K_ESCAPE:
@@ -583,3 +596,90 @@ class ActionCard(object):
 
     def __ne__(self, other):
         return self.layer != other.layer
+
+
+class Pointer(object):
+    def __init__(self, parent):
+        self.parent = parent
+        self.point_1 = (200, 500)
+        self.point_2 = (100, 100)
+        self.n_points = 10
+        self.points = []
+        self.triangle_pointer = Wireframe(self, [(0, 0), (20, 5), (20, -5)])
+        self.pointer_spline_point = self.point_2
+
+    def update(self, dt):
+        if self.parent.state == "Pointer":
+            self.points = bezier(np.arange(0, 1, 1/self.n_points), [self.point_1, self.point_2, pygame.mouse.get_pos()])
+            self.triangle_pointer.update(dt)
+
+    def draw(self, surface):
+        if self.parent.state == "Pointer":
+            if self.points:
+                for point in self.points:
+                    pygame.draw.circle(surface, (100, 20, 20), point, 10, 4)
+                self.triangle_pointer.draw(surface)
+
+
+def bezier(weights, points):
+    bezier_points = []
+    for weight in weights:
+        bezier_points.append(lerp_recurse(weight, points))
+    return bezier_points
+
+
+def lerp_recurse(float_, points):
+    new_points = []
+    for i in range(1, len(points)):
+        new_points.append(lerp(points[i], points[i-1], float_))
+    if len(new_points) > 1:
+        return lerp_recurse(float_, new_points)
+    else:
+        return new_points[0]
+
+
+def lerp(point_1, point_2, float_):
+    """give two points and a float in [0, 1] and return a point between proportional to the float"""
+    return point_1[0] + (float_ * (point_2[0] - point_1[0])), point_1[1] + (float_ * (point_2[1] - point_1[1]))
+
+
+class Wireframe(object):
+    def __init__(self, parent, points):
+        self.parent = parent
+        self.theta = 0
+        self.pos = (0, 0)
+        self.points = points
+        self.draw_points = points
+
+    def update(self, dt):
+        print(self.theta)
+        self.pos = pygame.mouse.get_pos()
+        self.draw_points = []
+        for point in self.points:
+            self.draw_points.append(self.point_transform(point))
+        self.theta = angle_find((-1, 0), difference_vector(self.parent.pointer_spline_point, self.pos))
+
+    def draw(self, surface):
+        draw_wireframe(surface, self.draw_points)
+
+    def point_transform(self, point):
+        rot = np.array([[math.cos(self.theta), -math.sin(self.theta)], [math.sin(self.theta), math.cos(self.theta)]])
+        v = np.array([point[0], point[1]])
+        v2 = np.dot(rot, v)
+        return v2[0] + self.pos[0], v2[1] + self.pos[1]
+
+
+def draw_wireframe(surface, points, width=4):
+    for i, point in enumerate(points):
+        pygame.draw.line(surface, (100, 100, 100), point, points[i-1], width)
+
+
+def angle_find(v1, v2):
+    unit1 = v1 / np.linalg.norm(v1)
+    unit2 = v2 / np.linalg.norm(v2)
+    dot_product = np.dot(unit1, unit2)
+    return np.arccos(dot_product)
+
+
+def difference_vector(v1, v2):
+    return v2[0] - v1[0], v2[1] - v1[1]
