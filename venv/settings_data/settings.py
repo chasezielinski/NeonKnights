@@ -317,11 +317,6 @@ CHARACTER_SELECT_MENU = {
     'name_display_rect': [X * 50 / 100, Y * 70 / 100, X * 80 / 100, Y * 5 / 100],
     'class_display_rect': [X * 50 / 100, Y * 5 / 100, X * 80 / 100, Y * 5 / 100],
     'prompt_rect': [X * 1 / 8, Y * 13 / 16, X * 3 / 4, Y * 1 / 8],
-    'fighter pos': (X * 1 / 10, Y * 8 / 100),
-    'adept pos': (X * 3 / 10, Y * 8 / 100),
-    'rogue pos': (X * 5 / 10, Y * 8 / 100),
-    'artificer pos': (X * 7 / 10, Y * 8 / 100),
-    'selected pos': (X * 4 / 10, Y * 2 / 8),
     'sprites': {
         "Fighter": {
             'images128': [image_load(
