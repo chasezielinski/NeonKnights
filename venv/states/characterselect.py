@@ -1,65 +1,89 @@
 import pygame
 import settings
 from base import BaseState
-from settings import PartyAbilityManager, PlayerCharacter
+from settings import PartyAbilityManager, PlayerCharacter, X, Y
 
 fighter_128 = r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Character " \
               r"Select\Fighter_Select128p.png "
 fighter_256 = r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Character " \
               r"Select\Fighter_Select256p.png "
 adept_128 = r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Character " \
-            r"Select\Fighter_Select128p.png "
+            r"Select\Adept_Select128p.png "
 adept_256 = r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Character " \
-            r"Select\Fighter_Select256p.png "
+            r"Select\Adept_Select256p.png "
 rogue_128 = r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Character " \
-            r"Select\Fighter_Select128p.png "
+            r"Select\Rogue_Select128p.png "
 rogue_256 = r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Character " \
-            r"Select\Fighter_Select256p.png "
+            r"Select\Rogue_Select256p.png "
 artificer_128 = r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Character " \
-                r"Select\Fighter_Select128p.png "
+                r"Select\Artificer_Select128p.png "
 artificer_256 = r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Character " \
-                r"Select\Fighter_Select256p.png "
+                r"Select\Artificer_Select256p.png "
 
 
 class CharacterSelect(BaseState):
     def __init__(self):
         super(CharacterSelect, self).__init__()
         self.max_name_length = 13
-        self.active_index = 0
-        self.name_entry_index = -1
-        self.confirm_index = -1
-        self.options = settings.BASE_CLASSES
         self.next_state = "MENU"
         self.state = "Class_Select"
         self.index = "Fighter"
+        self.name_entry_index = -1
         self.name_entry = ""
         self.class_rects = {
-            "Fighter": [settings.X * 15 / 100, settings.Y * 80 / 100, settings.X * 20 / 100, settings.Y * 5 / 100],
-            "Adept": [settings.X * 35 / 100, settings.Y * 80 / 100, settings.X * 20 / 100, settings.Y * 5 / 100],
-            "Rogue": [settings.X * 55 / 100, settings.Y * 80 / 100, settings.X * 20 / 100, settings.Y * 5 / 100],
-            "Artificer": [settings.X * 75 / 100, settings.Y * 80 / 100, settings.X * 20 / 100, settings.Y * 5 / 100],}
+            "Fighter": [X * 15 / 100, Y * 80 / 100, X * 20 / 100, Y * 5 / 100],
+            "Adept": [X * 35 / 100, Y * 80 / 100, X * 20 / 100, Y * 5 / 100],
+            "Rogue": [X * 55 / 100, Y * 80 / 100, X * 20 / 100, Y * 5 / 100],
+            "Artificer": [X * 75 / 100, Y * 80 / 100, X * 20 / 100, Y * 5 / 100],}
         self.class_sprites = pygame.sprite.Group()
         self.class_sprites.add(CharacterSelectSprite(self, "Fighter"), CharacterSelectSprite(self, "Adept"),
                                CharacterSelectSprite(self, "Rogue"), CharacterSelectSprite(self, "Artificer"), )
-
-    def render_text(self, index):
-        color = pygame.Color("red") if index == self.active_index else pygame.Color("white")
-        return self.font.render(self.options[index], True, color)
-
-    def get_text_position(self, text, index):
-        center = (self.screen_rect.center[0] - (3 / 4 * settings.X / len(self.options)) +
-                  (index * settings.X / (2 * len(self.options))), self.screen_rect.center[1] +
-                  (0.25 * settings.Y))
-        return text.get_rect(center=center)
+        self.name_rect = [X * 20 / 100, Y * 70 / 100, X * 80 / 100, Y * 5 / 100]
+        self.class_rect = [X * 20 / 100, Y * 5 / 100, X * 80 / 100, Y * 5 / 100]
+        self.prompt_rect = [X * 1 / 8, Y * 13 / 16, X * 3 / 4, Y * 1 / 8]
+        self.option_rect = {0: [X * 75 / 100, Y * 30 / 100, X * 25 / 100, Y * 10 / 100],
+                            1: [X * 75 / 100, Y * 40 / 100, X * 25 / 100, Y * 10 / 100],
+                            2: [X * 75 / 100, Y * 50 / 100, X * 25 / 100, Y * 10 / 100]}
 
     def menu_toggle(self, action):
         index = list(self.class_rects.keys()).index(self.index)
+        settings.SOUND_EFFECTS["Menu"]["Toggle_2"].play()
         if action == "Right":
             index += 1
         else:
             index -= 1
         index %= len(self.class_rects)
         self.index = list(self.class_rects.keys())[index]
+        
+    def menu_select(self):
+        if self.state == "Class_Select":
+            settings.SOUND_EFFECTS["Menu"]["Toggle_1"].play()
+            self.state = "Name_Entry"
+        elif self.state == "Name_Entry":
+            if self.name_entry_index == 0:
+                settings.SOUND_EFFECTS["Menu"]["Toggle_2"].play()
+                self.name_entry = settings.random_name()
+            elif self.name_entry_index == 1 and len(self.name_entry) > 0:
+                settings.SOUND_EFFECTS["Menu"]["Toggle_1"].play()
+                self.state = "Confirm"
+            elif self.name_entry_index == 2:
+                self.menu_return()
+        elif self.state == "Confirm":
+            if self.name_entry_index == 0:
+                settings.SOUND_EFFECTS["Menu"]["Confirm_1"].play()
+                self.start()
+            elif self.name_entry_index == 1 and len(self.name_entry) > 0:
+                self.menu_return()
+
+    def menu_return(self):
+        settings.SOUND_EFFECTS["Menu"]["Toggle_2"].play()
+        if self.state == "Class_Select":
+            self.done = True
+            self.next_state = "MENU"
+        elif self.state == "Name_Entry":
+            self.state = "Class_Select"
+        elif self.state == "Confirm":
+            self.state = "Name_Entry"
 
     def text_input(self, text):
         if self.state == "Name_Entry" and len(self.name_entry) < self.max_name_length:
@@ -78,71 +102,42 @@ class CharacterSelect(BaseState):
                             settings.SOUND_EFFECTS["Menu"]["Toggle_2"].play()
                         self.index = key
                         break
-            elif action == "click":
-                self.handle_action("Select")
-            elif action == "Left" or "Right":
+            elif action == "click" or action == "Return":
+                self.menu_select()
+            elif action == "Left" or action == "Right":
                 self.menu_toggle(action)
-            elif action == "Select":
-                settings.SOUND_EFFECTS["Menu"]["Toggle_1"].play()
-                self.state = "Name_Entry"
 
         elif self.state == "Name_Entry":
-            mods = pygame.key.get_mods()
             if action == "mouse_move":
-                if settings.click_check(settings.CHARACTER_SELECT_MENU['name_entry_option_rects']["random"]):
-                    self.name_entry_index = 0
-                elif settings.click_check(settings.CHARACTER_SELECT_MENU['name_entry_option_rects']["select"]):
-                    self.name_entry_index = 1
-                elif settings.click_check(settings.CHARACTER_SELECT_MENU['name_entry_option_rects']["back"]):
-                    self.name_entry_index = 2
-                else:
-                    self.name_entry_index = -1
+                self.name_entry_index = -1
+                for key, value in self.option_rect.items():
+                    if settings.click_check(value):
+                        self.name_entry_index = key
             elif action == "click":
-                if self.name_entry_index == 0:
-                    settings.SOUND_EFFECTS["Menu"]["Toggle_2"].play()
-                    self.name_entry = settings.random_name()
-                elif self.name_entry_index == 1:
-                    settings.SOUND_EFFECTS["Menu"]["Toggle_1"].play()
-                    if len(self.name_entry) > 0:
-                        self.state = "Confirm"
-                elif self.name_entry_index == 2:
-                    settings.SOUND_EFFECTS["Menu"]["Toggle_2"].play()
-                    self.state = "Class_Select"
+                self.menu_select()
             elif action == "Backspace":
-                settings.SOUND_EFFECTS["Menu"]["Toggle_1"].play()
                 if len(self.name_entry) > 0:
+                    settings.SOUND_EFFECTS["Menu"]["Toggle_1"].play()
                     self.name_entry = self.name_entry[:-1]
                 else:
-                    self.state = "Class_Select"
-            elif action == "Select":
-                settings.SOUND_EFFECTS["Menu"]["Toggle_1"].play()
-                if len(self.name_entry) > 0:
-                    self.state = "Confirm"
-            elif action == "space" and len(self.name_entry) < settings.MAX_NAME_LENGTH:
-                settings.SOUND_EFFECTS["Menu"]["Toggle_2"].play()
-                self.name_entry += " "
+                    self.menu_return()
+            elif action == "Return":
+                self.menu_select()
+            elif action == "space":
+                self.text_input(" ")
 
         elif self.state == "Confirm":
             if action == "mouse_move":
-                if settings.click_check(settings.CHARACTER_SELECT_MENU['confirm_rects']["confirm"]):
-                    self.confirm_index = 0
-                elif settings.click_check(settings.CHARACTER_SELECT_MENU['confirm_rects']["back"]):
-                    self.confirm_index = 1
-                else:
-                    self.confirm_index = -1
+                self.name_entry_index = -1
+                for key, value in self.option_rect.items():
+                    if settings.click_check(value):
+                        self.name_entry_index = key
             elif action == "click":
-                if self.confirm_index == 0:
-                    settings.SOUND_EFFECTS["Menu"]["Confirm_1"].play()
-                    self.state = "Start"
-                elif self.confirm_index == 1:
-                    settings.SOUND_EFFECTS["Menu"]["Toggle_2"].play()
-                    self.state = "Name_Entry"
-            if action == "Select":
-                settings.SOUND_EFFECTS["Menu"]["Confirm_1"].play()
-                self.state = "Start"
+                self.menu_select()
+            if action == "Return":
+                self.menu_select()
             elif action == "Backspace":
-                settings.SOUND_EFFECTS["Menu"]["Toggle_1"].play()
-                self.state = "Name_Entry"
+                self.menu_return()
 
     def update(self, dt):
         self.class_sprites.update(dt)
@@ -152,25 +147,24 @@ class CharacterSelect(BaseState):
         self.persist['FX'].update(dt)
         self.persist['Music'].update(dt)
 
-        if self.state == "Start":
-            self.next_state = "REGION_SELECT"
-            # setup persist dictionary
-            self.persist['region_generate'] = True
-            self.persist['region_index'] = 0
-            self.persist['characters'] = []
-            self.persist['characters'].append(eval(f"settings.{self.options[self.active_index]}")(name=self.name_entry))
-            self.persist['supplies'] = 10
-            self.persist['chargers'] = 5
-            self.persist['elixirs'] = 5
-            self.persist['gold'] = 1000
-            self.persist['region_type'] = "None"
-            self.persist['inventory'] = [settings.StimPack(), settings.StimPack(), settings.StimPack(),
-                                         settings.StimPack(), settings.StimPack()]
-            settings.character_initial(self.persist['characters'][0], self.options[self.active_index])
-            self.persist['equip menu indices'] = settings.REGION_MENUS['equip menu']['equip menu indices']
-            self.persist['party_abilities'] = PartyAbilityManager()
-            self.done = True
-
+    def start(self):
+        self.persist['region_generate'] = True
+        self.persist['region_index'] = 0
+        self.persist['characters'] = []
+        self.persist['characters'].append(eval(f"settings.{self.index}")(name=self.name_entry))
+        self.persist['supplies'] = 10
+        self.persist['chargers'] = 5
+        self.persist['elixirs'] = 5
+        self.persist['gold'] = 1000
+        self.persist['region_type'] = "None"
+        self.persist['inventory'] = [settings.StimPack(), settings.StimPack(), settings.StimPack(),
+                                     settings.StimPack(), settings.StimPack()]
+        settings.character_initial(self.persist['characters'][0], self.index)
+        self.persist['equip menu indices'] = settings.REGION_MENUS['equip menu']['equip menu indices']
+        self.persist['party_abilities'] = PartyAbilityManager()
+        self.next_state = "REGION_SELECT"
+        self.done = True
+        
     def get_event(self, event):
         if event.type == pygame.QUIT:
             self.quit = True
@@ -182,12 +176,12 @@ class CharacterSelect(BaseState):
         elif event.type == pygame.KEYDOWN:
             if 97 <= event.key <= 122:
                 self.text_input("{}".format(event.unicode))
-            if event.key == pygame.K_LEFT:
+            elif event.key == pygame.K_LEFT:
                 self.handle_action("Left")
             elif event.key == pygame.K_RIGHT:
                 self.handle_action("Right")
             elif event.key == pygame.K_RETURN:
-                self.handle_action("Select")
+                self.handle_action("Return")
             elif event.key == pygame.K_BACKSPACE:
                 self.handle_action("Backspace")
             elif event.key == pygame.K_SPACE:
@@ -198,57 +192,35 @@ class CharacterSelect(BaseState):
         self.class_sprites.draw(surface)
 
         if self.state == "Class_Select":
-            pass
+            options = list(self.class_rects.keys())
+            for option in options:
+                color = settings.TEXT_COLOR
+                if option == self.index:
+                    color = settings.SELECTED_COLOR
+                settings.tw(surface, option, color, self.class_rects[option], settings.TEXT_FONT)
 
         elif self.state == "Name_Entry":
-            rect_var = settings.CHARACTER_SELECT_MENU['name_display_rect']
-            settings.tw(surface, self.name_entry, settings.TEXT_COLOR,
-                        [rect_var[0] - (len(self.name_entry) * settings.X * 9 / 1000), rect_var[1], rect_var[2],
-                         rect_var[3]], settings.HEADING_FONT)
-            rect_var = settings.CHARACTER_SELECT_MENU['class_display_rect']
-            settings.tw(surface, self.options[self.active_index], settings.TEXT_COLOR,
-                        [rect_var[0] - (len(self.options[self.active_index]) * settings.X * 9 / 1000), rect_var[1],
-                         rect_var[2],
-                         rect_var[3]], settings.HEADING_FONT)
-
-            settings.tw(surface, "Input a name. Press enter to continue or backspace to select another class.",
-                        settings.TEXT_COLOR, settings.CHARACTER_SELECT_MENU['prompt_rect'], settings.HEADING_FONT)
-
-            options = settings.CHARACTER_SELECT_MENU['name_entry_option_rects'].keys()
-            for i, option in enumerate(options):
-                color = settings.TEXT_COLOR
-                if self.name_entry_index == i:
-                    color = settings.SELECTED_COLOR
-                settings.tw(surface, option, color, settings.CHARACTER_SELECT_MENU['name_entry_option_rects'][option],
-                            settings.HEADING_FONT)
+            prompt = "Input a name. Press enter to continue or backspace to select another class."
+            options = ["random", "select", "back"]
+            self.print_options(surface, options, prompt)
 
         elif self.state == "Confirm":
-            rect_var = settings.CHARACTER_SELECT_MENU['name_display_rect']
-            settings.tw(surface, self.name_entry, settings.TEXT_COLOR,
-                        [rect_var[0] - (len(self.name_entry) * settings.X * 9 / 1000), rect_var[1], rect_var[2],
-                         rect_var[3]], settings.HEADING_FONT)
-            rect_var = settings.CHARACTER_SELECT_MENU['class_display_rect']
-            settings.tw(surface, self.options[self.active_index], settings.TEXT_COLOR,
-                        [rect_var[0] - (len(self.options[self.active_index]) * settings.X * 9 / 1000), rect_var[1],
-                         rect_var[2],
-                         rect_var[3]], settings.HEADING_FONT)
-
-            settings.tw(surface, "Press enter to embark. Press backspace to reconsider.", settings.TEXT_COLOR,
-                        settings.CHARACTER_SELECT_MENU['prompt_rect'], settings.HEADING_FONT)
-
-            options = settings.CHARACTER_SELECT_MENU['confirm_rects'].keys()
-            for i, option in enumerate(options):
-                color = settings.TEXT_COLOR
-                if self.confirm_index == i:
-                    color = settings.SELECTED_COLOR
-                settings.tw(surface, option, color, settings.CHARACTER_SELECT_MENU['confirm_rects'][option],
-                            settings.HEADING_FONT)
-
-        elif self.state == "Start":
-            pass
+            prompt = "Press enter to embark. Press backspace to reconsider."
+            options = ["confirm", "back"]
+            self.print_options(surface, options, prompt)
 
         self.persist["Transition"].draw(surface)
         self.persist['FX'].draw(surface)
+
+    def print_options(self, surface, options, prompt):
+        settings.tw(surface, self.name_entry.rjust(20-len(self.name_entry)), settings.TEXT_COLOR, self.name_rect,
+                    settings.HEADING_FONT)
+        settings.tw(surface, self.index.rjust(20-len(self.index)), settings.TEXT_COLOR, self.class_rect,
+                    settings.HEADING_FONT)
+        settings.tw(surface, prompt, settings.TEXT_COLOR, self.prompt_rect, settings.HEADING_FONT)
+        for i, option in enumerate(options):
+            settings.tw(surface, option, settings.TEXT_COLOR, self.option_rect[i],
+                        settings.HEADING_FONT)
 
     def startup(self, persistent):
         self.persist = persistent
@@ -261,7 +233,8 @@ class CharacterSelectSprite(pygame.sprite.Sprite):
         self.parent = parent
         self.selected = False
         self.timer = 0
-        self.pos = self.selected_pos = settings.X * 4 / 10, settings.Y * 2 / 8
+        self.selected_pos = X * 4 / 10, Y * 2 / 8
+        self.class_ = class_
         if class_ == "Fighter":
             self.bg_sprites = settings.SpriteSheet(fighter_128).load_strip([0, 0, 128, 128], 12, (255, 55, 202))
             self.selected_sprites = settings.SpriteSheet(fighter_256).load_strip([0, 0, 256, 256], 12, (255, 55, 202))
@@ -269,43 +242,43 @@ class CharacterSelectSprite(pygame.sprite.Sprite):
             self.speed = self.idle_speed = [1650, 350]
             self.flourish_frames = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
             self.flourish_speed = [1000, 100, 100, 100, 100, 100, 100, 100, 100, 500]
-            self.bg_pos = settings.X * 1 / 10, settings.Y * 8 / 100
+            self.pos = self.bg_pos = X * 1 / 10, Y * 8 / 100
         elif class_ == "Adept":
-            self.bg_sprites = settings.SpriteSheet(adept_128).load_strip([0, 0, 128, 128], 12, (255, 55, 202))
-            self.selected_sprites = settings.SpriteSheet(adept_256).load_strip([0, 0, 256, 256], 12, (255, 55, 202))
-            self.frames = self.idle_frames = [0, 1]
-            self.speed = self.idle_speed = [1650, 350]
-            self.flourish_frames = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
-            self.flourish_frames = [1000, 100, 100, 100, 100, 100, 100, 100, 100, 500]
-            self.bg_pos = settings.X * 3 / 10, settings.Y * 8 / 100
+            self.bg_sprites = settings.SpriteSheet(adept_128).load_strip([0, 0, 128, 128], 16, (255, 55, 202))
+            self.selected_sprites = settings.SpriteSheet(adept_256).load_strip([0, 0, 256, 256], 16, (255, 55, 202))
+            self.frames = self.idle_frames = [0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+            self.speed = self.idle_speed = [100 for i in range(23)]
+            self.flourish_frames = [0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 11, 12, 13, 14, 15]
+            self.flourish_speed = [100 for i in range(19)]
+            self.pos = self.bg_pos = X * 3 / 10, Y * 8 / 100
         elif class_ == "Rogue":
             self.bg_sprites = settings.SpriteSheet(rogue_128).load_strip([0, 0, 128, 128], 12, (255, 55, 202))
             self.selected_sprites = settings.SpriteSheet(rogue_256).load_strip([0, 0, 256, 256], 12, (255, 55, 202))
             self.frames = self.idle_frames = [0, 1]
             self.speed = self.idle_speed = [1650, 350]
             self.flourish_frames = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
-            self.flourish_frames = [1000, 100, 100, 100, 100, 100, 100, 100, 100, 500]
-            self.bg_pos = settings.X * 5 / 10, settings.Y * 8 / 100
+            self.flourish_speed = [1000, 100, 100, 100, 100, 100, 100, 100, 100, 500]
+            self.pos = self.bg_pos = X * 5 / 10, Y * 8 / 100
         elif class_ == "Artificer":
-            self.bg_sprites = settings.SpriteSheet(artificer_128).load_strip([0, 0, 128, 128], 12, (255, 55, 202))
-            self.selected_sprites = settings.SpriteSheet(artificer_256).load_strip([0, 0, 256, 256], 12, (255, 55, 202))
-            self.frames = self.idle_frames = [0, 1]
-            self.speed = self.idle_speed = [1650, 350]
-            self.flourish_frames = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
-            self.flourish_frames = [1000, 100, 100, 100, 100, 100, 100, 100, 100, 500]
-            self.bg_pos = settings.X * 7 / 10, settings.Y * 8 / 100
+            self.bg_sprites = settings.SpriteSheet(artificer_128).load_strip([0, 0, 128, 128], 30, (255, 55, 202))
+            self.selected_sprites = settings.SpriteSheet(artificer_256).load_strip([0, 0, 256, 256], 30, (255, 55, 202))
+            self.frames = self.idle_frames = list(range(22))
+            self.speed = self.idle_speed = [1500, 100, 50, 50, 50, 50, 50, 50, 50, 50, 50, 100, 100, 100, 50, 50, 200,
+                                            50, 30, 30, 30, 100]
+            self.flourish_frames = [21, 22, 23, 24, 25, 26, 27, 28, 29]
+            self.flourish_speed = [1500, 100, 50, 50, 50, 50, 50, 50, 50]
+            self.pos = self.bg_pos = X * 7 / 10, Y * 8 / 100
         self.sprites = self.bg_sprites
         self.image = self.sprites[0]
         self.animation_index = 0
         self.rect = self.image.get_rect(topleft=self.pos)
 
     def update(self, dt):
-        self.selected = False
-        if self.parent.index.lower() == self.__class__.__name__.lower() and not self.selected:
+        if self.parent.index.lower() == self.class_.lower() and not self.selected:
             self.selected = True
             self.sprites = self.selected_sprites
             self.pos = self.selected_pos
-        elif not self.parent.index.lower() == self.__class__.__name__.lower() and self.selected:
+        elif not self.parent.index.lower() == self.class_.lower() and self.selected:
             self.selected = False
             self.sprites = self.bg_sprites
             self.pos = self.bg_pos
@@ -314,4 +287,5 @@ class CharacterSelectSprite(pygame.sprite.Sprite):
             self.timer = 0
             self.animation_index += 1
             self.animation_index %= len(self.frames)
+        self.image = self.sprites[self.frames[self.animation_index]]
         self.rect = self.image.get_rect(topleft=self.pos)
