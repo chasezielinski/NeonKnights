@@ -44,6 +44,7 @@ class CharacterSelect(BaseState):
         self.option_rect = {0: [X * 75 / 100, Y * 30 / 100, X * 25 / 100, Y * 10 / 100],
                             1: [X * 75 / 100, Y * 40 / 100, X * 25 / 100, Y * 10 / 100],
                             2: [X * 75 / 100, Y * 50 / 100, X * 25 / 100, Y * 10 / 100]}
+        self.particles = BGParticles()
 
     def menu_toggle(self, action):
         index = list(self.class_rects.keys()).index(self.index)
@@ -146,6 +147,7 @@ class CharacterSelect(BaseState):
         self.persist['SFX'].update(dt)
         self.persist['FX'].update(dt)
         self.persist['Music'].update(dt)
+        self.particles.update(dt)
 
     def start(self):
         self.persist['region_generate'] = True
@@ -189,6 +191,7 @@ class CharacterSelect(BaseState):
 
     def draw(self, surface):
         surface.fill(pygame.Color("black"))
+        self.particles.draw_bg(surface)
         self.class_sprites.draw(surface)
 
         if self.state == "Class_Select":
@@ -209,6 +212,7 @@ class CharacterSelect(BaseState):
             options = ["confirm", "back"]
             self.print_options(surface, options, prompt)
 
+        self.particles.draw_fg(surface)
         self.persist["Transition"].draw(surface)
         self.persist['FX'].draw(surface)
 
@@ -289,3 +293,67 @@ class CharacterSelectSprite(pygame.sprite.Sprite):
             self.animation_index %= len(self.frames)
         self.image = self.sprites[self.frames[self.animation_index]]
         self.rect = self.image.get_rect(topleft=self.pos)
+
+
+class BGParticles(object):
+    def __init__(self):
+        super(BGParticles, self).__init__()
+        self.bg_particles = []
+        self.fg_particles = []
+        self.timer = 200
+
+    def draw_bg(self, surface):
+        for particle in self.bg_particles:
+            particle.draw(surface)
+
+    def draw_fg(self, surface):
+        for particle in self.fg_particles:
+            particle.draw(surface)
+
+    def update(self, dt):
+        self.timer -= dt * settings.random_int(50, 150)/100
+        if self.timer < 0:
+            self.timer = 20
+            if settings.random_int(0, 100) > 98:
+                self.fg_particles.append(Particle(background=False))
+            else:
+                self.bg_particles.append(Particle())
+        if self.bg_particles:
+            for particle in self.bg_particles:
+                particle.update(dt)
+                if particle.done:
+                    del particle
+        if self.fg_particles:
+            for particle in self.fg_particles:
+                particle.update(dt)
+                if particle.done:
+                    del particle
+
+
+class Particle(object):
+    def __init__(self, background=True):
+        super(Particle, self).__init__()
+        self.pos = [settings.random_int(0, X), Y*1.1]
+        self.done = False
+        if background:
+            self.radius = settings.choose_random_weighted([1, 2, 3, 4, 5, 6, 7, 8, 9, 10], [100, 30, 12, 9, 7, 6, 5, 4, 3, 2])
+        else:
+            self.radius = settings.random_int(11, 15)
+        self.velocity = settings.random_int(90, 110)/100 * self.radius/5
+        self.rainbow = False
+        if settings.random_int(0, 100) > 99:
+            self.rainbow = True
+        self.color = settings.random_int(200, 255),settings.random_int(200, 255), settings.random_int(200, 255)
+        self.a = settings.random_int(150, 300)/100
+        self.rect = [self.pos[0], self.pos[1], 2*self.radius, 2*self.radius*self.a]
+
+    def update(self, dt):
+        self.pos[1] -= dt * self.velocity
+        if self.pos[1] < 0:
+            self.done = True
+        if self.rainbow:
+            self.color = (self.color[0] + 2*dt) % 255, (self.color[0] + 5*dt) % 255, (self.color[0] + 7*dt) % 255
+        self.rect = [self.pos[0], self.pos[1], 2*self.radius, 2*self.radius*self.a]
+
+    def draw(self, surface):
+        pygame.draw.ellipse(surface, self.color, self.rect)
