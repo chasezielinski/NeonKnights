@@ -298,64 +298,6 @@ MAIN_MENU_RECTS = {
                 },
 }
 
-CHARACTER_SELECT_MENU = {
-    'class_option_rects': {
-        "Fighter": [X * 15 / 100, Y * 80 / 100, X * 20 / 100, Y * 5 / 100],
-        "Adept": [X * 35 / 100, Y * 80 / 100, X * 20 / 100, Y * 5 / 100],
-        "Rogue": [X * 55 / 100, Y * 80 / 100, X * 20 / 100, Y * 5 / 100],
-        "Artificer": [X * 75 / 100, Y * 80 / 100, X * 20 / 100, Y * 5 / 100],
-    },
-    'name_entry_option_rects': {
-        "random": [X * 75 / 100, Y * 30 / 100, X * 25 / 100, Y * 10 / 100],
-        "select": [X * 75 / 100, Y * 40 / 100, X * 25 / 100, Y * 10 / 100],
-        "back": [X * 75 / 100, Y * 50 / 100, X * 25 / 100, Y * 10 / 100],
-    },
-    'confirm_rects': {
-        "confirm": [X * 75 / 100, Y * 40 / 100, X * 25 / 100, Y * 10 / 100],
-        "back": [X * 75 / 100, Y * 50 / 100, X * 25 / 100, Y * 10 / 100],
-    },
-    'name_display_rect': [X * 50 / 100, Y * 70 / 100, X * 80 / 100, Y * 5 / 100],
-    'class_display_rect': [X * 50 / 100, Y * 5 / 100, X * 80 / 100, Y * 5 / 100],
-    'prompt_rect': [X * 1 / 8, Y * 13 / 16, X * 3 / 4, Y * 1 / 8],
-    'sprites': {
-        "Fighter": {
-            'idle_frames': [0, 1],
-            'idle_weights': [5, 1],
-            'idle_speed': 2000,
-            'flourish_frames': [2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
-            'flourish_weights': [10, 1, 1, 1, 1, 1, 1, 1, 1, 5],
-            'flourish_speed': 2000
-        },
-        "Rogue": {
-            'idle_frames': [0, 1],
-            'idle_weights': [11, 1],
-            'idle_speed': 6000,
-            'flourish_frames': [2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
-            'flourish_weights': [10, 1, 1, 1, 1, 1, 1, 1, 1, 5],
-            'flourish_speed': 2000
-        },
-        "Adept": {
-
-            'idle_frames': range(16),
-            'idle_weights': [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-            'idle_speed': 500,
-            'flourish_frames': [2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
-            'flourish_weights': [10, 1, 1, 1, 1, 1, 1, 1, 1, 5],
-            'flourish_speed': 2000
-        },
-        "Artificer": {
-
-            'idle_frames': range(30),
-            'idle_weights': [500, 100, 50, 50, 50, 50, 50, 50, 50, 50, 50, 100, 100, 100, 50, 50, 200, 50, 30, 30, 30,
-                             100, 50, 50, 50, 50, 50, 50, 50, 50],
-            'idle_speed': 2290,
-            'flourish_frames': [2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
-            'flourish_weights': [10, 1, 1, 1, 1, 1, 1, 1, 1, 5],
-            'flourish_speed': 2000
-        }
-    },
-}
-
 # Regions
 
 REGION_BIOMES = ["Desert", "Grasslands", "Valley"]  # , "Forest", "Savannah", "Badlands", "Tundra",
