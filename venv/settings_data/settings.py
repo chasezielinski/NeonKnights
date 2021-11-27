@@ -45,19 +45,6 @@ EXPERIENCE_CURVE_TOTAL = [100, 310, 630, 1060, 1600, 2250, 3010, 3880, 4860, 595
 for i in range(len(EXPERIENCE_CURVE)):
     EXPERIENCE_CURVE_TOTAL.append(sum(EXPERIENCE_CURVE[:i + 1]))
 BASE_STATS = {
-    "FIGHTER_BASE_STATS": {'FIGHTER_BASE_HP': 100,
-                           'FIGHTER_BASE_MP': 10,
-                           'FIGHTER_BASE_STRENGTH': 100,
-                           'FIGHTER_BASE_DEFENSE': 10,
-                           'FIGHTER_BASE_MAGIC': 10,
-                           'FIGHTER_BASE_SPIRIT': 10,
-                           'FIGHTER_BASE_SPEED': 10,
-                           'FIGHTER_BASE_LUCK': 10000,
-                           'FIGHTER_BASE_ATTACK_TYPE': "Attack",
-                           'FIGHTER_BASE_EQUIPMENT_OPTIONS': ["Weapon", "Helm", "Armor", "Boots", "Shield"],
-                           'FIGHTER_BASE_TECHNIQUES': ["Bash", "Strike", "Impale", "Dash", "Fortify", "Magic Strike",
-                                                       "True Strike"], },
-
     "ADEPT_BASE_STATS": {'ADEPT_BASE_HP': 100,
                          'ADEPT_BASE_MP': 10,
                          'ADEPT_BASE_STRENGTH': 10,
@@ -1579,21 +1566,21 @@ REGION_MENUS = {
 # self.persist['region menus']['skill tree menu'] = {}
 BATTLE_MENUS = {
     'enemy positions': {
-        1: {'enemy_a': (600, 300)},
-        2: {'enemy_a': (600, 100),
-            'enemy_b': (600, 300)},
-        3: {'enemy_a': (500, 100),
-            'enemy_b': (500, 100),
-            'enemy_c': (500, 200)},
-        4: {'enemy_a': (500, 100),
-            'enemy_b': (500, 100),
-            'enemy_c': (500, 200),
-            'enemy_d': (500, 100)},
-        5: {'enemy_a': (500, 100),
-            'enemy_b': (500, 100),
-            'enemy_c': (500, 200),
-            'enemy_d': (500, 100),
-            'enemy_e': (500, 200)},
+        1: {0: (600, 300)},
+        2: {0: (600, 100),
+            1: (600, 300)},
+        3: {0: (500, 100),
+            1: (500, 100),
+            2: (500, 200)},
+        4: {0: (500, 100),
+            1: (500, 100),
+            2: (500, 200),
+            3: (500, 100)},
+        5: {0: (500, 100),
+            1: (500, 100),
+            2: (500, 200),
+            3: (500, 100),
+            4: (500, 200)},
     },
     'hero positions': {
         1: {'player_a': (600, 300)},
@@ -1626,17 +1613,17 @@ BATTLE_MENUS = {
         "enemy_e": 9,
     },
     'player_status_rects': {
-        'player_a': {
+        '0': {
             'hp': [X * 20 / 100, Y * 76 / 100, X * 20 / 100, Y * 7 / 100],
             'mp': [X * 20 / 100, Y * 80 / 100, X * 20 / 100, Y * 7 / 100],
             'name': [X * 1 / 100, Y * 76 / 100, X * 20 / 100, Y * 7 / 100]
         },
-        'player_b': {
+        '1': {
             'hp': [X * 20 / 100, Y * 84 / 100, X * 20 / 100, Y * 7 / 100],
             'mp': [X * 20 / 100, Y * 88 / 100, X * 20 / 100, Y * 7 / 100],
             'name': [X * 1 / 100, Y * 84 / 100, X * 20 / 100, Y * 7 / 100]
         },
-        'player_c': {
+        '2': {
             'hp': [X * 20 / 100, Y * 92 / 100, X * 20 / 100, Y * 7 / 100],
             'mp': [X * 20 / 100, Y * 96 / 100, X * 20 / 100, Y * 7 / 100],
             'name': [X * 1 / 100, Y * 92 / 100, X * 20 / 100, Y * 7 / 100]
@@ -2346,7 +2333,7 @@ class EquipMenu(object):
         if self.menu_horizontal_index == "Inventory" and self.parent.persist['inventory'] and len(
                 self.parent.persist['inventory']) > self.inventory_selection_index >= 0:
             if hasattr(self.parent.persist['inventory'][self.inventory_selection_index], 'slot'):
-                slot = self.parent.persist['inventory'][self.inventory_selection_index].slot
+                slot = self.parent.persist['inventory'][self.inventory_selection_index].battle_slot
                 for value in stats:
                     if value != 'strength':
                         if hasattr(self.parent.persist['inventory'][self.inventory_selection_index], value):
@@ -2750,29 +2737,6 @@ class Medallion(Equipment):
     def __init__(self, dictionary):
         super(Medallion, self).__init__(dictionary)
 
-
-battle_characters = {
-    "Fighter": {'sprites': [image_load(r"C:\Users\Chase\Dropbox\Pycharm\FinalRogue\venv\resources\sprites"
-                                       r"\Character\Battle\Fighter\Fighter_Battle128p1.png"),
-                            image_load(r"C:\Users\Chase\Dropbox\Pycharm\FinalRogue\venv\resources\sprites"
-                                       r"\Character\Battle\Fighter\Fighter_Battle128p2.png"),
-                            image_load(r"C:\Users\Chase\Dropbox\Pycharm\FinalRogue\venv\resources\sprites"
-                                       r"\Character\Battle\Fighter\Fighter_Battle128p3.png"),
-                            image_load(r"C:\Users\Chase\Dropbox\Pycharm\FinalRogue\venv\resources\sprites"
-                                       r"\Character\Battle\Fighter\Fighter_Battle128p4.png"),
-                            image_load(r"C:\Users\Chase\Dropbox\Pycharm\FinalRogue\venv\resources\sprites"
-                                       r"\Character\Battle\Fighter\Fighter_Battle128p5.png")
-                            ],
-                'idle': [0, 1, 2, 3],  # frames of sprites associated with idle state
-                'idle weights': [10, 1, 3, 1],  # time weights for idle frames
-                'idle speed': 2000,  # ms to complete idle cycle
-                'attack': [4],  # frames of sprites associated with attack state
-                'cast': [4],  # frames of sprites associated with cast state
-                'hit': [0],  # frames of sprites associated with hit state
-                'miss': [2],  # frames of sprites associated with miss state
-                },
-}
-
 BATTLE_ANIMATIONS = {
     "Slash_1": {
         'sprites': [image_load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Battle\Effects"
@@ -2906,7 +2870,7 @@ def utility_select(options):
                             if n > 3:
                                 for option_enemy_4 in options[3]:
                                     if n > 4:
-                                        for option_enemy_5 in options[3]:
+                                        for option_enemy_5 in options[4]:
                                             if n == 4:
                                                 outcome_total = vector_sum(option_enemy_1[3], option_enemy_2[3],
                                                                            option_enemy_3[3], option_enemy_4[3])
@@ -2918,6 +2882,7 @@ def utility_select(options):
                                                     enemy_2_choice = option_enemy_2
                                                     enemy_3_choice = option_enemy_3
                                                     enemy_4_choice = option_enemy_4
+                                                    enemy_5_choice = option_enemy_5
                                     else:
                                         outcome_total = vector_sum(option_enemy_1[3], option_enemy_2[3],
                                                                    option_enemy_3[3], option_enemy_4[3])
@@ -3253,7 +3218,7 @@ class BattleCharacter(pygame.sprite.Sprite):
         self.flip_state_on_physical = False
         self.shield_on_hit = 0
         self.ward_on_hit = 0
-        self.slot = "None"
+        self.battle_slot = "None"
         self.parent = parent
         self.action = None
         self.hover = False
@@ -3303,9 +3268,20 @@ class BattleCharacter(pygame.sprite.Sprite):
                             'hex', 'dull', 'savage', 'gentle', 'regen', 'speed']
         self.defend_action = Defend(self)
         self.run_action = Run(self)
+        self.timer = 0
+        self.animation_index = 0
+        self.state = "Idle"
+        self.sprites = []
+        self.pos = 0, 0
 
     def update(self, dt):
-        pass
+        self.timer += dt * random_int(90, 110)/100
+        if self.timer > getattr(self, f"{self.state.lower()}_speed")[self.animation_index]:
+            self.timer = 0
+            self.animation_index += 1
+            self.animation_index %= len(getattr(self, f"{self.state.lower()}_frames"))
+        self.image = self.sprites[getattr(self, f"{self.state.lower()}_frames")[self.animation_index]]
+        self.rect = pygame.rect.Rect(self.pos[0], self.pos[1], self.image.get_width(), self.image.get_height())
 
     def damage(self, damage, action, delay=0):
         if damage == 'miss':
@@ -3362,7 +3338,7 @@ class BattleCharacter(pygame.sprite.Sprite):
         options = []
         if hasattr(self, 'action'):
             if getattr(self.action, 'name', "None") != "None":
-                return [(self.slot, "None", ["None"], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0])]
+                return [(self.battle_slot, "None", ["None"], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0])]
         for action in self.action_options:
             if action.is_usable():
                 action_outcomes = action.expected_value()
@@ -3427,53 +3403,11 @@ class BattleCharacter(pygame.sprite.Sprite):
 
 
 class PlayerCharacter(BattleCharacter):
-    def __init__(self, char_class, player_holder, parent="None", name="bob"):
+    def __init__(self, name):
         super().__init__(parent="None")
-        self.slot = player_holder
         self.move_selected = False
-        self.sprites = battle_characters[char_class]['sprites']
-        self.idle_frames = battle_characters[char_class]['idle']
-        self.idle_speed = battle_characters[char_class]['idle speed']
-        self.idle_weights = battle_characters[char_class]['idle weights']
-        self.idle_weights = weights_convert(self.idle_speed, self.idle_weights)
-        self.idle_time = random_int(0, self.idle_speed)
-        self.idle_index = 0
-        self.attack_frames = battle_characters[char_class]['attack']
-        self.cast_frames = battle_characters[char_class]['cast']
-        self.hit_frames = battle_characters[char_class]['hit']
-        self.miss_frames = battle_characters[char_class]['miss']
-        self.base_x = 300
-        self.x = self.base_x
-        self.base_y = 300
-        self.y = self.base_y
-        self.image = self.sprites[self.idle_frames[self.idle_index]]
-        self.rect = pygame.rect.Rect(self.x, self.y, self.image.get_width(), self.image.get_height())
         self.attack_type = "Attack"
         self.name = name
-        self.base_class = self.current_class = char_class
-        self.hp = self.max_hp = self.base_hp = BASE_STATS[char_class.upper() + "_BASE_STATS"][
-            char_class.upper() + "_BASE_HP"]
-        self.mp = self.max_mp = self.base_mp = BASE_STATS[char_class.upper() + "_BASE_STATS"][
-            char_class.upper() + "_BASE_MP"]
-        self.strength = self.base_strength = BASE_STATS[char_class.upper() + "_BASE_STATS"][
-            char_class.upper() + "_BASE_STRENGTH"]
-        self.defense = self.base_defense = BASE_STATS[char_class.upper() + "_BASE_STATS"][
-            char_class.upper() + "_BASE_DEFENSE"]
-        self.magic = self.base_magic = BASE_STATS[char_class.upper() + "_BASE_STATS"][
-            char_class.upper() + "_BASE_MAGIC"]
-        self.spirit = self.base_spirit = BASE_STATS[char_class.upper() + "_BASE_STATS"][
-            char_class.upper() + "_BASE_SPIRIT"]
-        self.speed = self.base_speed = BASE_STATS[char_class.upper() + "_BASE_STATS"][
-            char_class.upper() + "_BASE_SPEED"]
-        self.luck = self.base_luck = BASE_STATS[char_class.upper() + "_BASE_STATS"][char_class.upper() + "_BASE_LUCK"]
-        self.equipment_options = self.base_equipment_options = BASE_STATS[char_class.upper() + "_BASE_STATS"][
-            char_class.upper() + "_BASE_EQUIPMENT_OPTIONS"]
-        self.base_attack_type = self.attack_type = BASE_STATS[char_class.upper() + "_BASE_STATS"][
-            char_class.upper() + "_BASE_ATTACK_TYPE"]
-        self.equipment = {}
-        self.abilities = self.base_abilities = BASE_STATS[char_class.upper() + "_BASE_STATS"][
-            char_class.upper() + "_BASE_TECHNIQUES"]
-        self.abilities = [KiBlast(self)]
         self.crit_rate = self.base_crit_rate = 1
         self.crit_damage = self.base_crit_damage = 1
         self.level = 1
@@ -3481,33 +3415,15 @@ class PlayerCharacter(BattleCharacter):
         self.skill_points = 10
         self.experience_to_level = 0
         self.battle_action = NoActionSelected(self)
-        self.left_tree = SkillTree(char_class, "left", self)
-        self.center_tree = SkillTree(char_class, "center", self)
-        self.right_tree = SkillTree(char_class, "right", self)
+        self.timer = 0
+        self.animation_index = 0
 
-    def update(self, dt):
+    def level_check(self):
         if self.level < len(EXPERIENCE_CURVE) + 1:
             self.experience_to_level = sum(EXPERIENCE_CURVE[:self.level]) - self.exp
             if self.exp > sum(EXPERIENCE_CURVE[:self.level]):
                 self.level += 1
                 self.skill_points += 1
-        if self.state == "Idle":
-            self.idle_time += random_int(15, 20)
-            if self.idle_time > self.idle_weights[self.idle_index]:
-                self.idle_time -= self.idle_weights[self.idle_index]
-                self.idle_index += 1
-                if self.idle_index >= len(self.idle_frames):
-                    self.idle_index = 0
-            self.image = self.sprites[self.idle_frames[self.idle_index]]
-        elif self.state == "Attack":
-            self.image = self.sprites[self.attack_frames[0]]
-        elif self.state == "Cast":
-            self.image = self.sprites[self.cast_frames[0]]
-        elif self.state == "Hit":
-            self.image = self.sprites[self.hit_frames[0]]
-        elif self.state == "Miss":
-            self.image = self.sprites[self.miss_frames[0]]
-        self.rect = pygame.rect.Rect(self.x, self.y, self.image.get_width(), self.image.get_height())
 
     def pre_turn(self, parent):
         if not hasattr(self, 'battle_action'):
@@ -3524,34 +3440,65 @@ class PlayerCharacter(BattleCharacter):
                 parent.battle_objects.add(self.battle_action)
 
 
+class Fighter(PlayerCharacter):
+    def __init__(self, name):
+        super(Fighter, self).__init__(name)
+        self.sprites = SpriteSheet(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Character"
+                                   r"\Battle\Fighter\Fighter_Battle128p.png").load_strip([0, 0, 128, 128],
+                                                                                         6, (255, 55, 202))
+        self.idle_frames = [0, 1, 2, 3]
+        self.idle_speed = [1331, 134, 400, 134]
+        self.attack_frames = [4]
+        self.attack_speed = [1000]
+        self.cast_frames = [4]
+        self.cast_speed = [1000]
+        self.hit_frames = [0]
+        self.hit_speed = [1000]
+        self.miss_frames = [2]
+        self.miss_speed = [1000]
+        self.pos = 0, 0
+        self.image = self.sprites[0]
+        self.rect = pygame.rect.Rect(self.pos[0], self.pos[1], self.image.get_width(), self.image.get_height())
+        self.hp = self.max_hp = self.base_hp = 100
+        self.mp = self.max_mp = self.base_mp = 10
+        self.strength = self.base_strength = 100
+        self.defense = self.base_defense = 10
+        self.magic = self.base_magic = 10
+        self.spirit = self.base_spirit = 10
+        self.speed = self.base_speed = 10
+        self.luck = self.base_luck = 10_000
+        self.equipment_options = self.base_equipment_options = ["Weapon", "Helm", "Armor", "Boots", "Shield"]
+        self.base_attack_type = self.attack_type = "Attack"
+        self.equipment = {}
+        self.abilities = self.base_abilities = ["Bash", "Strike", "Impale", "Dash", "Fortify", "Magic Strike",
+                                                       "True Strike"]
+        self.abilities = [KiBlast(self)]
+        self.left_tree = SkillTree("Fighter", "left", self)
+        self.center_tree = SkillTree("Fighter", "center", self)
+        self.right_tree = SkillTree("Fighter", "right", self)
+
+
 class Slime(BattleCharacter):
     def __init__(self, enemy_slot, region_index, n_enemy, parent):
         super().__init__(parent)
-        self.name = "Slime" + enemy_slot[5:]
+        self.name = "Slime"
         self.hover = False
-        self.slot = enemy_slot
-        self.sprites = [image_load(r"C:\Users\Chase\Dropbox\Pycharm\FinalRogue\venv\resources\sprites"
-                                   r"\Enemy\Slime\Slime128p1.png"),
-                        image_load(r"C:\Users\Chase\Dropbox\Pycharm\FinalRogue\venv\resources\sprites"
-                                   r"\Enemy\Slime\Slime128p2.png"),
-                        image_load(r"C:\Users\Chase\Dropbox\Pycharm\FinalRogue\venv\resources\sprites"
-                                   r"\Enemy\Slime\Slime128p3.png"),
-                        image_load(r"C:\Users\Chase\Dropbox\Pycharm\FinalRogue\venv\resources\sprites"
-                                   r"\Enemy\Slime\Slime128p4.png")]
+        self.battle_slot = enemy_slot
+        self.sprites = SpriteSheet(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Enemy\Slime"
+                                   r"\Slime128p.png").load_strip([0, 0, 128, 128], 4, (255, 55, 202))
         self.idle_frames = [0, 1]
-        self.idle_weights = [3, 1]
-        self.idle_speed = 1000
-        self.idle_time = random_int(0, self.idle_speed)
-        self.idle_index = 0
-        self.idle_weights = weights_convert(self.idle_speed, self.idle_weights)
+        self.idle_speed = [750, 250]
         self.attack_frames = [2]
+        self.attack_speed = [1000]
         self.cast_frames = [3]
+        self.cast_speed = [1000]
         self.hit_frames = [2]
+        self.hit_speed = [1000]
         self.miss_frames = [3]
-        self.x = self.base_x = BATTLE_MENUS['enemy positions'][n_enemy][enemy_slot][0]
-        self.y = self.base_y = BATTLE_MENUS['enemy positions'][n_enemy][enemy_slot][1]
-        self.image = self.sprites[self.idle_frames[self.idle_index]]
-        self.rect = pygame.rect.Rect(self.x, self.y, self.image.get_width(), self.image.get_height())
+        self.miss_speed = [1000]
+        self.pos = self.base_pos = BATTLE_MENUS['enemy positions'][n_enemy][self.battle_slot-5]
+        self.image = self.sprites[0]
+        self.rect = pygame.rect.Rect(self.pos[0], self.pos[1], self.image.get_width(), self.image.get_height())
         self.hp = self.max_hp = [100, 120, 140, 160, 190, 220, 250, 300][region_index]
         self.mp = self.max_mp = [100, 110, 120, 130, 140, 150, 160, 180][region_index]
         self.strength = [10, 12, 14, 16, 18, 20, 22, 28][region_index]
@@ -3562,19 +3509,13 @@ class Slime(BattleCharacter):
         self.speed = [10, 12, 14, 16, 18, 20, 22, 28][region_index]
         self.crit_rate = [1, 1, 1, 1, 1, 1.1, 1.1, 1.1][region_index]
         self.crit_damage = [1, 1, 1, 1, 1, 1, 1, 1][region_index]
-        self.ai = {'ai_type': 'simple',
-                   'actions': [["Attack", "Attack"], ["Skill", "Slime Ball"]],
-                   'weights': [50, 50],
-                   'target': 'random', }
         self.exp_reward = [200, 12, 14, 16, 18, 20, 22, 28][region_index]
         self.supply_reward = random_int([0, 0, 0, 0, 0, 0, 0, 0][region_index], [1, 1, 1, 1, 2, 2, 2, 2][region_index])
         self.elixir_reward = random_int([0, 0, 0, 0, 0, 0, 0, 0][region_index], [1, 1, 1, 1, 2, 2, 2, 2][region_index])
         self.charger_reward = random_int([0, 0, 0, 0, 0, 0, 0, 0][region_index], [1, 1, 1, 1, 2, 2, 2, 2][region_index])
         self.gold_reward = random_int([0, 0, 0, 0, 0, 0, 0, 0][region_index],
                                       [10, 12, 14, 16, 18, 20, 22, 24][region_index])
-        self.action_options = []
-        self.action_options.append(Attack(self))
-        self.action_options.append(SlimeBall(self))
+        self.action_options = [Attack(self), SlimeBall(self)]
         self.item_reward = self.reward(region_index)
 
     def reward(self, region_index):
@@ -3590,25 +3531,6 @@ class Slime(BattleCharacter):
             else:
                 item = 'none'
         return item
-
-    def update(self, dt):
-        if self.state == "Idle":
-            self.idle_time += random_int(15, 20)
-            if self.idle_time > self.idle_weights[self.idle_index]:
-                self.idle_time -= self.idle_weights[self.idle_index]
-                self.idle_index += 1
-                if self.idle_index >= len(self.idle_frames):
-                    self.idle_index = 0
-            self.image = self.sprites[self.idle_frames[self.idle_index]]
-        elif self.state == "Attack":
-            self.image = self.sprites[self.attack_frames[0]]
-        elif self.state == "Cast":
-            self.image = self.sprites[self.cast_frames[0]]
-        elif self.state == "Hit":
-            self.image = self.sprites[self.hit_frames[0]]
-        elif self.state == "Miss":
-            self.image = self.sprites[self.miss_frames[0]]
-        self.rect = pygame.rect.Rect(self.x, self.y, self.image.get_width(), self.image.get_height())
 
     def ko(self):
         self.kill()
@@ -3913,13 +3835,13 @@ class BattleOverlay(object):
                HEADING_FONT)
             tw(surface, "Press enter to continue.", TEXT_COLOR, [X * 30 / 100, Y * 60 / 100, X * 20 / 100,
                                                                  Y * 20 / 100], TEXT_FONT)
-        for sprite in self.parent.player_characters.sprites():
+        for i, sprite in enumerate(self.parent.player_characters.sprites()):
             tw(surface, "hp: " + str(sprite.hp) + "/" + str(sprite.max_hp), TEXT_COLOR,
-               BATTLE_MENUS['player_status_rects'][sprite.slot]['hp'], DETAIL_FONT)
+               BATTLE_MENUS['player_status_rects'][str(i)]['hp'], DETAIL_FONT)
             tw(surface, "mp: " + str(sprite.mp) + "/" + str(sprite.max_mp), TEXT_COLOR,
-               BATTLE_MENUS['player_status_rects'][sprite.slot]['mp'], DETAIL_FONT)
+               BATTLE_MENUS['player_status_rects'][str(i)]['mp'], DETAIL_FONT)
             tw(surface, sprite.name, TEXT_COLOR,
-               BATTLE_MENUS['player_status_rects'][sprite.slot]['name'], TEXT_FONT)
+               BATTLE_MENUS['player_status_rects'][str(i)]['name'], TEXT_FONT)
 
     def reticle_color_update(self, dt):
         self.target_time += dt * self.target_direction
@@ -3943,7 +3865,7 @@ class BattleAction(pygame.sprite.Sprite):
         self.hover = False
         self.parent = parent
         if self.parent is not None:
-            self.source = self.parent.slot
+            self.source = self.parent.battle_slot
             self.speed = self.parent.speed
         self.queue = 0
         self.priority = False
@@ -4164,7 +4086,7 @@ class SlimeBall(BattleAction):
                 value = player.defense
             else:
                 value = player.defense / 2
-            value_set.append((self.name, player.slot, value))
+            value_set.append((self.name, player.battle_slot, value))
         return value_set
 
     def do_action(self):
@@ -4231,9 +4153,7 @@ class Attack(BattleAction):
             outcome = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
             damage_low, damage_high, p_hit, critical_low, critical_high, p_critical = \
                 attack_defense_calculate(self, self.parent, character, ev=True)
-            outcome[BATTLE_MENUS['battle_slot_index'][character.slot]] = \
-                ((damage_low + damage_high) * p_hit * (1 - p_critical) / (2 * character.hp)) + \
-                ((critical_low + critical_high) * p_hit * p_critical / (2 * character.hp))
+            outcome[character.battle_slot] = ((damage_low + damage_high) * p_hit * (1 - p_critical) / (2 * character.hp)) + ((critical_low + critical_high) * p_hit * p_critical / (2 * character.hp))
             value_set.append((self.parent, self, [character], outcome))
         return value_set
 
@@ -4284,7 +4204,7 @@ class KiBlast(BattleAction):
             outcome = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
             damage_low, damage_high, p_hit, critical_low, critical_high, p_critical = \
                 attack_defense_calculate(self, self.parent, character, ev=True)
-            outcome[BATTLE_MENUS['battle_slot_index'][character.slot]] = \
+            outcome[BATTLE_MENUS['battle_slot_index'][character.battle_slot]] = \
                 ((damage_low + damage_high) * p_hit * (1 - p_critical) / (2 * character.hp)) + \
                 ((critical_low + critical_high) * p_hit * p_critical / (2 * character.hp))
             value_set.append((self.parent, self, [character], outcome))
@@ -4338,7 +4258,7 @@ class SandBreath(BattleAction):
             outcome = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
             damage_low, damage_high, p_hit, critical_low, critical_high, p_critical = \
                 attack_defense_calculate(self, self.parent, character, ev=True)
-            outcome[BATTLE_MENUS['battle_slot_index'][character.slot]] = \
+            outcome[BATTLE_MENUS['battle_slot_index'][character.battle_slot]] = \
                 ((damage_low + damage_high) * p_hit * (1 - p_critical) / (2 * character.hp)) + \
                 ((critical_low + critical_high) * p_hit * p_critical / (2 * character.hp))
             value_set.append((self.parent, self, [character], outcome))
@@ -4382,7 +4302,7 @@ class Impale(BattleAction):
             outcome = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
             damage_low, damage_high, p_hit, critical_low, critical_high, p_critical = \
                 attack_defense_calculate(self, self.parent, character, ev=True)
-            outcome[BATTLE_MENUS['battle_slot_index'][character.slot]] = \
+            outcome[BATTLE_MENUS['battle_slot_index'][character.battle_slot]] = \
                 ((damage_low + damage_high) * p_hit * (1 - p_critical) / (2 * character.hp)) + \
                 ((critical_low + critical_high) * p_hit * p_critical / (2 * character.hp))
             value_set.append((self.parent, self, [character], outcome))
@@ -4425,7 +4345,7 @@ class Burrow(BattleAction):
             outcome = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
             damage_low, damage_high, p_hit, critical_low, critical_high, p_critical = \
                 attack_defense_calculate(self, self.parent, character, ev=True)
-            outcome[BATTLE_MENUS['battle_slot_index'][character.slot]] = \
+            outcome[BATTLE_MENUS['battle_slot_index'][character.battle_slot]] = \
                 ((damage_low + damage_high) * p_hit * (1 - p_critical) / (2 * character.hp)) + \
                 ((critical_low + critical_high) * p_hit * p_critical / (2 * character.hp))
             value_set.append((self.parent, self, [character], outcome))
@@ -4459,7 +4379,7 @@ class TailSweep(BattleAction):
             outcome = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
             damage_low, damage_high, p_hit, critical_low, critical_high, p_critical = \
                 attack_defense_calculate(self, self.parent, character, ev=True)
-            outcome[BATTLE_MENUS['battle_slot_index'][character.slot]] = \
+            outcome[BATTLE_MENUS['battle_slot_index'][character.battle_slot]] = \
                 ((damage_low + damage_high) * p_hit * (1 - p_critical) / (2 * character.hp)) + \
                 ((critical_low + critical_high) * p_hit * p_critical / (2 * character.hp))
             value_set.append((self.parent, self, [character], outcome))
@@ -4502,7 +4422,7 @@ class Emerge(BattleAction):
             outcome = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
             damage_low, damage_high, p_hit, critical_low, critical_high, p_critical = \
                 attack_defense_calculate(self, self.parent, character, ev=True)
-            outcome[BATTLE_MENUS['battle_slot_index'][character.slot]] = \
+            outcome[BATTLE_MENUS['battle_slot_index'][character.battle_slot]] = \
                 ((damage_low + damage_high) * p_hit * (1 - p_critical) / (2 * character.hp)) + \
                 ((critical_low + critical_high) * p_hit * p_critical / (2 * character.hp))
             value_set.append((self.parent, self, [character], outcome))
@@ -4545,7 +4465,7 @@ class Bolster(BattleAction):
             outcome = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
             damage_low, damage_high, p_hit, critical_low, critical_high, p_critical = \
                 attack_defense_calculate(self, self.parent, character, ev=True)
-            outcome[BATTLE_MENUS['battle_slot_index'][character.slot]] = \
+            outcome[BATTLE_MENUS['battle_slot_index'][character.battle_slot]] = \
                 ((damage_low + damage_high) * p_hit * (1 - p_critical) / (2 * character.hp)) + \
                 ((critical_low + critical_high) * p_hit * p_critical / (2 * character.hp))
             value_set.append((self.parent, self, [character], outcome))
@@ -4590,7 +4510,7 @@ class DesertWrath(BattleAction):
             outcome = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
             damage_low, damage_high, p_hit, critical_low, critical_high, p_critical = \
                 attack_defense_calculate(self, self.parent, character, ev=True)
-            outcome[BATTLE_MENUS['battle_slot_index'][character.slot]] = \
+            outcome[BATTLE_MENUS['battle_slot_index'][character.battle_slot]] = \
                 ((damage_low + damage_high) * p_hit * (1 - p_critical) / (2 * character.hp)) + \
                 ((critical_low + critical_high) * p_hit * p_critical / (2 * character.hp))
             value_set.append((self.parent, self, [character], outcome))

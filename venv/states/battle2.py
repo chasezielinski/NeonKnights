@@ -49,21 +49,15 @@ class Battle(BaseState):
     def startup(self, persistent):
         self.persist = persistent
         self.victory_display = settings.VictoryDisplay(self)
-        # point Battle to player character sprite objects and add them to proper Groups
-        for player in self.persist['characters']:
-            setattr(self, player.slot, player)
-            setattr(getattr(self, player.slot), 'parent', self)
-            self.battle_characters.add(getattr(self, player.slot))
-            self.player_characters.add(getattr(self, player.slot))
-            self.battle_objects.add(getattr(self, player.slot))
+        # add each player character to proper groups
+        for i, player in enumerate(self.persist['characters']):
+            setattr(player, 'battle_slot', i)
+            player.parent = self
+            player.add(self.battle_characters, self.player_characters, self.battle_objects)
         # construct each enemy sprite object and add them to proper Groups
         for i, enemy in enumerate(self.persist['enemies']):
-            slot = self.enemy_slots[i]
-            population = len(self.persist['enemies'])
-            setattr(self, slot, eval("settings." + enemy)(slot, self.persist['region_index'], population, self))
-            self.battle_characters.add(getattr(self, slot))
-            self.enemy_characters.add(getattr(self, slot))
-            self.battle_objects.add(getattr(self, slot))
+            enemy_sprite = eval("settings." + enemy)(i+5, self.persist['region_index'], len(self.persist['enemies']), self)
+            enemy_sprite.add(self.battle_characters, self.enemy_characters, self.battle_objects)
 
     def handle_action(self, action):
         if self.state != "Pointer":

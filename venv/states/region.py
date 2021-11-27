@@ -540,7 +540,7 @@ class Region(BaseState):
 
         elif self.equipment_menu_horizontal_index == "Inventory" and 0 <= self.equipment_inventory_selection_index <= len(self.persist['inventory'])-1 :
             if hasattr(self.persist['inventory'][self.equipment_inventory_selection_index], 'slot'):
-                slot = self.persist['inventory'][self.equipment_inventory_selection_index].slot
+                slot = self.persist['inventory'][self.equipment_inventory_selection_index].battle_slot
                 if slot in self.persist['characters'][self.inventory_menu_player_index].equipment_options:
                     if slot in self.persist['characters'][self.inventory_menu_player_index].equipment:
                         self.persist['inventory'].append(
@@ -1248,7 +1248,7 @@ class Region(BaseState):
                  'crit_damage']
         potential = {}
         if self.equipment_menu_horizontal_index == "Inventory" and self.persist['inventory'] and len(self.persist['inventory']) > self.equipment_inventory_selection_index >= 0:
-            slot = self.persist['inventory'][self.equipment_inventory_selection_index].slot
+            slot = self.persist['inventory'][self.equipment_inventory_selection_index].battle_slot
             for value in stats:
                 if value != 'strength':
                     if hasattr(self.persist['inventory'][self.equipment_inventory_selection_index], value):

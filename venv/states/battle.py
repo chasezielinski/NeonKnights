@@ -331,7 +331,7 @@ class BattleManager(object):
             if enemy.item_reward != 'none':
                 self.item.append(enemy.item_reward)
             for action in self.actions:
-                if action.source == enemy.slot:
+                if action.source == enemy.battle_slot:
                     action.kill()
             enemy.kill()
 
@@ -741,7 +741,7 @@ class Battle(BaseState):
                 if action == "click":
                     for sprite in self.persist['battle manager'].heroes:
                         if sprite.rect.collidepoint(self.mouse) and not sprite.move_selected:
-                            self.player_index = sprite.slot
+                            self.player_index = sprite.battle_slot
                             self.turn_sub_state = "Move_Select"
                     for sprite in self.persist['battle manager'].actions:
                         if sprite.source == "player_a" or sprite.source == "player_b" or sprite.source == "player_c":
@@ -833,7 +833,7 @@ class Battle(BaseState):
                     source = self.player_index
                     for sprite in self.persist['battle manager'].battle_characters:
                         if sprite.rect.collidepoint(pos):
-                            target = sprite.slot
+                            target = sprite.battle_slot
                     if target != 'none':
                         if self.top_menu_index == "Attack":
                             target_type = \
@@ -861,7 +861,7 @@ class Battle(BaseState):
                     source = self.player_index
                     for sprite in self.persist['battle manager'].battle_characters:
                         if sprite.rect.collidepoint(pos):
-                            target = sprite.slot
+                            target = sprite.battle_slot
                     if target != 'none':
                         if self.top_menu_index == "Attack":
                             target_type = \
@@ -907,8 +907,8 @@ class Battle(BaseState):
                 self.persist['chargers'] += self.persist['battle manager'].charger
                 self.persist['elixirs'] += self.persist['battle manager'].elixir
                 for hero in self.persist['battle manager'].heroes:
-                    self.persist['characters'][hero.slot].hp = hero.hp
-                    self.persist['characters'][hero.slot].exp += exp
+                    self.persist['characters'][hero.battle_slot].hp = hero.hp
+                    self.persist['characters'][hero.battle_slot].exp += exp
                 self.next_state = "REGION"
                 self.done = True
                 del self.persist['battle manager']
@@ -1090,7 +1090,7 @@ class Battle(BaseState):
         if settings.actions_dict[action_type][action]["Target"] == "Single":
             target_options = []
             for hero in self.persist['battle manager'].heroes:
-                target_options.append(hero.slot)
+                target_options.append(hero.battle_slot)
             if enemy.ai['target'] == 'random':
                 target = settings.choose_random(target_options)
-        self.persist['battle manager'].set_action(enemy.slot, target, action, action_type)
+        self.persist['battle manager'].set_action(enemy.battle_slot, target, action, action_type)
