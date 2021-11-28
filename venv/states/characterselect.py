@@ -30,6 +30,8 @@ class CharacterSelect(BaseState):
         self.timer = 2000
         self.index = "Fighter"
         self.name_entry_index = -1
+        self.name_entry_options = ["random", "select", "back"]
+        self.confirm_options = ["confirm", "back"]
         self.name_entry = ""
         self.class_rects = {
             "Fighter": [X * 15 / 100, Y * 80 / 100, X * 20 / 100, Y * 5 / 100],
@@ -127,6 +129,12 @@ class CharacterSelect(BaseState):
                 self.menu_select()
             elif action == "space":
                 self.text_input(" ")
+            elif action == "Up":
+                self.name_entry_index -= 1
+                self.name_entry_index %= len(self.name_entry_options)
+            elif action == "Down":
+                self.name_entry_index += 1
+                self.name_entry_index %= len(self.name_entry_options)
 
         elif self.state == "Confirm":
             if action == "mouse_move":
@@ -140,6 +148,12 @@ class CharacterSelect(BaseState):
                 self.menu_select()
             elif action == "Backspace":
                 self.menu_return()
+            elif action == "Up":
+                self.name_entry_index -= 1
+                self.name_entry_index %= len(self.confirm_options)
+            elif action == "Down":
+                self.name_entry_index += 1
+                self.name_entry_index %= len(self.confirm_options)
 
     def update(self, dt):
         if self.state == "Wait":
@@ -187,6 +201,10 @@ class CharacterSelect(BaseState):
                 self.handle_action("Left")
             elif event.key == pygame.K_RIGHT:
                 self.handle_action("Right")
+            elif event.key == pygame.K_UP:
+                self.handle_action("Up")
+            elif event.key == pygame.K_DOWN:
+                self.handle_action("Down")
             elif event.key == pygame.K_RETURN:
                 self.handle_action("Return")
             elif event.key == pygame.K_BACKSPACE:
@@ -209,13 +227,11 @@ class CharacterSelect(BaseState):
 
         elif self.state == "Name_Entry":
             prompt = "Input a name. Press enter to continue or backspace to select another class."
-            options = ["random", "select", "back"]
-            self.print_options(surface, options, prompt)
+            self.print_options(surface, self.name_entry_options, prompt)
 
         elif self.state == "Confirm":
             prompt = "Press enter to embark. Press backspace to reconsider."
-            options = ["confirm", "back"]
-            self.print_options(surface, options, prompt)
+            self.print_options(surface, self.confirm_options, prompt)
 
         self.particles.draw_fg(surface)
         self.persist["Transition"].draw(surface)
