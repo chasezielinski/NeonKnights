@@ -2649,7 +2649,7 @@ class VictoryDisplay:
                [X * 6 / 100, Y * 38 / 100, X * 40 / 100, Y * 8 / 100], HEADING_FONT)
         if self.state == "Exp" or self.state == "Exp_Animate" or self.state == "Done":
             for i, player in enumerate(self.parent.player_characters.sprites()):
-                surface.blit(REGION_STATIC_SPRITES[player.current_class + "Icon"],
+                surface.blit(REGION_STATIC_SPRITES[player.__class__.__name__ + "Icon"],
                              (X * 6 / 100, (Y * 14 / 100) + i * Y * 30 / 100))
                 tw(surface, player.name, TEXT_COLOR,
                    [X * 6 / 100, Y * 6 / 100 + (i * Y * 30 / 100), X * 40 / 100, Y * 8 / 100], HEADING_FONT)
@@ -4342,136 +4342,62 @@ def attack_defense_calculate(action, source, target, estimate=False, ev=False):
     return damage
 
 
-actions_dict = {
-    "Attack": {
-        "Attack": {
-            "Target": "Single",
-            "Attack_Stat": "strength",
-            "Defend_Stat": "defense",
-            "Animation": "Slash_1",
-        },
-        "Magic_Attack": {
-            "Target": "Single",
-            "Attack_Stat": "magic",
-            "Defend_Stat": "spirit",
-            "Animation": "Slash_1",
-        },
-        "Defense_Attack": {
-            "Target": "Single",
-            "Attack_Stat": "defense",
-            "Defend_Stat": "defense",
-            "Animation": "Slash_1",
-        },
-        "Energy_Attack": {
-            "Target": "Single",
-            "Attack_Stat": "strength",
-            "Defend_Stat": "lowest",
-            "Animation": "Slash_1",
-        },
-        "True_Attack": {
-            "Target": "Single",
-            "Attack_Stat": "strength",
-            "Defend_Stat": "none",
-            "Animation": "Slash_1",
-        },
-        "Wide_Attack": {
-            "Target": "Team",
-            "Attack_Stat": "strength",
-            "Defend_Stat": "defense",
-            "Animation": "Slash_1",
-        },
-        "Wide_Magic_Attack": {
-            "Target": "Team",
-            "Attack_Stat": "magic",
-            "Defend_Stat": "spirit",
-            "Animation": "Slash_1",
-        },
-        "Wide_Energy_Attack": {
-            "Target": "Team",
-            "Attack_Stat": "strength",
-            "Defend_Stat": "lowest",
-            "Animation": "Slash_1",
-        },
-        "Wide_True_Attack": {
-            "Target": "Team",
-            "Attack_Stat": "strength",
-            "Defend_Stat": "none",
-            "Animation": "Slash_1",
-        },
-        "Chaotic_Attack": {
-            "Target": "All",
-            "Attack_Stat": "strength",
-            "Defend_Stat": "defense",
-            "Animation": "Slash_1",
-        },
-        "Chaotic_Magic_Attack": {
-            "Target": "All",
-            "Attack_Stat": "magic",
-            "Defend_Stat": "spirit",
-            "Animation": "Slash_1",
-        },
-        "Chaotic_Energy_Attack": {
-            "Target": "All",
-            "Attack_Stat": "strength",
-            "Defend_Stat": "lowest",
-            "Animation": "Slash_1",
-        },
-        "Chaotic_True_Attack": {
-            "Target": "All",
-            "Attack_Stat": "strength",
-            "Defend_Stat": "none",
-            "Animation": "Slash_1",
-        },
-    },
-    "Defend": {
-    },
-    "Skill": {
-        "Slime Ball": {
-            "Target": "Single",
-            "Attack_Stat": "strength",
-            "Defend_Stat": "defense",
-            "Power": 10,
-            "MP Cost": 10,
-            "Effect": [("Corrode", 100)],
-        },
-    },
-    "Item": {
+class SettingsManager(object):
+    def __init__(self):
+        super(SettingsManager, self).__init__()
+        self.load = True
+        self.top_left = 0, 0
+        self.top_center = 640, 0
+        self.top_right = 1280, 0
+        self.center_left = 0, 360
+        self.center = 640, 360
+        self.center_right = 1280, 360
+        self.bottom_left = 0, 720
+        self.bottom_center = 640, 720
+        self.bottom_right = self.screen = 1280, 720
+        self.music_volume = 0.5
+        self.effects_volume = 0.5
+        self.static_paths = True
+        self.size_options = {"720p": (1280, 720), "1080p": (1920, 1080), "1440p": (2560, 1440)}
+        self.music_volume_options = {"0": 0, "1": 0.1, "2": 0.2, "3": 0.3, "4": 0.4, "5": 0.5, "6": 0.6, "7": 0.7,
+                                     "8": 0.8, "9": 0.9, "10": 1}
+        self.effects_volume_options = {"0": 0, "1": 0.1, "2": 0.2, "3": 0.3, "4": 0.4, "5": 0.5, "6": 0.6, "7": 0.7,
+                                       "8": 0.8, "9": 0.9, "10": 1}
+        self.static_path_options = {"Yes": True, "No": False}
 
-    },
-    "Run": {
+    def update(self, dt):
+        if self.load == True:
+            self.load = False
 
-    },
-}
-weapon_dict = {
-    "Short Sword": {
-        "attack": [6, 8, 10, 12, 14]
-    },
+    def draw(self, surface):
+        pass
 
-    "Coder Sword": {
-        "max_level": 5,
-        "attack": [6, 8, 10, 12, 14],
-        "hits": [2, 2, 3, 3, 3],
-        "status": {
-            "bleed": [[100, 100, 100, 100, 100], [2, 2, 2, 3, 3]],
-        },
-        "attack_type": "Magic_Attack",
-        'buy_value': 999,
-        'sell_value': 999,
+    def handle_action(self, action):
+        pass
 
-    },
-}
-armor_dict = {
-    "Iron Plate": {
-        "tier": ["common", "rare"],
-        "tier mod": {"common": 0, "rare": 2},
-        "defense": [2, 5, 8]
-    }
-}
-boots_dict = {
-    "Leather Boots": {
-        "tier": ["common", "rare"],
-        "tier mod": {"common": 0, "rare": 2},
-        "defense": [1, 2, 3],
-        "speed": [1, 3, 5]
-    }
-}
+    def exit_menu(self):
+        self.load = True
+
+    def set_screen_size(self, size: tuple):
+        self.top_center = size[0]/2, 0
+        self.top_right = size[0], 0
+        self.center_left = 0, size[0]/2
+        self.center = size[0]/2, size[0]/2
+        self.center_right = size[0],
+        self.bottom_left = 0, size[0]
+        self.bottom_center = size[0]/2, size[0]
+        self.bottom_right = self.screen = size
+
+
+class PauseMenu(object):
+    def __init__(self):
+        super(PauseMenu, self).__init__()
+
+    def update(self, dt):
+        pass
+
+    def draw(self, surface):
+        pass
+
+    def handle_action(self, action):
+        pass
