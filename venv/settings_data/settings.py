@@ -1785,6 +1785,7 @@ class ScreenTransition(object):
 
     def fade_in(self, time=500, delay=None):
         self.state = "In"
+        self.alpha = 255
         self.timer = self.start = time
         self.delay = delay
 

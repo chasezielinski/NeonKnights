@@ -26,7 +26,8 @@ class CharacterSelect(BaseState):
         super(CharacterSelect, self).__init__()
         self.max_name_length = 13
         self.next_state = "MENU"
-        self.state = "Class_Select"
+        self.state = "Wait"
+        self.timer = 2000
         self.index = "Fighter"
         self.name_entry_index = -1
         self.name_entry = ""
@@ -141,6 +142,10 @@ class CharacterSelect(BaseState):
                 self.menu_return()
 
     def update(self, dt):
+        if self.state == "Wait":
+            self.timer -= dt
+            if self.timer < 0:
+                self.state = "Class_Select"
         self.class_sprites.update(dt)
         self.persist["Transition"].update(dt)
         self.persist["Transition"].update(dt)
@@ -217,18 +222,20 @@ class CharacterSelect(BaseState):
         self.persist['FX'].draw(surface)
 
     def print_options(self, surface, options, prompt):
-        settings.tw(surface, self.name_entry.rjust(20-len(self.name_entry)), settings.TEXT_COLOR, self.name_rect,
+        settings.tw(surface, self.name_entry.rjust(12+len(self.name_entry)), settings.TEXT_COLOR, self.name_rect,
                     settings.HEADING_FONT)
         settings.tw(surface, self.index.rjust(20-len(self.index)), settings.TEXT_COLOR, self.class_rect,
                     settings.HEADING_FONT)
         settings.tw(surface, prompt, settings.TEXT_COLOR, self.prompt_rect, settings.HEADING_FONT)
         for i, option in enumerate(options):
-            settings.tw(surface, option, settings.TEXT_COLOR, self.option_rect[i],
-                        settings.HEADING_FONT)
+            color = settings.TEXT_COLOR
+            if i == self.name_entry_index:
+                color = settings.SELECTED_COLOR
+            settings.tw(surface, option, color, self.option_rect[i], settings.HEADING_FONT)
 
     def startup(self, persistent):
         self.persist = persistent
-        self.persist["Transition"].fade_in(500)
+        self.persist["Transition"].fade_in(500, 2000)
 
 
 class CharacterSelectSprite(pygame.sprite.Sprite):
