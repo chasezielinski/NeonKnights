@@ -4358,15 +4358,17 @@ class SettingsManager(object):
         self.music_volume = 0.5
         self.effects_volume = 0.5
         self.static_paths = True
+        self.battle_messages = True
         self.size_options = {"720p": (1280, 720), "1080p": (1920, 1080), "1440p": (2560, 1440)}
         self.music_volume_options = {"0": 0, "1": 0.1, "2": 0.2, "3": 0.3, "4": 0.4, "5": 0.5, "6": 0.6, "7": 0.7,
                                      "8": 0.8, "9": 0.9, "10": 1}
         self.effects_volume_options = {"0": 0, "1": 0.1, "2": 0.2, "3": 0.3, "4": 0.4, "5": 0.5, "6": 0.6, "7": 0.7,
                                        "8": 0.8, "9": 0.9, "10": 1}
         self.static_path_options = {"Yes": True, "No": False}
+        self.battle_messages_options = {"Yes": True, "No": False}
 
     def update(self, dt):
-        if self.load == True:
+        if self.load:
             self.load = False
 
     def draw(self, surface):

@@ -258,27 +258,40 @@ class Battle(BaseState):
         self.next_battle_state = return_state
         self.state = "Delay"
 
+    def battle_end_check(self):
+        if len(self.player_characters.sprites()) <= 0:
+            self.state = "Defeat"
+        elif len(self.enemy_characters.sprites()) <= 0:
+            self.state = "Victory_1"
+            self.win_timer = 2000
+            for player in self.player_characters.sprites():
+                player.exp += self.exp_reward / len(self.player_characters.sprites())
+            self.persist['gold'] += self.gold_reward
+            self.persist['supplies'] += self.supply_reward
+            self.persist['chargers'] += self.charger_reward
+            self.persist['elixirs'] += self.elixir_reward
+
+    def turn_setup(self):
+        for player in self.player_characters.sprites():
+            player.pre_turn(self)
+        options = []
+        for enemy in self.enemy_characters.sprites():
+            options.append(enemy.give_options())
+        choices = settings.utility_select(options)
+        for choice in choices:
+            choice[1].target_set(choice[0], choice[2])
+
     def update(self, dt):
         self.print_timer -= dt
-        if self.print_timer <= 0:
+        if self.print_timer <= 0: # used for getting battle state screen positions
             #print(pygame.mouse.get_pos())
             #print((pygame.mouse.get_pos()[0]*100/settings.X ,pygame.mouse.get_pos()[1]*100/settings.Y))
             self.print_timer = 200
-        for sprite in self.battle_characters:
+        for sprite in self.battle_characters: # maybe let battle character class do this itself...
             if sprite.hp <= 0:
                 sprite.ko()
         if self.state not in ["Victory_1", "Victory_2", "Defeat", "Clean_Up", "Delay", "Wait"]:
-            if len(self.player_characters.sprites()) <= 0:
-                self.state = "Defeat"
-            elif len(self.enemy_characters.sprites()) <= 0:
-                self.state = "Victory_1"
-                self.win_timer = 2000
-                for player in self.player_characters.sprites():
-                    player.exp += self.exp_reward / len(self.player_characters.sprites())
-                self.persist['gold'] += self.gold_reward
-                self.persist['supplies'] += self.supply_reward
-                self.persist['chargers'] += self.charger_reward
-                self.persist['elixirs'] += self.elixir_reward
+            self.battle_end_check()
         self.battle_objects.update(dt)
         self.battle_overlay.update(dt)
         self.damage_particle.update(dt)
@@ -288,14 +301,7 @@ class Battle(BaseState):
         if self.state == "Pre_Battle":
             self.state = "Pre_Turn"
         elif self.state == "Pre_Turn":
-            for player in self.player_characters.sprites():
-                player.pre_turn(self)
-            options = []
-            for enemy in self.enemy_characters.sprites():
-                options.append(enemy.give_options())
-            choices = settings.utility_select(options)
-            for choice in choices:
-                choice[1].target_set(choice[0], choice[2])
+            self.turn_setup()
             self.sort_actions()
             self.state = "Turn"
             self.turn_sub_state = "Browse"
