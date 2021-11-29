@@ -81,15 +81,9 @@ class Battle(BaseState):
             if self.turn_sub_state == "Browse":
                 if action == "click":
                     # check for click on player character sprite or action queue sprite
-                    for i, sprite in enumerate(self.battle_characters.sprites()):
-                        if isinstance(sprite, settings.PlayerCharacter):
-                            if sprite.rect.collidepoint(pygame.mouse.get_pos()):
-                                self.player_index = sprite
-                                self.turn_sub_state = "Move_Select"
-                                self.action_card_manager.set_main_actions()
-                    # check for click on end turn button
-                    if settings.click_check(settings.BATTLE_MENUS['turn_end_rect']):
-                        self.turn_sub_state = "Confirm"
+                    for i, player in enumerate(self.player_characters.sprites()):
+                        if player.rect.collidepoint(pygame.mouse.get_pos()):
+                            self.to_action_select(player)
                 if action == "t":
                     self.turn_sub_state = "Confirm"
             elif self.turn_sub_state == "Move_Select":
@@ -199,6 +193,7 @@ class Battle(BaseState):
             self.state = "Turn"
             self.turn_sub_state = "Browse"
             self.message.set_message("Select actions", state="Persist")
+            self.action_card_manager.set_browse()
         elif self.state == "Turn":
             pass
         elif self.state == "Pre_Action":
@@ -346,26 +341,13 @@ class Battle(BaseState):
                             sprite.queue = b[0]
                             sprite_2.queue = a[0]
 
-    def ability_click(self):
-        if self.player_index.abilities:
-            if not self.player_index.dazed > 0 \
-                    and not self.player_index.stunned > 0:
-                for action in self.player_index.abilities:
-                    if action.is_usable():
-                        self.turn_sub_state = "Skill"
-                        break
+    def to_action_select(self, player):
+        self.player_index = player
+        self.turn_sub_state = "Move_Select"
+        self.action_card_manager.set_main_actions()
 
-    def attack_click(self):
-        pass
-
-    def defend_click(self):
-        pass
-
-    def item_click(self):
-        pass
-
-    def run_click(self):
-        pass
+    def to_end_turn(self):
+        self.turn_sub_state = "Confirm"
 
 
 class ActionCardManger(object):
@@ -438,7 +420,7 @@ class ActionCardManger(object):
             self.selected_action = None
         elif self.state == "Main":
             self.parent.turn_sub_state = "Browse"
-            self.action_cards.clear()
+            self.set_browse()
         elif self.state == "Ability":
             self.state = "Main"
             self.set_main_actions()
@@ -462,10 +444,18 @@ class ActionCardManger(object):
                 else:
                     self.menu_back()
 
+    def set_browse(self):
+        self.action_cards.clear()
+        for i, player in enumerate(self.parent.player_characters.sprites()):
+            self.action_cards.append(ActionCard(self, player.name, "self.parent.parent.to_action_select(self.player_ref)", i, player_ref=player))
+        self.action_cards.append(ActionCard(self, "End Turn", "self.parent.parent.to_end_turn()", len(self.action_cards)))
+        self.set_action_card_positions()
+
 
 class ActionCard(object):
-    def __init__(self, parent, name, function, index, battle_action=None):
+    def __init__(self, parent, name, function, index, battle_action=None, player_ref=None):
         self.battle_action = battle_action
+        self.player_ref = player_ref
         self.parent = parent
         self.name = name
         self.function = function

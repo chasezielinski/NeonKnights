@@ -38,6 +38,11 @@ class CharacterSelect(BaseState):
             "Adept": [X * 35 / 100, Y * 80 / 100, X * 20 / 100, Y * 5 / 100],
             "Rogue": [X * 55 / 100, Y * 80 / 100, X * 20 / 100, Y * 5 / 100],
             "Artificer": [X * 75 / 100, Y * 80 / 100, X * 20 / 100, Y * 5 / 100],}
+        self.class_bg_rects = {
+            "Fighter": [X * 12 / 100, Y * 76 / 100, X * 16 / 100, Y * 10 / 100],
+            "Adept": [X * 32 / 100, Y * 76 / 100, X * 16 / 100, Y * 10 / 100],
+            "Rogue": [X * 52 / 100, Y * 76 / 100, X * 16 / 100, Y * 10 / 100],
+            "Artificer": [X * 72 / 100, Y * 76 / 100, X * 16 / 100, Y * 10 / 100],}
         self.class_sprites = pygame.sprite.Group()
         self.class_sprites.add(CharacterSelectSprite(self, "Fighter"), CharacterSelectSprite(self, "Adept"),
                                CharacterSelectSprite(self, "Rogue"), CharacterSelectSprite(self, "Artificer"), )
@@ -218,6 +223,14 @@ class CharacterSelect(BaseState):
         self.class_sprites.draw(surface)
 
         if self.state == "Class_Select":
+            backgrounds = list(self.class_bg_rects.keys())
+            for background in backgrounds:
+                color = (50, 50, 50)
+                if background == self.index:
+                    color = (100, 100, 100)
+                pygame.draw.rect(surface, color, self.class_bg_rects[background], border_radius=8)
+                pygame.draw.rect(surface, (20, 20, 20), self.class_bg_rects[background], 5, 8)
+
             options = list(self.class_rects.keys())
             for option in options:
                 color = settings.TEXT_COLOR
