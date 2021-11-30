@@ -1663,6 +1663,49 @@ def click_check(rect):
         return False
 
 
+def text_wrap(surface, text, color, rect, font, mode=None, buffer=0, aa=False, bkg=None):
+    rect = pygame.Rect(rect)
+    linesize = font.get_linesize()
+    font_height = font.size("Tg")[1]
+    y = buffer * font_height + rect.top
+
+    while text:
+        i = 1
+
+        # determine if the row of text will be outside our area
+        if y + font_height > rect.bottom:
+            break
+
+        # determine maximum width of line
+        while font.size(text[:i])[0] < rect.width and i < len(text):
+            i += 1
+
+        # if we've wrapped the text, then adjust the wrap to the last word
+        if i < len(text):
+            i = text.rfind(" ", 0, i) + 1
+
+        # render the line and blit it to the surface
+        if bkg:
+            image = font.render(text[:i], 1, color, bkg)
+            image.set_colorkey(bkg)
+        else:
+            image = font.render(text[:i], aa, color)
+        image_rect = pygame.Rect((rect.left, y), (image.get_size()))
+        if mode == "rjust":
+            image_rect.right = rect.right - (buffer * font_height)
+        elif mode == "center":
+            image_rect.center = rect.center[0], image_rect.center[1]
+        else:
+            image_rect.left = rect.left + (buffer * font_height)
+        surface.blit(image, image_rect)
+        y += linesize
+
+        # remove the text we just blitted
+        text = text[i:]
+
+    return text
+
+
 def tw(surface, text, color, rect, font, aa=False, bkg=None):
     rect = pygame.Rect(rect)
     y = rect.top
