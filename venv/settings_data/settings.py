@@ -289,15 +289,6 @@ class SpriteSheet:
         return self.images_at(tups, colorkey)
 
 
-MAIN_MENU_RECTS = {
-    "options": {0: [X * 37 / 100, Y / 3, X / 4, Y * 10 / 100],
-                1: [X * 37 / 100, Y / 3 + Y * 10 / 100, X / 4, Y * 10 / 100],
-                2: [X * 37 / 100, Y / 3 + Y * 20 / 100, X / 4, Y * 10 / 100],
-                3: [X * 37 / 100, Y / 3 + Y * 30 / 100, X / 4, Y * 10 / 100],
-                4: [X * 37 / 100, Y / 3 + Y * 40 / 100, X / 4, Y * 10 / 100],
-                },
-}
-
 # Regions
 
 REGION_BIOMES = ["Desert", "Grasslands", "Valley"]  # , "Forest", "Savannah", "Badlands", "Tundra",
@@ -1359,15 +1350,15 @@ BATTLE_MENU_SPRITES = {
 MUSIC = {'Title': r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\music\title.oga",
          'Desert': {'constant': pygame.mixer.Sound(
              r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\music\Desert_Layer\constant-Constant.wav"),
-                    'shop': pygame.mixer.Sound(
-                        r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\music\Desert_Layer\shop-Shop.wav"),
-                    'map': pygame.mixer.Sound(
-                        r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\music\Desert_Layer\map-Map.wav"),
-                    'battle': pygame.mixer.Sound(
-                        r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\music\Desert_Layer\battle-Battle.wav"),
-                    'event': pygame.mixer.Sound(
-                        r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\music\Desert_Layer\event-Event.wav"),
-                    }
+             'shop': pygame.mixer.Sound(
+                 r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\music\Desert_Layer\shop-Shop.wav"),
+             'map': pygame.mixer.Sound(
+                 r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\music\Desert_Layer\map-Map.wav"),
+             'battle': pygame.mixer.Sound(
+                 r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\music\Desert_Layer\battle-Battle.wav"),
+             'event': pygame.mixer.Sound(
+                 r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\music\Desert_Layer\event-Event.wav"),
+         }
          }
 
 SOUND_EFFECTS = {'Toggle_1': pygame.mixer.Sound(
@@ -1677,7 +1668,7 @@ def tw(surface, text, color, rect, font, x_mode=None, y_mode=None, buffer=0, aa=
         y = rect.bottom - total_height - (buffer * font_height)
 
     if y_mode == "center":
-        y = rect.center[1] - total_height/2
+        y = rect.center[1] - total_height / 2
         buffer = 0
 
     while text:
@@ -2420,6 +2411,7 @@ class Medallion(Equipment):
     def __init__(self, dictionary):
         super(Medallion, self).__init__(dictionary)
 
+
 BATTLE_ANIMATIONS = {
     "Slash_1": {
         'sprites': [image_load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Battle\Effects"
@@ -2958,7 +2950,7 @@ class BattleCharacter(pygame.sprite.Sprite):
         self.pos = 0, 0
 
     def update(self, dt):
-        self.timer += dt * random_int(90, 110)/100
+        self.timer += dt * random_int(90, 110) / 100
         if self.timer > getattr(self, f"{self.state.lower()}_speed")[self.animation_index]:
             self.timer = 0
             self.animation_index += 1
@@ -3154,7 +3146,7 @@ class Fighter(PlayerCharacter):
         self.base_attack_type = self.attack_type = "Attack"
         self.equipment = {}
         self.abilities = self.base_abilities = ["Bash", "Strike", "Impale", "Dash", "Fortify", "Magic Strike",
-                                                       "True Strike"]
+                                                "True Strike"]
         self.abilities = [KiBlast(self)]
         self.left_tree = SkillTree("Fighter", "left", self)
         self.center_tree = SkillTree("Fighter", "center", self)
@@ -3179,7 +3171,7 @@ class Slime(BattleCharacter):
         self.hit_speed = [1000]
         self.miss_frames = [3]
         self.miss_speed = [1000]
-        self.pos = self.base_pos = BATTLE_MENUS['enemy positions'][n_enemy][self.battle_slot-5]
+        self.pos = self.base_pos = BATTLE_MENUS['enemy positions'][n_enemy][self.battle_slot - 5]
         self.image = self.sprites[0]
         self.rect = pygame.rect.Rect(self.pos[0], self.pos[1], self.image.get_width(), self.image.get_height())
         self.hp = self.max_hp = [100, 120, 140, 160, 190, 220, 250, 300][region_index]
@@ -3372,95 +3364,13 @@ class BattleOverlay(object):
         self.item_display_index = 0
         self.item_relative = -1
 
-    def handle_action(self, action):
-        if self.parent.turn_sub_state == "Item":
-            if action == "mouse_move":
-                for key in range(5):
-                    if click_check(BATTLE_MENUS['item_menu_rects'][key]):
-                        self.item_relative = key
-                        self.item_index = key + self.item_display_index
-                        break
-                    else:
-                        self.item_relative = -1
-                        self.item_index = -1
-            elif action == "click":
-                if self.item_index >= 0:
-                    self.parent.selected_action = self.parent.persist['inventory'][self.item_index]
-                    self.parent.turn_sub_state = "Target"
-                else:
-                    self.parent.turn_sub_state = "Browse"
-            elif action == "up":
-                if self.item_relative < 0 or self.item_relative > 4:
-                    self.item_relative = 0
-                if self.item_relative == 0 and self.item_display_index > 0:
-                    self.item_display_index -= 1
-                elif self.item_relative > 0:
-                    self.item_relative -= 1
-                self.item_index = self.item_relative + self.item_display_index
-            elif action == "down":
-                if self.item_relative < 0 or self.item_relative > 4:
-                    self.item_relative = 0
-                if self.item_relative == 4 and self.item_index < len(self.parent.persist['inventory']) - 1:
-                    self.item_display_index += 1
-                elif self.item_relative < 4:
-                    self.item_relative += 1
-                self.item_index = self.item_relative + self.item_display_index
-            elif action == "backspace":
-                pass
-            elif action == "return":
-                pass
-
-        elif self.parent.turn_sub_state == "Skill":
-            if action == "mouse_move":
-                for key in range(5):
-                    if click_check(BATTLE_MENUS['skill_menu_rects'][key]):
-                        self.skill_relative = key
-                        self.skill_index = key + self.skill_display_index
-                        break
-                    else:
-                        self.skill_relative = -1
-                        self.skill_index = -1
-            elif action == "click":
-                if self.skill_index >= 0:
-                    self.parent.selected_action = self.parent.player_index.abilities[self.skill_index]
-                    self.parent.turn_sub_state = "Target"
-                else:
-                    self.parent.turn_sub_state = "Browse"
-            elif action == "up":
-                if self.skill_relative < 0 or self.skill_relative > 4:
-                    self.skill_relative = 0
-                if self.skill_relative == 0 and self.skill_display_index > 0:
-                    self.skill_display_index -= 1
-                elif self.skill_relative > 0:
-                    self.skill_relative -= 1
-                self.skill_index = self.skill_relative + self.skill_display_index
-            elif action == "down":
-                if self.skill_relative < 0 or self.skill_relative > 4:
-                    self.skill_relative = 0
-                if self.skill_relative == 4 and self.skill_index < len(self.parent.player_index.abilities) - 1:
-                    self.skill_display_index += 1
-                elif self.skill_relative < 4:
-                    self.skill_relative += 1
-                self.skill_index = self.skill_relative + self.skill_display_index
-            elif action == "backspace":
-                pass
-            elif action == "return":
-                pass
-
     def update(self, dt):
         self.reticle_color_update(dt)
 
     def draw(self, surface):
-        pygame.draw.rect(surface, (50, 50, 50), [0, Y * 75 / 100, X, Y * 25 / 100])
-        pygame.draw.rect(surface, (50, 50, 50), [X * 80 / 100, 0, X * 20 / 100, Y])
         if self.parent.state == "Turn":
-            pass
 
-            if self.parent.turn_sub_state == "Browse":
-                pygame.draw.rect(surface, (150, 150, 20), BATTLE_MENUS['turn_end_rect'], 5, 12)
-                tw(surface, "END TURN", TEXT_COLOR, BATTLE_MENUS['turn_end_rect'],
-                   HEADING_FONT)
-            elif self.parent.turn_sub_state == "Target":
+            if self.parent.turn_sub_state == "Target":
                 target_type = getattr(self.parent.selected_action, 'target_type')
                 target = None
                 for sprite in self.parent.battle_characters.sprites():
@@ -3518,13 +3428,6 @@ class BattleOverlay(object):
                HEADING_FONT)
             tw(surface, "Press enter to continue.", TEXT_COLOR, [X * 30 / 100, Y * 60 / 100, X * 20 / 100,
                                                                  Y * 20 / 100], TEXT_FONT)
-        for i, sprite in enumerate(self.parent.player_characters.sprites()):
-            tw(surface, "hp: " + str(sprite.hp) + "/" + str(sprite.max_hp), TEXT_COLOR,
-               BATTLE_MENUS['player_status_rects'][str(i)]['hp'], DETAIL_FONT)
-            tw(surface, "mp: " + str(sprite.mp) + "/" + str(sprite.max_mp), TEXT_COLOR,
-               BATTLE_MENUS['player_status_rects'][str(i)]['mp'], DETAIL_FONT)
-            tw(surface, sprite.name, TEXT_COLOR,
-               BATTLE_MENUS['player_status_rects'][str(i)]['name'], TEXT_FONT)
 
     def reticle_color_update(self, dt):
         self.target_time += dt * self.target_direction
@@ -3836,7 +3739,8 @@ class Attack(BattleAction):
             outcome = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
             damage_low, damage_high, p_hit, critical_low, critical_high, p_critical = \
                 attack_defense_calculate(self, self.parent, character, ev=True)
-            outcome[character.battle_slot] = ((damage_low + damage_high) * p_hit * (1 - p_critical) / (2 * character.hp)) + ((critical_low + critical_high) * p_hit * p_critical / (2 * character.hp))
+            outcome[character.battle_slot] = ((damage_low + damage_high) * p_hit * (1 - p_critical) / (
+                        2 * character.hp)) + ((critical_low + critical_high) * p_hit * p_critical / (2 * character.hp))
             value_set.append((self.parent, self, [character], outcome))
         return value_set
 
@@ -4413,13 +4317,13 @@ class SettingsManager(object):
         self.load = True
 
     def set_screen_size(self, size: tuple):
-        self.top_center = size[0]/2, 0
+        self.top_center = size[0] / 2, 0
         self.top_right = size[0], 0
-        self.center_left = 0, size[0]/2
-        self.center = size[0]/2, size[0]/2
+        self.center_left = 0, size[0] / 2
+        self.center = size[0] / 2, size[0] / 2
         self.center_right = size[0],
         self.bottom_left = 0, size[0]
-        self.bottom_center = size[0]/2, size[0]
+        self.bottom_center = size[0] / 2, size[0]
         self.bottom_right = self.screen = size
 
 

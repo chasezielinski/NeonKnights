@@ -354,7 +354,7 @@ class ActionCardManger(object):
     def __init__(self, parent):
         self.parent = parent
         self.action_cards = []
-        self.card_rect = (31*settings.X/100, 74*settings.Y/100, 64*settings.X/100, 26*settings.Y/100)
+        self.card_rect = pygame.Rect(31*settings.X/100, 74*settings.Y/100, 64*settings.X/100, 26*settings.Y/100)
         self.timer = 200
         self.state = "Main"
         self.pointer = Pointer(self)
@@ -466,7 +466,7 @@ class ActionCard(object):
         self.layer = index
         self.selected = False
         self.pos = (0, 0)
-        self.size = (15*settings.X/100, 26*settings.Y/100)
+        self.size = (15*settings.X/100, 30*settings.Y/100)
         self.distance_x_mouse = int
 
     def handle_action(self, action):
@@ -492,7 +492,7 @@ class ActionCard(object):
     def draw(self, surface):
         pygame.draw.rect(surface, (50, 50, 50), self.pos + self.size, border_radius=8)
         pygame.draw.rect(surface, (150, 150, 150), self.pos + self.size, width=5, border_radius=8)
-        settings.tw(surface, self.name, settings.TEXT_COLOR, self.pos + self.size, settings.TEXT_FONT, x_mode="rjust", y_mode="center")
+        settings.tw(surface, self.name, settings.TEXT_COLOR, self.pos + self.size, settings.TEXT_FONT, x_mode="rjust", buffer=1)
 
     def select(self):
         eval(self.function)
@@ -501,16 +501,18 @@ class ActionCard(object):
     def set_position(self, number_cards):
         max_card_with_no_overlap = math.floor(self.parent.card_rect[2]/self.size[0])
         if number_cards <= max_card_with_no_overlap:
-            self.pos = self.get_position()
+            self.get_position(number_cards)
         else:
-            self.pos = self.get_overlap_position(number_cards)
+            self.get_overlap_position(number_cards)
 
-    def get_position(self):
-        return self.parent.card_rect[0] + self.index * self.size[0], self.parent.card_rect[1]
+    def get_position(self, number_cards):
+        rect = pygame.Rect(self.pos, self.size)
+        rect.right = self.parent.card_rect.right - (rect.width * (number_cards - self.index - 1))
+        self.pos = rect.left, self.pos[1]
 
     def get_overlap_position(self, number_cards):
         offset = self.parent.card_rect[2]/number_cards
-        return self.parent.card_rect[0] + self.index * offset, self.parent.card_rect[1]
+        self.pos = self.parent.card_rect[0] + self.index * offset, self.parent.card_rect[1]
 
     def __lt__(self, other):
         return self.layer < other.layer

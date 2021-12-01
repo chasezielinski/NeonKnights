@@ -10,6 +10,16 @@ class Menu(BaseState):
         self.active_index = 0
         self.options = ["Start Game", "Map Bounds", "Quit Game"]
         self.next_state = "CHARACTER_SELECT"
+        self.rects = {0: [settings.X * 35 / 100, settings.Y / 3, settings.X * 30 / 100, settings.Y * 10 / 100],
+                      1: [settings.X * 35 / 100, settings.Y / 3 + settings.Y * 10 / 100, settings.X * 30 / 100,
+                          settings.Y * 10 / 100],
+                      2: [settings.X * 35 / 100, settings.Y / 3 + settings.Y * 20 / 100, settings.X * 30 / 100,
+                          settings.Y * 10 / 100],
+                      3: [settings.X * 35 / 100, settings.Y / 3 + settings.Y * 30 / 100, settings.X * 30 / 100,
+                          settings.Y * 10 / 100],
+                      4: [settings.X * 35 / 100, settings.Y / 3 + settings.Y * 40 / 100, settings.X * 30 / 100,
+                          settings.Y * 10 / 100],
+                      }
 
     def startup(self, persistent):
         self.persist = persistent
@@ -38,14 +48,14 @@ class Menu(BaseState):
                 self.quit = True
         elif action == "mouse_move":
             for i in range(len(self.options)):
-                if settings.click_check(settings.MAIN_MENU_RECTS["options"][i]):
+                if settings.click_check(self.rects[i]):
                     self.active_index = i
                     break
                 else:
                     self.active_index = -1
         elif action == "click":
             for i in range(len(self.options)):
-                if settings.click_check(settings.MAIN_MENU_RECTS["options"][i]):
+                if settings.click_check(self.rects[i]):
                     self.active_index = i
                     self.handle_action("return")
                 else:
@@ -57,11 +67,11 @@ class Menu(BaseState):
         elif event.type == pygame.KEYDOWN:
             if event.key == pygame.K_UP:
                 self.persist['SFX'].schedule_sfx("Toggle_2")
-                self.active_index -=1
+                self.active_index -= 1
                 self.active_index %= len(self.options)
             elif event.key == pygame.K_DOWN:
                 self.persist['SFX'].schedule_sfx("Toggle_2")
-                self.active_index +=1
+                self.active_index += 1
                 self.active_index %= len(self.options)
             elif event.key == pygame.K_RETURN:
                 self.persist['SFX'].schedule_sfx("Confirm_1")
@@ -84,6 +94,6 @@ class Menu(BaseState):
             color = settings.TEXT_COLOR
             if index == self.active_index:
                 color = settings.SELECTED_COLOR
-            settings.tw(surface, option, color, settings.MAIN_MENU_RECTS["options"][index], settings.HEADING_FONT)
+            settings.tw(surface, option, color, self.rects[index], settings.HEADING_FONT, x_mode="center")
         self.persist["Transition"].draw(surface)
         self.persist['FX'].draw(surface)
