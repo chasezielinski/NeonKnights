@@ -11,6 +11,15 @@ class RegionSelect(BaseState):
         self.index = -1
         self.next_state = "REGION"
         self.options = []
+        self.rects = {0: [75, 20, 330, 680],
+                      1: [475, 20, 330, 680],
+                      2: [875, 20, 330, 680], }
+        self.text_rects = {0: [80, 60, 300, 50],
+                           1: [480, 600, 300, 50],
+                           2: [880, 60, 300, 50], }
+        self.image_pos = {0: (80, 120),
+                           1: (480, 60),
+                           2: (880, 180),}
 
     def startup(self, persistent):
         self.persist = persistent
@@ -27,18 +36,12 @@ class RegionSelect(BaseState):
                 settings.SOUND_EFFECTS["Menu"]["Confirm_1"].play()
                 self.go_to_region()
         elif action == "mouse_move":
-            if settings.click_check([75, 20, 330, 680]):
-                if self.index != 0:
-                    settings.SOUND_EFFECTS["Menu"]["Toggle_2"].play()
-                self.index = 0
-            elif settings.click_check([475, 20, 330, 680]):
-                if self.index != 1:
-                    settings.SOUND_EFFECTS["Menu"]["Toggle_2"].play()
-                self.index = 1
-            elif settings.click_check([875, 20, 330, 680]):
-                if self.index != 2:
-                    settings.SOUND_EFFECTS["Menu"]["Toggle_2"].play()
-                self.index = 2
+            for key, value in self.rects.items():
+                if settings.click_check(value):
+                    if self.index != key:
+                        settings.SOUND_EFFECTS["Menu"]["Toggle_2"].play()
+                    self.index = key
+                    break
             else:
                 self.index = -1
         elif action == "click":
@@ -47,11 +50,11 @@ class RegionSelect(BaseState):
                 self.go_to_region()
         elif action == "right":
             settings.SOUND_EFFECTS["Menu"]["Toggle_2"].play()
-            self.index +=1
+            self.index += 1
             self.index %= len(self.options)
         elif action == "left":
             settings.SOUND_EFFECTS["Menu"]["Toggle_2"].play()
-            self.index -=1
+            self.index -= 1
             self.index %= len(self.options)
 
     def get_event(self, event):
@@ -77,30 +80,13 @@ class RegionSelect(BaseState):
 
     def draw(self, surface):
         surface.fill(pygame.Color("black"))
-        rect_color = (50, 50, 50)
-        text_color = settings.TEXT_COLOR
-        if self.index == 0:
-            rect_color = (80, 80, 80)
-            text_color = settings.SELECTED_COLOR
-        pygame.draw.rect(surface, rect_color, [75, 20, 330, 680], border_radius=4)
-        surface.blit(settings.REGION_CARDS[self.options[0]], (80, 120))
-        settings.tw(surface, self.options[0].rjust(15 - len(self.options[0])), text_color,
-                    [80, 60, 300, 50], settings.HEADING_FONT)
-        rect_color = (50, 50, 50)
-        text_color = settings.TEXT_COLOR
-        if self.index == 1:
-            rect_color = (80, 80, 80)
-            text_color = settings.SELECTED_COLOR
-        pygame.draw.rect(surface, rect_color, [475, 20, 330, 680], border_radius=4)
-        surface.blit(settings.REGION_CARDS[self.options[1]], (480, 60))
-        settings.tw(surface, self.options[1].rjust(15 - len(self.options[1])), text_color,
-                    [480, 600, 300, 50], settings.HEADING_FONT)
-        rect_color = (50, 50, 50)
-        text_color = settings.TEXT_COLOR
-        if self.index == 2:
-            rect_color = (80, 80, 80)
-            text_color = settings.SELECTED_COLOR
-        pygame.draw.rect(surface, rect_color, [875, 20, 330, 680], border_radius=4)
-        surface.blit(settings.REGION_CARDS[self.options[2]], (880, 180))
-        settings.tw(surface, self.options[2].rjust(15 - len(self.options[2])), text_color,
-                    [880, 80, 300, 50], settings.HEADING_FONT)
+        for key, value in self.rects.items():
+            rect_color = (50, 50, 50)
+            text_color = settings.TEXT_COLOR
+            if self.index == key:
+                rect_color = (80, 80, 80)
+                text_color = settings.SELECTED_COLOR
+            pygame.draw.rect(surface, rect_color, value, border_radius=4)
+            surface.blit(settings.REGION_CARDS[self.options[key]], self.image_pos[key])
+            settings.tw(surface, self.options[key], text_color, self.text_rects[key], settings.HEADING_FONT,
+                        x_mode="center")

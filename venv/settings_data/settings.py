@@ -1663,11 +1663,22 @@ def click_check(rect):
         return False
 
 
-def text_wrap(surface, text, color, rect, font, mode=None, buffer=0, aa=False, bkg=None):
+def tw(surface, text, color, rect, font, x_mode=None, y_mode=None, buffer=0, aa=False, bkg=None):
     rect = pygame.Rect(rect)
     linesize = font.get_linesize()
     font_height = font.size("Tg")[1]
     y = buffer * font_height + rect.top
+    text_lines = 0
+    if y_mode is not None:
+        text_lines = find_lines(text, font, rect)
+        total_height = (text_lines - 1) * linesize + font_height
+
+    if y_mode == "bjust":
+        y = rect.bottom - total_height - (buffer * font_height)
+
+    if y_mode == "center":
+        y = rect.center[1] - total_height/2
+        buffer = 0
 
     while text:
         i = 1
@@ -1691,9 +1702,9 @@ def text_wrap(surface, text, color, rect, font, mode=None, buffer=0, aa=False, b
         else:
             image = font.render(text[:i], aa, color)
         image_rect = pygame.Rect((rect.left, y), (image.get_size()))
-        if mode == "rjust":
+        if x_mode == "rjust":
             image_rect.right = rect.right - (buffer * font_height)
-        elif mode == "center":
+        elif x_mode == "center":
             image_rect.center = rect.center[0], image_rect.center[1]
         else:
             image_rect.left = rect.left + (buffer * font_height)
@@ -1706,43 +1717,21 @@ def text_wrap(surface, text, color, rect, font, mode=None, buffer=0, aa=False, b
     return text
 
 
-def tw(surface, text, color, rect, font, aa=False, bkg=None):
-    rect = pygame.Rect(rect)
-    y = rect.top
-    lineSpacing = -2
-
-    # get the height of the font
-    fontHeight = font.size("Tg")[1]
-
+def find_lines(text, font, rect):
+    text_lines = 0
     while text:
+        text_lines += 1
         i = 1
 
-        # determine if the row of text will be outside our area
-        if y + fontHeight > rect.bottom:
-            break
-
-        # determine maximum width of line
         while font.size(text[:i])[0] < rect.width and i < len(text):
             i += 1
 
-        # if we've wrapped the text, then adjust the wrap to the last word
         if i < len(text):
             i = text.rfind(" ", 0, i) + 1
 
-        # render the line and blit it to the surface
-        if bkg:
-            image = font.render(text[:i], 1, color, bkg)
-            image.set_colorkey(bkg)
-        else:
-            image = font.render(text[:i], aa, color)
-
-        surface.blit(image, (rect.left, y))
-        y += fontHeight + lineSpacing
-
-        # remove the text we just blitted
         text = text[i:]
 
-    return text
+    return text_lines
 
 
 def node_assign_2(parent):

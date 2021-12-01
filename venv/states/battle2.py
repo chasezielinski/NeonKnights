@@ -492,8 +492,7 @@ class ActionCard(object):
     def draw(self, surface):
         pygame.draw.rect(surface, (50, 50, 50), self.pos + self.size, border_radius=8)
         pygame.draw.rect(surface, (150, 150, 150), self.pos + self.size, width=5, border_radius=8)
-        text_rect = [self.pos[0]+(1*settings.X/100), self.pos[1]+(settings.Y*2/100), self.size[0]-(2*settings.X/100), self.size[1]]
-        settings.text_wrap(surface, self.name, settings.TEXT_COLOR, self.pos + self.size, settings.TEXT_FONT, mode="rjust", buffer=1)
+        settings.tw(surface, self.name, settings.TEXT_COLOR, self.pos + self.size, settings.TEXT_FONT, x_mode="rjust", y_mode="center")
 
     def select(self):
         eval(self.function)

@@ -46,7 +46,7 @@ class CharacterSelect(BaseState):
         self.class_sprites = pygame.sprite.Group()
         self.class_sprites.add(CharacterSelectSprite(self, "Fighter"), CharacterSelectSprite(self, "Adept"),
                                CharacterSelectSprite(self, "Rogue"), CharacterSelectSprite(self, "Artificer"), )
-        self.name_rect = [X * 20 / 100, Y * 70 / 100, X * 80 / 100, Y * 5 / 100]
+        self.name_rect = [0, Y * 70 / 100, X, Y * 8 / 100]
         self.class_rect = [X * 20 / 100, Y * 5 / 100, X * 80 / 100, Y * 5 / 100]
         self.prompt_rect = [X * 1 / 8, Y * 13 / 16, X * 3 / 4, Y * 1 / 8]
         self.option_rect = {0: [X * 75 / 100, Y * 30 / 100, X * 25 / 100, Y * 10 / 100],
@@ -223,20 +223,16 @@ class CharacterSelect(BaseState):
         self.class_sprites.draw(surface)
 
         if self.state == "Class_Select":
-            backgrounds = list(self.class_bg_rects.keys())
-            for background in backgrounds:
+            for background in list(self.class_bg_rects.keys()):
                 color = (50, 50, 50)
+                text_color = settings.TEXT_COLOR
                 if background == self.index:
                     color = (100, 100, 100)
+                    text_color = settings.SELECTED_COLOR
                 pygame.draw.rect(surface, color, self.class_bg_rects[background], border_radius=8)
                 pygame.draw.rect(surface, (20, 20, 20), self.class_bg_rects[background], 5, 8)
-
-            options = list(self.class_rects.keys())
-            for option in options:
-                color = settings.TEXT_COLOR
-                if option == self.index:
-                    color = settings.SELECTED_COLOR
-                settings.tw(surface, option, color, self.class_rects[option], settings.TEXT_FONT)
+                settings.tw(surface, background, text_color, self.class_bg_rects[background],
+                            settings.TEXT_FONT, x_mode="center", y_mode="center")
 
         elif self.state == "Name_Entry":
             prompt = "Input a name. Press enter to continue or backspace to select another class."
@@ -251,8 +247,8 @@ class CharacterSelect(BaseState):
         self.persist['FX'].draw(surface)
 
     def print_options(self, surface, options, prompt):
-        settings.tw(surface, self.name_entry.rjust(12+len(self.name_entry)), settings.TEXT_COLOR, self.name_rect,
-                    settings.HEADING_FONT)
+        settings.tw(surface, self.name_entry, settings.TEXT_COLOR, self.name_rect,
+                    settings.HEADING_FONT, x_mode="center", y_mode="center")
         settings.tw(surface, self.index.rjust(20-len(self.index)), settings.TEXT_COLOR, self.class_rect,
                     settings.HEADING_FONT)
         settings.tw(surface, prompt, settings.TEXT_COLOR, self.prompt_rect, settings.HEADING_FONT)
