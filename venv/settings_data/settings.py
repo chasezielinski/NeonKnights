@@ -461,6 +461,9 @@ Party_Marker = [
      pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Region\Party_Marker8.png")],
     [65, 65, 65, 65, 65, 65, 65, 65]]
 
+BATTLE_BGS = {"Desert": {0: pygame.image.load(r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites"
+                                              r"\Battle\BGs\Desert_Battle_720p.png")}}
+
 
 class EmptyNode(object):
     def __init__(self, parent):
@@ -2957,6 +2960,10 @@ class BattleCharacter(pygame.sprite.Sprite):
             self.animation_index %= len(getattr(self, f"{self.state.lower()}_frames"))
         self.image = self.sprites[getattr(self, f"{self.state.lower()}_frames")[self.animation_index]]
         self.rect = pygame.rect.Rect(self.pos[0], self.pos[1], self.image.get_width(), self.image.get_height())
+
+    def set_pos_by_center(self, pos):
+        self.rect.center = pos
+        self.pos = self.rect.topleft
 
     def damage(self, damage, action, delay=0):
         if damage == 'miss':

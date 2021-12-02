@@ -46,6 +46,17 @@ class Battle(BaseState):
         self.timer = None
         self.next_battle_state = None
         self.print_timer = 200
+        self.background_image = None
+        self.character_pos_table = {0: (settings.X * 22/100, settings.Y * 32/100),
+                                    1: (settings.X * 15/100, settings.Y * 49/100),
+                                    2: (settings.X * 7/100, settings.Y * 60/100),
+                                    3: (settings.X * 36/100, settings.Y * 45/100),
+                                    4: (settings.X * 30/100, settings.Y * 66/100),
+                                    8: (settings.X * 50/100, settings.Y * 35/100),
+                                    9: (settings.X * 60/100, settings.Y * 61/100),
+                                    5: (settings.X * 72/100, settings.Y * 38/100),
+                                    6: (settings.X * 82/100, settings.Y * 51/100),
+                                    7: (settings.X * 92/100, settings.Y * 63/100), }
 
     def startup(self, persistent):
         self.persist = persistent
@@ -56,10 +67,16 @@ class Battle(BaseState):
             player.parent = self
             player.add(self.battle_characters, self.player_characters, self.battle_objects)
             self.status_cards.append(StatusCard(self, player))
+            player.set_pos_by_center(self.character_pos_table[i])
         # construct each enemy sprite object and add them to proper Groups
         for i, enemy in enumerate(self.persist['enemies']):
-            enemy_sprite = eval("settings." + enemy)(i+5, self.persist['region_index'], len(self.persist['enemies']), self)
+            enemy_sprite = eval("settings." + enemy)(i + 5, self.persist['region_index'], len(self.persist['enemies']),
+                                                     self)
             enemy_sprite.add(self.battle_characters, self.enemy_characters, self.battle_objects)
+            enemy_sprite.set_pos_by_center(self.character_pos_table[i+5])
+        if self.persist['region_type'] in settings.BATTLE_BGS.keys():
+            index = settings.choose_random(list(settings.BATTLE_BGS[self.persist['region_type']].keys()))
+            self.background_image = settings.BATTLE_BGS[self.persist['region_type']][index].convert()
 
     def handle_action(self, action):
         if self.state != "Pointer":
@@ -170,11 +187,11 @@ class Battle(BaseState):
 
     def update(self, dt):
         self.print_timer -= dt
-        if self.print_timer <= 0: # used for getting battle state screen positions
+        if self.print_timer <= 0:  # used for getting battle state screen positions
             print(pygame.mouse.get_pos())
-            print((pygame.mouse.get_pos()[0]*100/settings.X ,pygame.mouse.get_pos()[1]*100/settings.Y))
+            print((pygame.mouse.get_pos()[0] * 100 / settings.X, pygame.mouse.get_pos()[1] * 100 / settings.Y))
             self.print_timer = 200
-        for sprite in self.battle_characters: # maybe let battle character class do this itself...
+        for sprite in self.battle_characters:  # maybe let battle character class do this itself...
             if sprite.hp <= 0:
                 sprite.ko()
         if self.state not in ["Victory_1", "Victory_2", "Defeat", "Clean_Up", "Delay", "Wait"]:
@@ -263,6 +280,8 @@ class Battle(BaseState):
 
     def draw(self, surface):
         surface.fill(pygame.Color("black"))
+        if self.background_image:
+            surface.blit(self.background_image, (0, 0))
         self.battle_characters.draw(surface)
         self.battle_characters_ko.draw(surface)
         self.battle_animations.draw(surface)
@@ -354,7 +373,8 @@ class ActionCardManger(object):
     def __init__(self, parent):
         self.parent = parent
         self.action_cards = []
-        self.card_rect = pygame.Rect(31*settings.X/100, 74*settings.Y/100, 64*settings.X/100, 26*settings.Y/100)
+        self.card_rect = pygame.Rect(31 * settings.X / 100, 74 * settings.Y / 100, 64 * settings.X / 100,
+                                     26 * settings.Y / 100)
         self.timer = 200
         self.state = "Main"
         self.pointer = Pointer(self)
@@ -394,11 +414,14 @@ class ActionCardManger(object):
 
     def set_main_actions(self):
         self.action_cards.clear()
-        self.action_cards.append(ActionCard(self, "Attack", "self.parent.target()", 0, self.parent.player_index.attack_action))
-        self.action_cards.append(ActionCard(self, "Defend", "self.parent.target()", 1, self.parent.player_index.defend_action))
+        self.action_cards.append(
+            ActionCard(self, "Attack", "self.parent.target()", 0, self.parent.player_index.attack_action))
+        self.action_cards.append(
+            ActionCard(self, "Defend", "self.parent.target()", 1, self.parent.player_index.defend_action))
         self.action_cards.append(ActionCard(self, "Ability", "self.parent.set_ability_actions()", 2))
         self.action_cards.append(ActionCard(self, "Item", "self.parent.set_item_actions()", 3))
-        self.action_cards.append(ActionCard(self, "Run", "self.parent.target()", 4, self.parent.player_index.run_action))
+        self.action_cards.append(
+            ActionCard(self, "Run", "self.parent.target()", 4, self.parent.player_index.run_action))
         self.action_cards.append(ActionCard(self, "Back", "self.parent.menu_back()", 5))
         self.set_action_card_positions()
 
@@ -407,7 +430,8 @@ class ActionCardManger(object):
         self.action_cards.clear()
         for i, ability in enumerate(self.parent.player_index.abilities):
             self.action_cards.append(ActionCard(self, ability.name, "self.parent.target()", i, ability))
-        self.action_cards.append(ActionCard(self, "Back", "self.parent.menu_back()", len(self.parent.player_index.abilities)))
+        self.action_cards.append(
+            ActionCard(self, "Back", "self.parent.menu_back()", len(self.parent.player_index.abilities)))
         self.set_action_card_positions()
 
     def set_item_actions(self):
@@ -447,8 +471,11 @@ class ActionCardManger(object):
     def set_browse(self):
         self.action_cards.clear()
         for i, player in enumerate(self.parent.player_characters.sprites()):
-            self.action_cards.append(ActionCard(self, player.name, "self.parent.parent.to_action_select(self.player_ref)", i, player_ref=player))
-        self.action_cards.append(ActionCard(self, "End Turn", "self.parent.parent.to_end_turn()", len(self.action_cards)))
+            self.action_cards.append(
+                ActionCard(self, player.name, "self.parent.parent.to_action_select(self.player_ref)", i,
+                           player_ref=player))
+        self.action_cards.append(
+            ActionCard(self, "End Turn", "self.parent.parent.to_end_turn()", len(self.action_cards)))
         self.set_action_card_positions()
 
 
@@ -466,7 +493,7 @@ class ActionCard(object):
         self.layer = index
         self.selected = False
         self.pos = (0, 0)
-        self.size = (15*settings.X/100, 30*settings.Y/100)
+        self.size = (15 * settings.X / 100, 30 * settings.Y / 100)
         self.distance_x_mouse = int
 
     def handle_action(self, action):
@@ -475,7 +502,7 @@ class ActionCard(object):
                 self.select()
 
     def update(self, dt):
-        self.distance_x_mouse = (self.pos[0] + self.size[0]/2) - pygame.mouse.get_pos()[0]
+        self.distance_x_mouse = (self.pos[0] + self.size[0] / 2) - pygame.mouse.get_pos()[0]
         if self.distance_x_mouse < 0:
             self.distance_x_mouse *= -1
         self.hover = False
@@ -485,21 +512,22 @@ class ActionCard(object):
 
     def toggle_position(self):
         if self.hover and self.layer == -1:
-            self.pos = self.pos[0], self.parent.card_rect[1] - 2*settings.Y/100
+            self.pos = self.pos[0], self.parent.card_rect[1] - 2 * settings.Y / 100
         else:
             self.pos = self.pos[0], self.parent.card_rect[1]
 
     def draw(self, surface):
         pygame.draw.rect(surface, (50, 50, 50), self.pos + self.size, border_radius=8)
         pygame.draw.rect(surface, (150, 150, 150), self.pos + self.size, width=5, border_radius=8)
-        settings.tw(surface, self.name, settings.TEXT_COLOR, self.pos + self.size, settings.TEXT_FONT, x_mode="rjust", buffer=1)
+        settings.tw(surface, self.name, settings.TEXT_COLOR, self.pos + self.size, settings.TEXT_FONT, x_mode="rjust",
+                    buffer=1)
 
     def select(self):
         eval(self.function)
-        self.parent.pointer.set_anchor((self.pos[0] + self.size[0]/2, self.pos[1]))
+        self.parent.pointer.set_anchor((self.pos[0] + self.size[0] / 2, self.pos[1]))
 
     def set_position(self, number_cards):
-        max_card_with_no_overlap = math.floor(self.parent.card_rect[2]/self.size[0])
+        max_card_with_no_overlap = math.floor(self.parent.card_rect[2] / self.size[0])
         if number_cards <= max_card_with_no_overlap:
             self.get_position(number_cards)
         else:
@@ -511,7 +539,7 @@ class ActionCard(object):
         self.pos = rect.left, self.pos[1]
 
     def get_overlap_position(self, number_cards):
-        offset = self.parent.card_rect[2]/number_cards
+        offset = self.parent.card_rect[2] / number_cards
         self.pos = self.parent.card_rect[0] + self.index * offset, self.parent.card_rect[1]
 
     def __lt__(self, other):
@@ -544,7 +572,8 @@ class Pointer(object):
         self.triangle_pointer = Wireframe(self, [(0, 0), (40, 10), (40, -10)])
 
     def update(self, dt):
-        self.points = bezier(np.arange(0, 1, 1/self.n_points), [self.point_1, self.point_2, self.pointer_spline_point, pygame.mouse.get_pos()])
+        self.points = bezier(np.arange(0, 1, 1 / self.n_points),
+                             [self.point_1, self.point_2, self.pointer_spline_point, pygame.mouse.get_pos()])
         self.triangle_pointer.update(dt)
         self.pointer_spline_point = pygame.mouse.get_pos()[0] - 200, pygame.mouse.get_pos()[1]
 
@@ -568,7 +597,7 @@ def bezier(weights, points):
 def lerp_recurse(float_, points):
     new_points = []
     for i in range(1, len(points)):
-        new_points.append(lerp(points[i], points[i-1], float_))
+        new_points.append(lerp(points[i], points[i - 1], float_))
     if len(new_points) > 1:
         return lerp_recurse(float_, new_points)
     else:
@@ -607,7 +636,7 @@ class Wireframe(object):
 
 def draw_wireframe(surface, points, width=4):
     for i, point in enumerate(points):
-        pygame.draw.line(surface, (200, 200, 200), point, points[i-1], width)
+        pygame.draw.line(surface, (200, 200, 200), point, points[i - 1], width)
 
 
 def angle_find(v1, v2):
@@ -621,7 +650,7 @@ def difference_vector(v1, v2):
 
 
 def length(v1):
-    return math.sqrt(v1[0]**2 + v1[1]**2)
+    return math.sqrt(v1[0] ** 2 + v1[1] ** 2)
 
 
 class StatusCard(object):
@@ -630,10 +659,11 @@ class StatusCard(object):
         self.index = 0
         self.parent = parent
         self.player = player
-        self.size = settings.X * 30/100, settings.Y * 10/100
+        self.size = settings.X * 30 / 100, settings.Y * 10 / 100
         self.pos = 0, 0
         self.rect = [self.pos[0], self.pos[1], self.size[0], self.size[1]]
-        self.text_rect = [self.rect[0] + settings.X/100, self.rect[1] + settings.Y*2/100, self.rect[2], self.rect[3]]
+        self.text_rect = [self.rect[0] + settings.X / 100, self.rect[1] + settings.Y * 2 / 100, self.rect[2],
+                          self.rect[3]]
 
     def update(self):
         for i, player in enumerate(self.parent.player_characters.sprites()):
@@ -641,7 +671,8 @@ class StatusCard(object):
                 self.index = i
         self.pos = self.pos[0], settings.Y - (self.size[1] * (self.index + 1))
         self.rect = [self.pos[0], self.pos[1], self.size[0], self.size[1]]
-        self.text_rect = [self.rect[0] + settings.X/100, self.rect[1] + settings.Y*2/100, self.rect[2], self.rect[3]]
+        self.text_rect = [self.rect[0] + settings.X / 100, self.rect[1] + settings.Y * 2 / 100, self.rect[2],
+                          self.rect[3]]
 
     def draw(self, surface):
         self.update()
