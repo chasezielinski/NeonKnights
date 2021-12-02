@@ -44,43 +44,7 @@ EXPERIENCE_CURVE = [100, 210, 320, 430, 540, 650, 760, 870, 980, 1090, 1200, 131
 EXPERIENCE_CURVE_TOTAL = [100, 310, 630, 1060, 1600, 2250, 3010, 3880, 4860, 5950, 7150, 8460, 9880, 11410]
 for i in range(len(EXPERIENCE_CURVE)):
     EXPERIENCE_CURVE_TOTAL.append(sum(EXPERIENCE_CURVE[:i + 1]))
-BASE_STATS = {
-    "ADEPT_BASE_STATS": {'ADEPT_BASE_HP': 100,
-                         'ADEPT_BASE_MP': 10,
-                         'ADEPT_BASE_STRENGTH': 10,
-                         'ADEPT_BASE_DEFENSE': 10,
-                         'ADEPT_BASE_MAGIC': 10,
-                         'ADEPT_BASE_SPIRIT': 10,
-                         'ADEPT_BASE_SPEED': 10,
-                         'ADEPT_BASE_LUCK': 10,
-                         'ADEPT_BASE_ATTACK_TYPE': "Attack",
-                         'ADEPT_BASE_EQUIPMENT_OPTIONS': ["Weapon", "Helm", "Armor", "Boots", "Medallion"],
-                         'ADEPT_BASE_TECHNIQUES': ["Fireball"]},
 
-    "ROGUE_BASE_STATS": {'ROGUE_BASE_HP': 100,
-                         'ROGUE_BASE_MP': 10,
-                         'ROGUE_BASE_STRENGTH': 10,
-                         'ROGUE_BASE_DEFENSE': 10,
-                         'ROGUE_BASE_MAGIC': 10,
-                         'ROGUE_BASE_SPIRIT': 10,
-                         'ROGUE_BASE_SPEED': 10,
-                         'ROGUE_BASE_LUCK': 10,
-                         'ROGUE_BASE_ATTACK_TYPE': "Attack",
-                         'ROGUE_BASE_EQUIPMENT_OPTIONS': ["Weapon", "Helm", "Armor", "Boots", "Cape"],
-                         'ROGUE_BASE_TECHNIQUES': ["Double Strike"]},
-
-    "ARTIFICER_BASE_STATS": {'ARTIFICER_BASE_HP': 100,
-                             'ARTIFICER_BASE_MP': 10,
-                             'ARTIFICER_BASE_STRENGTH': 10,
-                             'ARTIFICER_BASE_DEFENSE': 10,
-                             'ARTIFICER_BASE_MAGIC': 10,
-                             'ARTIFICER_BASE_SPIRIT': 10,
-                             'ARTIFICER_BASE_SPEED': 10,
-                             'ARTIFICER_BASE_LUCK': 10,
-                             'ARTIFICER_BASE_ATTACK_TYPE': "Attack",
-                             'ARTIFICER_BASE_EQUIPMENT_OPTIONS': ["Weapon", "Helm", "Armor", "Boots", "Artifact"],
-                             'ARTIFICER_BASE_TECHNIQUES': ["Construct"]},
-}
 
 FIGHTER_LEFT_TREE = ["Brute",
                      [[0, 1, "Skill_1", 1, {"Name": "Skill_1",
@@ -253,7 +217,7 @@ def random_name():
 
 
 def image_load(path):
-    image = pygame.image.load(path)
+    image = pygame.image.load(path).convert()
     image.set_colorkey(COLOR_KEY)
     return image
 
