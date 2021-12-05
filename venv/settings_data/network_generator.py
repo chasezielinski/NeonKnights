@@ -97,7 +97,6 @@ def network_gen(X, Y, data):
                 if not flag:
                     node_list.append(init_pair)
                 flag = False
-        print(node_list)
     # nested for loops iterate over every pair of nodes, once each
     #   and place into a list of pairs
     for i, option_i in enumerate(node_list):
@@ -213,11 +212,11 @@ def network_gen(X, Y, data):
         set_island_check.add(i)
 
     neighbors_dict = {}
-    edge_dict = {}
+    edge_dict = []
 
     for i, value in enumerate(node_list):
         neighbors_dict[value[2]] = [n for n in g.neighbors(i)]
-        edge_dict[value[2]] = [n for n in g.edges(i)]
+        edge_dict = [i for i in g.edges]
 
     return [node_list, edge_list, neighbors_dict, edge_dict, valid_path]
 

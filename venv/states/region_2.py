@@ -147,8 +147,8 @@ class Node(pygame.sprite.Sprite):
 class Path(object):
     def __init__(self, parent, node_1, node_2):
         self.parent = parent
-        self.node_1 = node_1
-        self.node_2 = node_2
+        self.node_1 = self.get_node(node_1)
+        self.node_2 = self.get_node(node_2)
         self.hover = False
         self.state = "Hidden"
 
@@ -173,6 +173,10 @@ class Path(object):
                 pygame.draw.aaline(surface, (100, 100, 100), (self.node_1.x + 16, self.node_1.y + 16),
                                    (self.node_2.x + 16, self.node_2.y + 16), 5)
 
+    def get_node(self, index):
+        for node in self.parent.nodes.sprites():
+            if index == node.index:
+                return node
 
 class Cursor(object):
     def __init__(self, parent):
@@ -677,13 +681,11 @@ class Region(BaseState):
             self.skill_menu.draw(surface)
 
     def region_generate(self):
-        valid = False
         self.persist['node_group'] = pygame.sprite.Group()
         self.persist['party_group'] = pygame.sprite.Group()
         self.persist['nodes'] = []
         self.persist['portal'] = []
         data = settings.RegionGetter().get_region(self.persist['region_type'])
-        print(data["Image"])
         self.background = settings.ImageLoader().load_image(data["Image"])
         network = NetworkGetter().get_network(data)
         node_list, edge_list, neighbors_dict, edge_dict = network[0], network[1], network[2], network[3]
@@ -702,19 +704,8 @@ class Region(BaseState):
                 self.party.node = node
         self.persist['current_position'] = 1
         self.persist['region_generate'] = False
-        for key in edge_dict.keys():
-            for pair in edge_dict[key]:
-                node_1 = None
-                node_2 = None
-                for node in self.nodes.sprites():
-                    if node.index == key:
-                        node_1 = node
-                    if pair[1] == node.index:
-                        node_2 = node
-                    if node_2 is not None and node_1 is not None:
-                        break
-                if node_2 is not None and node_1 is not None:
-                    self.paths.append(Path(self, node_1, node_2))
+        for value in edge_dict:
+            self.paths.append(Path(self, value[0], value[1]))
 
     def travel(self):
         if self.selected_node is not None:

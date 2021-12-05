@@ -2238,7 +2238,7 @@ ARTIFACT_DICT = {}
 
 
 class Equipment(object):
-    def __init__(self, dictionary):
+    def __init__(self):
         self.parent = None
         self.buy_value = 0
         self.sell_value = 0
@@ -2254,8 +2254,6 @@ class Equipment(object):
         self.crit_damage = 1
         self.level = 1
         self.max_level = 1
-        for key in dictionary.keys():
-            setattr(self, key, dictionary[key])
 
     def equip(self, parent):
         self.parent = parent
@@ -2298,9 +2296,9 @@ class Equipment(object):
 
 
 class Weapon(Equipment):
-    def __init__(self, dictionary):
+    def __init__(self, properties, behaviors):
         self.energy = False
-        super(Weapon, self).__init__(dictionary)
+        super(Weapon, self).__init__()
         self.attack = 0
         self.slot = "Weapon"
         self.attack_type = "Attack"
@@ -2309,30 +2307,17 @@ class Weapon(Equipment):
         self.charge = 5
         self.max_charge = 30
         self.use_charge = 10
+        for key, value in properties.items():
+            setattr(self, key, value)
+        for k, v in behaviors.items():
+            pass
 
     def recharge(self):
         if hasattr(self, 'charge') and hasattr(self, 'max_charge'):
             self.charge = self.max_charge
 
     def stat_update(self):
-        self.attack = weapon_dict[self.name]["attack"][self.level - 1]
-        if 'hits' in weapon_dict[self.name].keys():
-            self.hits = weapon_dict[self.name]['hits'][self.level - 1]
-        else:
-            self.hits = 1
-        if 'status' in weapon_dict[self.name].keys():
-            for effect in weapon_dict[self.name]['status'].keys():
-                setattr(self, effect, [weapon_dict[self.name]['status'][effect][0][self.level - 1],
-                                       weapon_dict[self.name]['status'][effect][1][self.level - 1]])
-        if 'techniques' in weapon_dict[self.name].keys():
-            self.techniques = []
-            for technique in weapon_dict[self.name]['status'].keys():
-                self.techniques.append(weapon_dict[self.name]['techniques'][technique])
-        stats = ['max_hp', 'max_mp', 'strength', 'magic', 'defense', 'spirit', 'speed', 'luck', 'crit_rate',
-                 'crit_damage']
-        for stat in stats:
-            if stat in weapon_dict[self.name].keys():
-                setattr(self, stat, weapon_dict[self.name][stat][self.level - 1])
+        pass
 
     def can_upgrade(self):
         if self.level < self.max_level:
@@ -4302,13 +4287,64 @@ class PauseMenu(object):
 class ItemGetter:
     def __init__(self):
         self.item_dict = JsonReader().read_json("venv/settings_data/Items.json")
+        self.construct_dict = {"Weapon": self.construct_weapon,
+                               "Armor": self.construct_armor,
+                               "Helm": self.construct_helm,
+                               "Boots": self.construct_boots,
+                               "Cape": self.construct_cape,
+                               "Shield": self.construct_shield,
+                               "Artifact": self.construct_artifact,
+                               "Medallion": self.construct_medallion,
+                               "Item": self.construct_item,
+                               }
 
     def get_item(self, **kwargs):
-        pass
+        kwargs_list = list(kwargs.keys())
+        if "name" in kwargs_list:
+            return self.construct_by_name(kwargs["name"])
+        elif "names" in kwargs_list:
+            return self.construct_by_name(choose_random(kwargs["names"]))
+        elif "type" in kwargs_list:
+            return self.construct_dict[kwargs["type"]](choose_random(self.item_dict[kwargs["type"]].keys()))
+        else:
+            type = choose_random(self.item_dict.keys())
+            return self.construct_dict[type](choose_random(self.item_dict[type].keys()))
 
-    def read_json(self):
-        pass
+    def construct_by_name(self, name):
+        type = self.get_type_by_name(name)
+        return self.construct_dict[type](name)
 
+    def get_type_by_name(self, name: str):
+        for key, value in self.item_dict.times():
+            if name in value.keys():
+                return key
+
+    def construct_weapon(self, name: str):
+        return Weapon(self.item_dict["Weapon"][name]["Properties"], self.item_dict["Weapon"][name]["Behaviors"])
+
+    def construct_armor(self, name: str):
+        return Weapon(self.item_dict["Weapon"][name]["Properties"], self.item_dict["Weapon"][name]["Behaviors"])
+
+    def construct_boots(self, name: str):
+        return Weapon(self.item_dict["Weapon"][name]["Properties"], self.item_dict["Weapon"][name]["Behaviors"])
+
+    def construct_helm(self, name: str):
+        return Weapon(self.item_dict["Weapon"][name]["Properties"], self.item_dict["Weapon"][name]["Behaviors"])
+
+    def construct_shield(self, name: str):
+        return Weapon(self.item_dict["Weapon"][name]["Properties"], self.item_dict["Weapon"][name]["Behaviors"])
+
+    def construct_cape(self, name: str):
+        return Weapon(self.item_dict["Weapon"][name]["Properties"], self.item_dict["Weapon"][name]["Behaviors"])
+
+    def construct_artifact(self, name: str):
+        return Weapon(self.item_dict["Weapon"][name]["Properties"], self.item_dict["Weapon"][name]["Behaviors"])
+
+    def construct_medallion(self, name: str):
+        return Weapon(self.item_dict["Weapon"][name]["Properties"], self.item_dict["Weapon"][name]["Behaviors"])
+
+    def construct_item(self, name: str):
+        return Weapon(self.item_dict["Weapon"][name]["Properties"], self.item_dict["Weapon"][name]["Behaviors"])
 
 class RegionGetter:
     def __init__(self):
@@ -4317,6 +4353,20 @@ class RegionGetter:
     def get_region(self, region_type: str):
         region = choose_random([i for i in list(self.region_dict[region_type].keys())])
         return self.region_dict[region_type][region]
+
+    def get_region_by_name(self, name: str):
+        region = None
+        for key, region_type in self.region_dict.items():
+            for i, value in region_type.items():
+                if name == i:
+                    return value
+
+    def get_name_list(self):
+        name_list = []
+        for key, region_type in self.region_dict.items():
+            for k, value in region_type.items():
+                name_list.append(k)
+        return name_list
 
 
 class JsonReader:
