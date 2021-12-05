@@ -6,6 +6,7 @@ import pygame
 import names
 import pytweening
 from threading import Timer
+import json
 from dataclasses import dataclass
 
 pygame.init()
@@ -274,43 +275,43 @@ REGION_SHAPES = ["Land-Locked", "Coastal", "Archipelago", "Island", "Plateau",
 REGION_LAYOUTS = {
     # num_nodes=30, knn=4, node_space=100, space_probability=100,
     # node_space_ll=0, node_space_ul=350, min_edge_angle=15
-    'Badlands':
+    "Badlands":
         {
             "Badlands_1":
                 {
-                    'Image': image_load(r"venv\resources\sprites\Region\BGs"
+                    "Image": image_load(r"venv\resources\sprites\Region\BGs"
                                         r"\Badlands_720_BG_2.png"),
-                    'Start': [176, 424, 312, 592],
-                    'End': [904, 496, 1024, 528],
-                    'Shapes': [[(120, 224), (432, 264), (592, 184), (760, 176), (1048, 280), (1048, 680), (848, 680),
+                    "Start": [176, 424, 312, 592],
+                    "End": [904, 496, 1024, 528],
+                    "Shapes": [[(120, 224), (432, 264), (592, 184), (760, 176), (1048, 280), (1048, 680), (848, 680),
                                 (776, 624), (712, 368), (560, 360), (328, 600), (120, 608)]],
-                    'Positive': True,
+                    "Positive": True,
                 },
         },
-    'Desert':
+    "Desert":
         {
             "Desert_1":
                 {
-                    'Image': image_load(r"venv\resources\sprites\Region\BGs"
+                    "Image": image_load(r"venv\resources\sprites\Region\BGs"
                                         r"\Desert_720_BG_1.png"),
-                    'Start': [120, 264, 296, 440],
-                    'End': [856, 344, 1032, 488],
-                    'Shapes': [[(120, 96), (950, 96), (950, 504), (912, 528), (824, 432), (816, 288), (720, 232),
+                    "Start": [120, 264, 296, 440],
+                    "End": [856, 344, 1032, 488],
+                    "Shapes": [[(120, 96), (950, 96), (950, 504), (912, 528), (824, 432), (816, 288), (720, 232),
                                 (536, 288), (480, 472), (376, 512), (120, 440)],
                                [(120, 512), (336, 600), (552, 528), (640, 392), (728, 432), (856, 584), (950, 580),
                                 (950, 580), (120, 580)],
                                [(552, 424), (560, 344), (696, 280), (776, 320), (768, 350), (704, 300), (616, 300)]],
-                    'Positive': True,
+                    "Positive": True,
                 },
             "Desert_2":
                 {
-                    'Image': image_load(r"venv\resources\sprites\Region\BGs"
+                    "Image": image_load(r"venv\resources\sprites\Region\BGs"
                                         r"\Desert_720_BG_2.png"),
-                    'Start': [124, 94, 266, 418],
-                    'End': [956, 244, 1022, 506],
-                    'Shapes': [[(122, 92), (966, 90), (680, 369), (650, 588), (602, 606), (420, 476), (124, 428)],
+                    "Start": [124, 94, 266, 418],
+                    "End": [956, 244, 1022, 506],
+                    "Shapes": [[(122, 92), (966, 90), (680, 369), (650, 588), (602, 606), (420, 476), (124, 428)],
                                [(792, 472), (1026, 164), (1032, 540), (904, 446), (790, 508)]],
-                    'Positive': True,
+                    "Positive": True,
                 },
         }
 }
@@ -4298,12 +4299,28 @@ class PauseMenu(object):
         pass
 
 
-class ItemGetter():
+class ItemGetter:
     def __init__(self):
-        self.read_json()
+        self.item_dict = JsonReader().read_json("venv/settings_data/Items.json")
 
     def get_item(self, **kwargs):
         pass
 
     def read_json(self):
         pass
+
+
+class RegionGetter:
+    def __init__(self):
+        self.region_dict = JsonReader().read_json("venv/settings_data/Region_Maps.json")
+
+    def get_region(self, region_type: str):
+        pass
+
+
+class JsonReader:
+    def read_json(self, file):
+        with open(file) as f:
+            data = json.load(f)
+        return data
+
