@@ -4,28 +4,49 @@ import random
 import networkx as nx
 
 
-def network_gen(X, Y, num_nodes=30, knn=4, node_space=100, space_probability=100,
-                node_space_ll=0, node_space_ul=350, min_edge_angle=15,
-                start_rect=None,
-                end_rect=None,
-                positive=True, shapes="None"):
-    nodes = num_nodes  # number of nodes on graph
+def network_gen(X, Y, data):
+    data_list = list(data.keys())
+    nodes = 30
+    if "nodes" in data_list:
+        nodes = data["nodes"]
     node_list = []  # list to hold nodes
     edge_list = []  # list to hold edges
-    k_neighbors = knn  # parameter affects number of edges from each node
-    flag = False  # shouldn't be needed, simplify code
-    ul = node_space_ul  # parameter, upper limit of edge length
-    ll = node_space_ll  # parameter, lower limit of path length
-    p_space = space_probability  # parameter, probability of ignoring spacing parameter
-    spacing = node_space  # parameter, defines minimum node spacing
+    knn = 4
+    if "knn" in data_list:
+        knn = data["knn"]
+    ul = 350  # parameter, upper limit of edge length
+    if "node_space_ul" in data_list:
+        ul = data["node_space_ul"]
+    ll = 0  # parameter, lower limit of path length
+    if "node_space_ll" in data_list:
+        ll = data["node_space_ll"]
+    p_space = 100  # parameter, probability of ignoring spacing parameter
+    if "p_space" in data_list:
+        p_space = data["p_space"]
+    spacing = 100  # parameter, defines minimum node spacing
+    if "spacing" in data_list:
+        spacing = data["spacing"]
     # calculate mandatory region for starting node, based on xy_bounds
-    start_bound = start_rect
-    end_bound = end_rect
+    start_bound = None
+    if "start_rect" in data_list:
+        start_bound = data["start_rect"]
+    end_bound = None
+    if "end_rect" in data_list:
+        end_bound = data["end_rect"]
     # calculate mandatory region for ending node, based on xy_bounds
     start_node = [0, 0]  # placeholder for starting node
     end_node = [0, 0]  # placeholder for ending node
-    theta_min = min_edge_angle  # parameter, defines angular spacing minimum for edges around a node
+    theta_min = 15  # parameter, defines angular spacing minimum for edges around a node
+    if "min_edge_angle" in data_list:
+        theta_min = data["min_edge_angle"]
+    shapes = None
+    if "shapes" in data_list:
+        shapes = data["shapes"]
+    positive = True
+    if "positive" in data_list:
+        positive = data["positive"]
     theta_flag = False  # shouldn't be needed, simplify code
+    flag = False
 
     # start node
     x = random.randint(start_bound[0], start_bound[2])
@@ -50,7 +71,7 @@ def network_gen(X, Y, num_nodes=30, knn=4, node_space=100, space_probability=100
         y = random.randint(0, Y)
 
         valid = False
-        if shapes != "None":
+        if shapes:
             for polygon in shapes:
                 if polygon_check((x, y), polygon) and positive:
                     valid = True
@@ -58,7 +79,7 @@ def network_gen(X, Y, num_nodes=30, knn=4, node_space=100, space_probability=100
                 elif not polygon_check((x, y), polygon) and not positive:
                     valid = True
                     break
-        if shapes == "None" or valid:
+        if not shapes or valid:
             init_pair = [x, y]
             rand_int = random.randint(0, 100)
             if rand_int > p_space:
@@ -111,7 +132,7 @@ def network_gen(X, Y, num_nodes=30, knn=4, node_space=100, space_probability=100
         # take up to k pairs and add to edge list, starting with shortest path
         #   distance, check path distance is between ul and ll, check candidate
         #   angle spacing with respect to existing edges at that node
-        while index < k_neighbors - 1:
+        while index < knn - 1:
             if len(pair_list) > index and ul > pair_list[index][4] > ll:
                 for t, temp in enumerate(edge_list):
                     if share_node(temp, pair_list[index]):
@@ -198,7 +219,7 @@ def network_gen(X, Y, num_nodes=30, knn=4, node_space=100, space_probability=100
         neighbors_dict[value[2]] = [n for n in g.neighbors(i)]
         edge_dict[value[2]] = [n for n in g.edges(i)]
 
-    return node_list, edge_list, neighbors_dict, edge_dict, valid_path
+    return [node_list, edge_list, neighbors_dict, edge_dict, valid_path]
 
 
 def polygon_check(point, polygon):

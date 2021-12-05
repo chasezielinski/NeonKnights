@@ -4315,7 +4315,8 @@ class RegionGetter:
         self.region_dict = JsonReader().read_json("venv/settings_data/Region_Maps.json")
 
     def get_region(self, region_type: str):
-        pass
+        region = choose_random([i for i in list(self.region_dict[region_type].keys())])
+        return self.region_dict[region_type][region]
 
 
 class JsonReader:
@@ -4323,4 +4324,11 @@ class JsonReader:
         with open(file) as f:
             data = json.load(f)
         return data
+
+
+class ImageLoader:
+    def load_image(self, file_path, color_key=COLOR_KEY):
+        image = pygame.image.load(file_path).convert()
+        image.set_colorkey(color_key)
+        return image
 

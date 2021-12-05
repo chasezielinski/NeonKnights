@@ -546,8 +546,6 @@ class Region(BaseState):
         self.persist = persistent
         if self.persist['region_generate']:
             self.region_generate()
-        self.background = Background(self, settings.REGION_LAYOUTS[self.persist['region_type']][
-            self.persist['region_layout']]["Image"])
 
     def handle_action(self, action):
         if self.state == "Browse":
@@ -660,7 +658,7 @@ class Region(BaseState):
 
     def draw(self, surface):
         surface.fill(pygame.Color("black"))
-        self.background.draw(surface)
+        surface.blit(self.background, (0, 0))
         for path in self.paths:
             path.draw(surface)
         self.nodes.draw(surface)
@@ -684,42 +682,12 @@ class Region(BaseState):
         self.persist['party_group'] = pygame.sprite.Group()
         self.persist['nodes'] = []
         self.persist['portal'] = []
-        region_options = []
-        for option in settings.REGION_LAYOUTS[self.persist['region_type']]:
-            region_options.append(option)
-        self.persist['region_layout'] = region_layout = settings.choose_random(region_options)
-        num_nodes = 30
-        if 'num_nodes' in settings.REGION_LAYOUTS[self.persist['region_type']][region_layout]:
-            num_nodes = settings.REGION_LAYOUTS[self.persist['region_type']][region_layout]['num_nodes']
-        knn = 4
-        if 'knn' in settings.REGION_LAYOUTS[self.persist['region_type']][region_layout]:
-            knn = settings.REGION_LAYOUTS[self.persist['region_type']][region_layout]['knn']
-        node_space = 100
-        if 'node_space' in settings.REGION_LAYOUTS[self.persist['region_type']][region_layout]:
-            node_space = settings.REGION_LAYOUTS[self.persist['region_type']][region_layout]['node_space']
-        space_probability = 100
-        if 'space_probability' in settings.REGION_LAYOUTS[self.persist['region_type']][region_layout]:
-            space_probability = settings.REGION_LAYOUTS[self.persist['region_type']][region_layout]['space_probability']
-        node_space_ll = 0
-        if 'node_space_ll' in settings.REGION_LAYOUTS[self.persist['region_type']][region_layout]:
-            node_space_ll = settings.REGION_LAYOUTS[self.persist['region_type']][region_layout]['node_space_ll']
-        node_space_ul = 350
-        if 'node_space_ul' in settings.REGION_LAYOUTS[self.persist['region_type']][region_layout]:
-            node_space_ul = settings.REGION_LAYOUTS[self.persist['region_type']][region_layout]['node_space_ul']
-        min_edge_angle = 15
-        if 'min_edge_angle' in settings.REGION_LAYOUTS[self.persist['region_type']][region_layout]:
-            min_edge_angle = settings.REGION_LAYOUTS[self.persist['region_type']][region_layout]['min_edge_angle']
-        node_list, edge_list, neighbors_dict, edge_dict, valid_path = None, None, None, None, None
-        while not valid:
-            node_list, edge_list, neighbors_dict, edge_dict, valid_path = network_generator.network_gen(
-                X=settings.X, Y=settings.Y,
-                shapes=settings.REGION_LAYOUTS[self.persist['region_type']][region_layout]['Shapes'],
-                start_rect=settings.REGION_LAYOUTS[self.persist['region_type']][region_layout]['Start'],
-                end_rect=settings.REGION_LAYOUTS[self.persist['region_type']][region_layout]['End'],
-                positive=settings.REGION_LAYOUTS[self.persist['region_type']][region_layout]['Positive'],
-                num_nodes=num_nodes, knn=knn, node_space=node_space, space_probability=space_probability,
-                node_space_ll=node_space_ll, node_space_ul=node_space_ul, min_edge_angle=min_edge_angle)
-            valid = valid_path
+        data = settings.RegionGetter().get_region(self.persist['region_type'])
+        print(data["Image"])
+        self.background = settings.ImageLoader().load_image(data["Image"])
+        network = NetworkGetter().get_network(data)
+        node_list, edge_list, neighbors_dict, edge_dict = network[0], network[1], network[2], network[3]
+
         for i, value in enumerate(node_list):
             if i == 0:
                 self.nodes.add(Node(self, value[0], value[1], neighbors_dict[i], edge_dict[i], i, "Boss"))
@@ -759,3 +727,13 @@ class Region(BaseState):
                     self.state = "Event"
                     self.party.node.state = "Explored"
                     self.party.node.visited = True
+
+
+class NetworkGetter:
+    def get_network(self, data):
+        valid = False
+        while not valid:
+            network = network_generator.network_gen(settings.X, settings.Y, data)
+            valid = network[4]
+        return network
+
