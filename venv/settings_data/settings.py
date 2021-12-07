@@ -3075,6 +3075,7 @@ class Fighter(PlayerCharacter):
         self.cast_frames = [4]
         self.cast_speed = [1000]
         self.hit_frames = [0]
+
         self.hit_speed = [1000]
         self.miss_frames = [2]
         self.miss_speed = [1000]
@@ -4381,4 +4382,17 @@ class ImageLoader:
         image = pygame.image.load(file_path).convert()
         image.set_colorkey(color_key)
         return image
+
+
+class CharacterGetter:
+    def __init__(self):
+        self.data = JsonReader().read_json("venv/settings_data/Class_Data.json")
+
+    def get_character_by_class(self, name: str):
+        pass
+
+    def get_character(self, **kwargs):
+        kwargs_list = list(kwargs.keys())
+        if "class" in kwargs_list:
+            pass
 
