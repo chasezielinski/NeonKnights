@@ -2895,6 +2895,7 @@ class BattleCharacter(pygame.sprite.Sprite):
         self.pos = 0, 0
 
     def update(self, dt):
+        """Increment animation state, flip image, set new rect if necessary"""
         self.timer += dt * random_int(90, 110) / 100
         if self.timer > getattr(self, f"{self.state.lower()}_speed")[self.animation_index]:
             self.timer = 0
@@ -2904,19 +2905,32 @@ class BattleCharacter(pygame.sprite.Sprite):
         self.rect = pygame.rect.Rect(self.pos[0], self.pos[1], self.image.get_width(), self.image.get_height())
 
     def set_pos_by_center(self, pos):
+        """ Set position of sprite by center"""
         self.rect.center = pos
         self.pos = self.rect.topleft
 
+    def change_hp(self, damage, delay):
+        """Provide damage to BC, spawn particle and check for hp < min and hp > max"""
+        damage = int(damage)
+        self.parent.damage_particle.add_particles(self.rect.centerx, self.rect.centery, damage, delay=delay)
+        self.hp -= damage
+        if self.hp < 0:
+            self.hp = 0
+        if self.hp > self.max_hp:
+            self.hp = self.max_hp
+
+    def get_stat(self, stat: str):
+        """proper way to get stat"""
+        pass
+
     def damage(self, damage, action, delay=0):
+        """Provide damage amount, action ref, and optional delay to for particle, to deliver damage or healing to BC"""
         if damage == 'miss':
             self.parent.damage_particle.add_particles(self.rect.centerx, self.rect.centery, damage, delay=delay)
         elif damage == 'effect':
             pass
         elif damage < 0:
-            self.parent.damage_particle.add_particles(self.rect.centerx, self.rect.centery, -damage, delay=delay)
-            self.hp += -damage
-            if self.hp > self.max_hp:
-                self.hp = self.max_hp
+            self.change_hp(damage, delay)
         elif self.invincible > 0:
             self.parent.damage_particle.add_particles(self.rect.centerx, self.rect.centery, "immune")
         else:
@@ -2930,11 +2944,7 @@ class BattleCharacter(pygame.sprite.Sprite):
                 damage += 10
             if self.curse > 0:
                 damage *= 2
-            damage = int(damage)
-            self.parent.damage_particle.add_particles(self.rect.centerx, self.rect.centery, damage, delay=delay)
-            self.hp -= damage
-            if self.hp < 0:
-                self.hp = 0
+            self.change_hp(damage, delay)
         if damage != 'miss':
             if hasattr(action, 'effects'):
                 for index, effect in enumerate(action.effects):
@@ -2981,9 +2991,11 @@ class BattleCharacter(pygame.sprite.Sprite):
         self.battle_action.kill()
 
     def flip_state(self):
+        """hook for subclass"""
         pass
 
     def on_hit(self, action):
+        """trigger for on hit effects"""
         if self.shield_on_hit > 0:
             if action.defend_stat == "defense" or action.defend_stat == "lowest":
                 self.shield += self.shield_on_hit
@@ -3004,6 +3016,7 @@ class BattleCharacter(pygame.sprite.Sprite):
                 self.flip_state()
 
     def on_end_turn(self):
+        """called after all actions on each turn, tick down status effects and trigger any other desired effects"""
         for effect in self.tick_status:
             if getattr(self, effect) > 0:
                 damage = None
