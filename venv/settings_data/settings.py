@@ -7,6 +7,7 @@ import names
 import pytweening
 from threading import Timer
 import json
+from enum import Enum, unique, auto
 from dataclasses import dataclass
 
 pygame.init()
@@ -4438,6 +4439,7 @@ class Action:
         return value_set
 
     def is_usable(self, user) -> bool:
+        #if self.parent.dazed > 0 or self.parent.stunned > 0 or self.parent.mp < self.mp_cost:
         return True
 
 
@@ -4446,5 +4448,59 @@ class SkillTreeGetter:
         self.data = JsonReader.read_json("venv/settings_data/Tree_Nodes.json")
 
 
+@unique
+class Status(Enum):
+    DAZED = auto()  # can't use ability
+    DISABLED = auto()  # can't use attack
+    STUNNED = auto()  # can't act
+    PERPLEXED = auto()  # CAN'T USE ITEM
+    VIGILANT = auto()  # DEFENSE UP
+    SMITTEN = auto()
+    FAITH = auto()  # SPIRIT UP
+    BRAVE = auto()  # ATTACK UP
+    CALM = auto()  # MAGIC UP
+    HASTE = auto()  # EXTRA TURN
+    TURNS = auto()  # NUM TURNS
+    QUICK = auto()  # SPEED UP
+    LUCKY = auto()  # LUCK UP
+    FOCUS = auto()  # CRIT RATE UP
+    BLEED = auto()  # DOT
+    TOXIC = auto()  # DOT
+    BURN = auto()  # DOT
+    CURSE = auto()  # DAMAGE BONUS
+    SPITE = auto()  # DAMAGE BONUS
+    INVINCIBLE = auto()  # DAMAGE IMMUNE
+    SHIELD = auto()  # 1/2 DAMAGE PHYSICAL OR LASER
+    WARD = auto()  # 1/2 DAMAGE MAGICAL OR LASER
+    FRAIL = auto()  # DEFENSE DOWN
+    TERRIFY = auto()  # SPIRIT DOWN
+    WEAK = auto()  # ATTACK DOWN
+    DISTRACT = auto()  # MAGIC DOWN
+    SLOW = auto()  # SPEED DOWN
+    HEX = auto()  # LUCK DOWN
+    DULL = auto()  # CRIT RATE DOWN
+    SAVAGE = auto()  # CRIT DAMAGE UP
+    GENTLE = auto()  # CRIT DAMAGE DOWN
+    REGEN = auto()  # REGEN OVER TIME
 
 
+class DamageCalculator:
+    def calculate(self, action, user, target) -> int or list:
+        """take an action, user, target; determine proper damage formula and return damage"""
+        pass
+
+
+class ActionEvaluator:
+    def evaluate_action(self, action, user, battle_characters) -> list:
+        """take an action, user, and all battle characters;
+        return a list of options with [user, action, target, outcome]"""
+        pass
+
+    def single_target(self):
+        pass
+
+    def all_target(self):
+        pass
+
+    def team_target(self):
+        pass
