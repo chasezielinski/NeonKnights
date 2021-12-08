@@ -3051,7 +3051,7 @@ class PlayerCharacter(BattleCharacter):
         self.exp = 0
         self.skill_points = 10
         self.experience_to_level = 0
-        self.battle_action = NoActionSelected(self)
+        self.battle_action = NoActionCardSelected(self)
         self.timer = 0
         self.animation_index = 0
 
@@ -3064,7 +3064,7 @@ class PlayerCharacter(BattleCharacter):
 
     def pre_turn(self, parent):
         if not hasattr(self, 'battle_action'):
-            setattr(self, 'battle_action', NoActionSelected(self))
+            setattr(self, 'battle_action', NoActionCardSelected(self))
             parent.battle_actions.add(self.battle_action)
             parent.battle_objects.add(self.battle_action)
         elif self.battle_action.turns == 0:
@@ -3072,7 +3072,7 @@ class PlayerCharacter(BattleCharacter):
                 return
             else:
                 self.battle_action.kill()
-                setattr(self, 'battle_action', NoActionSelected(self))
+                setattr(self, 'battle_action', NoActionCardSelected(self))
                 parent.battle_actions.add(self.battle_action)
                 parent.battle_objects.add(self.battle_action)
 
@@ -3398,7 +3398,7 @@ class BattleOverlay(object):
         self.reticle_color = (self.target_color[0] * step, self.target_color[1] * step, self.target_color[2] * step)
 
 
-class BattleAction(pygame.sprite.Sprite):
+class BattleActionCard(pygame.sprite.Sprite):
     def __init__(self, parent, target=None):
         super().__init__()
         if target is None:
@@ -3519,9 +3519,9 @@ class BattleAction(pygame.sprite.Sprite):
             return self.speed >= other.speed
 
 
-class NoActionSelected(BattleAction):
+class NoActionCardSelected(BattleActionCard):
     def __init__(self, parent, target=None):
-        super(NoActionSelected, self).__init__(parent, target=None)
+        super(NoActionCardSelected, self).__init__(parent, target=None)
 
     def expected_value(self):
         value_set = []
@@ -3544,7 +3544,7 @@ class NoActionSelected(BattleAction):
         self.parent.parent.battle_objects.add(self)
 
 
-class Run(BattleAction):
+class Run(BattleActionCard):
     def __init__(self, parent, target=None):
         super(Run, self).__init__(parent, target=None)
 
@@ -3563,7 +3563,7 @@ class Run(BattleAction):
         self.parent.parent.battle_objects.add(self)
 
 
-class Defend(BattleAction):
+class Defend(BattleActionCard):
     def __init__(self, parent, target=None):
         super(Defend, self).__init__(parent, target=None)
         self.priority = True
@@ -3584,7 +3584,7 @@ class Defend(BattleAction):
         self.parent.parent.battle_objects.add(self)
 
 
-class Recharge(BattleAction):
+class Recharge(BattleActionCard):
     def __init__(self, parent, target=None):
         super(Recharge, self).__init__(parent, target=None)
 
@@ -3606,7 +3606,7 @@ class Recharge(BattleAction):
         self.parent.parent.battle_objects.add(self)
 
 
-class SlimeBall(BattleAction):
+class SlimeBall(BattleActionCard):
     def __init__(self, parent, target=None):
         super(SlimeBall, self).__init__(parent, target=None)
         self.target_type = "Single"
@@ -3679,7 +3679,7 @@ class SlimeBall(BattleAction):
         self.kill()
 
 
-class Attack(BattleAction):
+class Attack(BattleActionCard):
     def __init__(self, parent, target=None):
         super().__init__(parent, target=None)
         self.target_type = "Single"
@@ -3722,7 +3722,7 @@ class Attack(BattleAction):
         self.parent.parent.battle_objects.add(self)
 
 
-class KiBlast(BattleAction):
+class KiBlast(BattleActionCard):
     def __init__(self, parent, target=None):
         super(KiBlast, self).__init__(parent, target=None)
         self.parent = parent
@@ -3784,7 +3784,7 @@ class KiBlast(BattleAction):
         self.parent.parent.battle_objects.add(self)
 
 
-class SandBreath(BattleAction):
+class SandBreath(BattleActionCard):
     def __init__(self, parent, target=None):
         super(SandBreath, self).__init__(parent, target=None)
         self.target_type = "Team"
@@ -3828,7 +3828,7 @@ class SandBreath(BattleAction):
         self.parent.parent.battle_objects.add(self)
 
 
-class Impale(BattleAction):
+class Impale(BattleActionCard):
     def __init__(self, parent, target=None):
         super(Impale, self).__init__(parent, target=None)
         self.target_type = "Single"
@@ -3872,7 +3872,7 @@ class Impale(BattleAction):
         self.parent.parent.battle_objects.add(self)
 
 
-class Burrow(BattleAction):
+class Burrow(BattleActionCard):
     def __init__(self, parent, target=None):
         super(Burrow, self).__init__(parent, target=None)
         self.target_type = "None"
@@ -3906,7 +3906,7 @@ class Burrow(BattleAction):
         pass
 
 
-class TailSweep(BattleAction):
+class TailSweep(BattleActionCard):
     def __init__(self, parent, target=None):
         super(TailSweep, self).__init__(parent, target=None)
         self.target_type = "Team"
@@ -3948,7 +3948,7 @@ class TailSweep(BattleAction):
         self.parent.parent.battle_objects.add(self)
 
 
-class Emerge(BattleAction):
+class Emerge(BattleActionCard):
     def __init__(self, parent, target=None):
         super(Emerge, self).__init__(parent, target=None)
         self.target_type = "Team"
@@ -3991,7 +3991,7 @@ class Emerge(BattleAction):
         self.parent.parent.battle_objects.add(self)
 
 
-class Bolster(BattleAction):
+class Bolster(BattleActionCard):
     def __init__(self, parent, target=None):
         super(Bolster, self).__init__(parent, target=None)
         self.target_type = "Single"
@@ -4035,7 +4035,7 @@ class Bolster(BattleAction):
         self.parent.parent.battle_objects.add(self)
 
 
-class DesertWrath(BattleAction):
+class DesertWrath(BattleActionCard):
     def __init__(self, parent, target=None):
         super(DesertWrath, self).__init__(parent, target=None)
         self.target_type = "Single"
@@ -4130,13 +4130,13 @@ ADJECTIVES = ["accurate", "accessible", "adaptable", "advisable", "aesthetically
 TITLES = ["Sir", "Madam"]
 
 
-class BattleConsumable(BattleAction):
+class BattleConsumableCard(BattleActionCard):
     def __init__(self, parent=None, target=None):
         super().__init__(parent, target=None)
         self.action_type = "Item"
 
 
-class StimPack(BattleConsumable):
+class StimPack(BattleConsumableCard):
     def __init__(self, parent=None, target=None):
         super().__init__(parent=None, target=None)
         self.parent = parent
@@ -4384,7 +4384,8 @@ class RegionGetter:
 
 
 class JsonReader:
-    def read_json(self, file):
+    @staticmethod
+    def read_json(file):
         with open(file) as f:
             data = json.load(f)
         return data
@@ -4399,7 +4400,7 @@ class ImageLoader:
 
 class CharacterGetter:
     def __init__(self):
-        self.data = JsonReader().read_json("venv/settings_data/Class_Data.json")
+        self.data = JsonReader.read_json("venv/settings_data/Class_Data.json")
 
     def get_character_by_class(self, name: str):
         pass
@@ -4408,4 +4409,42 @@ class CharacterGetter:
         kwargs_list = list(kwargs.keys())
         if "class" in kwargs_list:
             pass
+
+
+class ActionGetter:
+    def __init__(self):
+        self.data = JsonReader.read_json("venv/settings_data/Battle_Actions.json")
+        self.actions = []
+        for name, action in self.data.items():
+            self.actions.append(Action(action))
+
+
+class Action:
+    def __init__(self, data):
+        fields = ["name", "target_type", "damage_type", "defend_type", "status", "hits", "modify_character_attack",
+                  "damage_delay", "mp_cost", "turn_delay", "power"]
+        for key, value in data.items():
+            if key in fields:
+                setattr(self, key, value)
+        #"source_animation": null,
+        #"target_animation": null,
+        #"screen_animation": null,
+        #"sound": null,
+        #"behavior_objects": null,
+        #"coupled_with": null,
+
+    def expected_value(self, user, battle_characters) -> list:
+        value_set = []
+        return value_set
+
+    def is_usable(self, user) -> bool:
+        return True
+
+
+class SkillTreeGetter:
+    def __init__(self):
+        self.data = JsonReader.read_json("venv/settings_data/Tree_Nodes.json")
+
+
+
 
