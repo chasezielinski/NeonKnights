@@ -40,6 +40,64 @@ SELECTED_COLOR = (75, 225, 225)
 COLOR_KEY = (255, 55, 202)
 MAX_NAME_LENGTH = 12
 
+@unique
+class Status(Enum):
+    DAZED = auto()  # can't use ability
+    DISABLED = auto()  # can't use attack
+    STUNNED = auto()  # can't act
+    PERPLEXED = auto()  # CAN'T USE ITEM
+    VIGILANT = auto()  # DEFENSE UP
+    SMITTEN = auto() # CAN'T DEFEND
+    FAITH = auto()  # SPIRIT UP
+    BRAVE = auto()  # ATTACK UP
+    CALM = auto()  # MAGIC UP
+    HASTE = auto()  # EXTRA TURN
+    TURNS = auto()  # NUM TURNS
+    QUICK = auto()  # SPEED UP
+    LUCKY = auto()  # LUCK UP
+    FOCUS = auto()  # CRIT RATE UP
+    BLEED = auto()  # DOT
+    TOXIC = auto()  # DOT
+    BURN = auto()  # DOT
+    CURSE = auto()  # DAMAGE BONUS
+    SPITE = auto()  # DAMAGE BONUS
+    INVINCIBLE = auto()  # DAMAGE IMMUNE
+    SHIELD = auto()  # 1/2 DAMAGE PHYSICAL OR LASER
+    WARD = auto()  # 1/2 DAMAGE MAGICAL OR LASER
+    FRAIL = auto()  # DEFENSE DOWN
+    TERRIFY = auto()  # SPIRIT DOWN
+    WEAK = auto()  # ATTACK DOWN
+    DISTRACT = auto()  # MAGIC DOWN
+    SLOW = auto()  # SPEED DOWN
+    HEX = auto()  # LUCK DOWN
+    DULL = auto()  # CRIT RATE DOWN
+    SAVAGE = auto()  # CRIT DAMAGE UP
+    GENTLE = auto()  # CRIT DAMAGE DOWN
+    REGEN = auto()  # REGEN OVER TIME
+
+
+@unique
+class Stat(Enum):
+    HP = auto()
+    MP = auto()
+    STRENGTH = auto()
+    DEFENSE = auto()
+    MAGIC = auto()
+    SPIRIT = auto()
+    SPEED = auto()
+    LUCK = auto()
+    CRITICAL_RATE = auto()
+    CRITICAL_DAMAGE = auto()
+
+
+@unique
+class DamageType(Enum):
+    MAGICAL = auto()
+    PHYSICAL = auto()
+    LASER = auto()
+    TRUE = auto()
+
+
 # Player Characters
 BASE_CLASSES = ["Fighter", "Adept", "Rogue", "Artificer"]
 EXPERIENCE_CURVE = [100, 210, 320, 430, 540, 650, 760, 870, 980, 1090, 1200, 1310, 1420, 1530]
@@ -2834,6 +2892,7 @@ class DamageParticle:
 class BattleCharacter(pygame.sprite.Sprite):
     def __init__(self, parent="None"):
         super().__init__()
+        self.level = 1
         self.flip_state_on_hit = False
         self.flip_state_on_magic = False
         self.flip_state_on_physical = False
@@ -2845,38 +2904,13 @@ class BattleCharacter(pygame.sprite.Sprite):
         self.hover = False
         self.selected = False
         self.current_sprite = 0
-        self.dazed = 0  # can't use ability
-        self.disabled = 0  # can't use attack
-        self.stunned = 0  # can't act
-        self.perplexed = 0  # can't use item
-        self.vigilant = 0  # defense up
-        self.smitten = 0
-        self.faith = 0  # spirit up
-        self.brave = 0  # attack up
-        self.calm = 0  # magic up
-        self.haste = 0  # extra turn
-        self.turns = 0  # num turns
-        self.quick = 0  # speed up
-        self.lucky = 0  # luck up
-        self.focus = 0  # crit rate up
-        self.bleed = 5  # dot
-        self.toxic = 5  # dot
-        self.burn = 5  # dot
-        self.curse = 0  # damage bonus
-        self.spite = 0  # damage bonus
-        self.invincible = 0  # damage immune
-        self.shield = 0  # 1/2 damage physical or laser
-        self.ward = 0  # 1/2 damage magical or laser
-        self.frail = 0  # defense down
-        self.terrify = 0  # spirit down
-        self.weak = 0  # attack down
-        self.distract = 0  # magic down
-        self.slow = 0  # speed down
-        self.hex = 0  # luck down
-        self.dull = 0  # crit rate down
-        self.savage = 0  # crit damage up
-        self.gentle = 0  # crit damage down
-        self.regen = 0  # regen over time
+        self.status = {}
+        self.equipment = {}
+        self.abilities = {}
+        self.ability_tree = None
+        self.stats = {}
+        self.hp = 0
+        self.mp = 0
         self.speed = 0
         self.defend = 0
         self.state = "Idle"
@@ -2917,12 +2951,71 @@ class BattleCharacter(pygame.sprite.Sprite):
         self.hp -= damage
         if self.hp < 0:
             self.hp = 0
-        if self.hp > self.max_hp:
-            self.hp = self.max_hp
+        if self.hp > self.get_stat(Stat.HP):
+            self.hp = self.get_stat(Stat.HP)
 
-    def get_stat(self, stat: str):
+    def get_stat(self, stat: Stat) -> int:
         """proper way to get stat"""
-        pass
+        value = self.stats[stat][self.level]
+        for key, equipment in self.equipment.items():
+            value += equipment.get_stat(stat)
+        for key, ability in self.abilities.items():
+            value += ability.get_stat(stat)
+        value *= self.get_status_multiplier(stat)
+        return int(value)
+
+    def get_status_multiplier(self, stat: Stat) -> float or int:
+        value = 1
+        if stat == Stat.HP or stat == Stat.MP:
+            return value
+        elif stat == Stat.STRENGTH:
+            if Status.BRAVE in self.status.keys():
+                value *= 1.5
+            if Status.WEAK in self.status.keys():
+                value /= 1.5
+            return value
+        elif stat == Stat.MAGIC:
+            if Status.CALM in self.status.keys():
+                value *= 1.5
+            if Status.DISTRACT in self.status.keys():
+                value /= 1.5
+            return value
+        elif stat == Stat.DEFENSE:
+            if Status.VIGILANT in self.status.keys():
+                value *= 1.5
+            if Status.FRAIL in self.status.keys():
+                value /= 1.5
+            return value
+        elif stat == Stat.SPIRIT:
+            if Status.FAITH in self.status.keys():
+                value *= 1.5
+            if Status.TERRIFY in self.status.keys():
+                value /= 1.5
+            return value
+        elif stat == Stat.LUCK:
+            if Status.LUCKY in self.status.keys():
+                value *= 1.5
+            if Status.HEX in self.status.keys():
+                value /= 1.5
+            return value
+        elif stat == Stat.SPEED:
+            if Status.QUICK in self.status.keys():
+                value *= 1.5
+            if Status.SLOW in self.status.keys():
+                value /= 1.5
+            return value
+        elif stat == Stat.CRITICAL_RATE:
+            if Status.FOCUS in self.status.keys():
+                value *= 1.5
+            if Status.DULL in self.status.keys():
+                value /= 1.5
+            return value
+        elif stat == Stat.CRITICAL_DAMAGE:
+            if Status.SAVAGE in self.status.keys():
+                value *= 1.5
+            if Status.GENTLE in self.status.keys():
+                value /= 1.5
+            return value
 
     def damage(self, damage, action, delay=0):
         """Provide damage amount, action ref, and optional delay to for particle, to deliver damage or healing to BC"""
@@ -2932,18 +3025,18 @@ class BattleCharacter(pygame.sprite.Sprite):
             pass
         elif damage < 0:
             self.change_hp(damage, delay)
-        elif self.invincible > 0:
+        elif Status.INVINCIBLE in self.status.keys():
             self.parent.damage_particle.add_particles(self.rect.centerx, self.rect.centery, "immune")
         else:
             if action.defend_stat == "defense" or action.defend_stat == "lowest":
-                if self.shield > 0:
+                if Status.SHIELD in self.status.keys():
                     damage /= 2
             if action.defend_stat == "spirit" or action.defend_stat == "lowest":
-                if self.ward > 0:
+                if Status.WARD in self.status.keys():
                     damage /= 2
-            if self.spite > 0:
+            if Status.SPITE in self.status.keys():
                 damage += 10
-            if self.curse > 0:
+            if Status.CURSE in self.status.keys():
                 damage *= 2
             self.change_hp(damage, delay)
         if damage != 'miss':
@@ -4422,7 +4515,7 @@ class ActionGetter:
 
 class Action:
     def __init__(self, data):
-        fields = ["name", "target_type", "damage_type", "defend_type", "status", "hits", "modify_character_attack",
+        fields = ["name", "target_type", "damage_type", "damage_stat", "status", "hits", "modify_character_attack",
                   "damage_delay", "mp_cost", "turn_delay", "power"]
         for key, value in data.items():
             if key in fields:
@@ -4448,46 +4541,60 @@ class SkillTreeGetter:
         self.data = JsonReader.read_json("venv/settings_data/Tree_Nodes.json")
 
 
-@unique
-class Status(Enum):
-    DAZED = auto()  # can't use ability
-    DISABLED = auto()  # can't use attack
-    STUNNED = auto()  # can't act
-    PERPLEXED = auto()  # CAN'T USE ITEM
-    VIGILANT = auto()  # DEFENSE UP
-    SMITTEN = auto()
-    FAITH = auto()  # SPIRIT UP
-    BRAVE = auto()  # ATTACK UP
-    CALM = auto()  # MAGIC UP
-    HASTE = auto()  # EXTRA TURN
-    TURNS = auto()  # NUM TURNS
-    QUICK = auto()  # SPEED UP
-    LUCKY = auto()  # LUCK UP
-    FOCUS = auto()  # CRIT RATE UP
-    BLEED = auto()  # DOT
-    TOXIC = auto()  # DOT
-    BURN = auto()  # DOT
-    CURSE = auto()  # DAMAGE BONUS
-    SPITE = auto()  # DAMAGE BONUS
-    INVINCIBLE = auto()  # DAMAGE IMMUNE
-    SHIELD = auto()  # 1/2 DAMAGE PHYSICAL OR LASER
-    WARD = auto()  # 1/2 DAMAGE MAGICAL OR LASER
-    FRAIL = auto()  # DEFENSE DOWN
-    TERRIFY = auto()  # SPIRIT DOWN
-    WEAK = auto()  # ATTACK DOWN
-    DISTRACT = auto()  # MAGIC DOWN
-    SLOW = auto()  # SPEED DOWN
-    HEX = auto()  # LUCK DOWN
-    DULL = auto()  # CRIT RATE DOWN
-    SAVAGE = auto()  # CRIT DAMAGE UP
-    GENTLE = auto()  # CRIT DAMAGE DOWN
-    REGEN = auto()  # REGEN OVER TIME
-
-
 class DamageCalculator:
-    def calculate(self, action, user, target) -> int or list:
+    @staticmethod
+    def calculate(action, user: BattleCharacter, target: BattleCharacter or [BattleCharacter], estimate=False) -> int or list:
         """take an action, user, target; determine proper damage formula and return damage"""
+        if type(target) == list:
+            return [DamageCalculator.calculate(action, user, target_) for target_ in target]
+        else:
+            critical_roll = random_int(0, 100)
+            damage_roll = random_int(85, 100)
+            if action.get_damage_type == DamageType.PHYSICAL:
+                return DamageCalculator.physical_calculate(action, user, target, damage_roll, critical_roll)
+            elif action.get_damage_type == DamageType.MAGICAL:
+                return DamageCalculator.physical_calculate(action, user, target, damage_roll, critical_roll)
+            elif action.get_damage_type == DamageType.LASER:
+                return DamageCalculator.physical_calculate(action, user, target, damage_roll, critical_roll)
+            elif action.get_damage_type == DamageType.TRUE:
+                return DamageCalculator.physical_calculate(action, user, target, damage_roll, critical_roll)
         pass
+
+    @staticmethod
+    def physical_calculate(action, user, target, damage_roll, critical_roll):
+        defense = target.get_stat(Stat.DEFENSE)
+        attack = user.get_stat(action.get_damage_stat())
+        power = action.get_power()
+        return (power * attack / defense) * damage_roll / 100
+
+    @staticmethod
+    def magical_calculate(action, user, target, damage_roll, critical_roll):
+        defense = target.get_stat(Stat.SPIRIT)
+        attack = user.get_stat(action.get_damage_stat())
+        power = action.get_power()
+        return (power * attack / defense) * damage_roll / 100
+
+    @staticmethod
+    def laser_calculate(action, user, target, damage_roll, critical_roll):
+        defense = min(target.get_stat(Stat.DEFENSE), target.get_stat(Stat.SPIRIT))
+        attack = user.get_stat(action.get_damage_stat())
+        power = action.get_power()
+        return (power * attack / defense) * damage_roll / 100
+
+    @staticmethod
+    def true_calculate(action, user, target, damage_roll, critical_roll):
+        power = action.get_power()
+        return power * damage_roll / 100
+
+
+class MissRoll:
+    @staticmethod
+    def hit_or_miss(action, user: BattleCharacter, target: BattleCharacter or [BattleCharacter]) -> bool or [bool]:
+        if type(target) == list:
+            return [MissRoll.hit_or_miss(action, user, target_) for target_ in target]
+        else:
+            miss_roll = random_int(0, 100)
+            return miss_roll * target.get_stat(Stat.LUCK) / user.get_stat(Stat.LUCK) > action.get_accuracy()
 
 
 class ActionEvaluator:
