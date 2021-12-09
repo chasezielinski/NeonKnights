@@ -40,6 +40,7 @@ SELECTED_COLOR = (75, 225, 225)
 COLOR_KEY = (255, 55, 202)
 MAX_NAME_LENGTH = 12
 
+
 @unique
 class Status(Enum):
     DAZED = auto()  # can't use ability
@@ -47,7 +48,7 @@ class Status(Enum):
     STUNNED = auto()  # can't act
     PERPLEXED = auto()  # CAN'T USE ITEM
     VIGILANT = auto()  # DEFENSE UP
-    SMITTEN = auto() # CAN'T DEFEND
+    SMITTEN = auto()  # CAN'T DEFEND
     FAITH = auto()  # SPIRIT UP
     BRAVE = auto()  # ATTACK UP
     CALM = auto()  # MAGIC UP
@@ -104,7 +105,6 @@ EXPERIENCE_CURVE = [100, 210, 320, 430, 540, 650, 760, 870, 980, 1090, 1200, 131
 EXPERIENCE_CURVE_TOTAL = [100, 310, 630, 1060, 1600, 2250, 3010, 3880, 4860, 5950, 7150, 8460, 9880, 11410]
 for i in range(len(EXPERIENCE_CURVE)):
     EXPERIENCE_CURVE_TOTAL.append(sum(EXPERIENCE_CURVE[:i + 1]))
-
 
 FIGHTER_LEFT_TREE = ["Brute",
                      [[0, 1, "Skill_1", 1, {"Name": "Skill_1",
@@ -3174,7 +3174,9 @@ class PlayerCharacter(BattleCharacter):
 class Fighter(PlayerCharacter):
     def __init__(self, name):
         super(Fighter, self).__init__(name)
-        self.sprites = SpriteSheet(r"venv\resources\sprites\Character\Battle\Fighter\Fighter_Battle128p.png").load_strip([0, 0, 128, 128], 6, (255, 55, 202))
+        self.sprites = SpriteSheet(
+            r"venv\resources\sprites\Character\Battle\Fighter\Fighter_Battle128p.png").load_strip([0, 0, 128, 128], 6,
+                                                                                                  (255, 55, 202))
         self.idle_frames = [0, 1, 2, 3]
         self.idle_speed = [1331, 134, 400, 134]
         self.attack_frames = [4]
@@ -3791,7 +3793,7 @@ class Attack(BattleActionCard):
             damage_low, damage_high, p_hit, critical_low, critical_high, p_critical = \
                 attack_defense_calculate(self, self.parent, character, ev=True)
             outcome[character.battle_slot] = ((damage_low + damage_high) * p_hit * (1 - p_critical) / (
-                        2 * character.hp)) + ((critical_low + critical_high) * p_hit * p_critical / (2 * character.hp))
+                    2 * character.hp)) + ((critical_low + critical_high) * p_hit * p_critical / (2 * character.hp))
             value_set.append((self.parent, self, [character], outcome))
         return value_set
 
@@ -4454,6 +4456,7 @@ class ItemGetter:
     def construct_item(self, name: str):
         return Weapon(self.item_dict["Weapon"][name]["Properties"], self.item_dict["Weapon"][name]["Behaviors"])
 
+
 class RegionGetter:
     def __init__(self):
         self.region_dict = JsonReader().read_json("venv/settings_data/Region_Maps.json")
@@ -4520,19 +4523,19 @@ class Action:
         for key, value in data.items():
             if key in fields:
                 setattr(self, key, value)
-        #"source_animation": null,
-        #"target_animation": null,
-        #"screen_animation": null,
-        #"sound": null,
-        #"behavior_objects": null,
-        #"coupled_with": null,
+        # "source_animation": null,
+        # "target_animation": null,
+        # "screen_animation": null,
+        # "sound": null,
+        # "behavior_objects": null,
+        # "coupled_with": null,
 
     def expected_value(self, user, battle_characters) -> list:
         value_set = []
         return value_set
 
     def is_usable(self, user) -> bool:
-        #if self.parent.dazed > 0 or self.parent.stunned > 0 or self.parent.mp < self.mp_cost:
+        # if self.parent.dazed > 0 or self.parent.stunned > 0 or self.parent.mp < self.mp_cost:
         return True
 
 
@@ -4542,14 +4545,20 @@ class SkillTreeGetter:
 
 
 class DamageCalculator:
+    min_critical_roll = 0
+    max_critical_roll = 100
+    critical_threshold = 95
+    min_damage_roll = 85
+    max_damage_roll = 100
+
     @staticmethod
-    def calculate(action, user: BattleCharacter, target: BattleCharacter or [BattleCharacter], estimate=False) -> int or list:
+    def calculate(action, user: BattleCharacter, target: BattleCharacter or [BattleCharacter], **kwargs) -> int or list:
         """take an action, user, target; determine proper damage formula and return damage"""
         if type(target) == list:
-            return [DamageCalculator.calculate(action, user, target_) for target_ in target]
+            return [DamageCalculator.calculate(action, user, target_, **kwargs) for target_ in target]
         else:
-            critical_roll = random_int(0, 100)
-            damage_roll = random_int(85, 100)
+            critical_roll = DamageCalculator.get_critical_roll(**kwargs)
+            damage_roll = DamageCalculator.get_damage_roll(**kwargs)
             if action.get_damage_type == DamageType.PHYSICAL:
                 return DamageCalculator.physical_calculate(action, user, target, damage_roll, critical_roll)
             elif action.get_damage_type == DamageType.MAGICAL:
@@ -4559,6 +4568,34 @@ class DamageCalculator:
             elif action.get_damage_type == DamageType.TRUE:
                 return DamageCalculator.physical_calculate(action, user, target, damage_roll, critical_roll)
         pass
+
+    @staticmethod
+    def get_damage_roll(**kwargs):
+        if "damage_roll" in kwargs.keys():
+            return kwargs["damage_roll"]
+        if "damage_min_roll" in kwargs.keys():
+            min_ = kwargs["damage_min_roll"]
+        else:
+            min_ = DamageCalculator.min_damage_roll
+        if "damage_max_roll" in kwargs.keys():
+            max_ = kwargs["damage_max_roll"]
+        else:
+            max_ = DamageCalculator.max_damage_roll
+        return random_int(min_, max_)
+
+    @staticmethod
+    def get_critical_roll(**kwargs):
+        if "critical_roll" in kwargs.keys():
+            return kwargs["critical_roll"]
+        if "critical_min_roll" in kwargs.keys():
+            min_ = kwargs["critical_min_roll"]
+        else:
+            min_ = DamageCalculator.min_critical_roll
+        if "critical_max_roll" in kwargs.keys():
+            max_ = kwargs["critical_max_roll"]
+        else:
+            max_ = DamageCalculator.max_critical_roll
+        return random_int(min_, max_)
 
     @staticmethod
     def physical_calculate(action, user, target, damage_roll, critical_roll):
