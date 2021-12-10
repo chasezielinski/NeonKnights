@@ -9,6 +9,8 @@ from threading import Timer
 import json
 from enum import Enum, unique, auto
 from dataclasses import dataclass
+from itertools import product
+from typing import List, Type, Union
 
 pygame.init()
 pygame.mixer.init()
@@ -97,6 +99,15 @@ class DamageType(Enum):
     PHYSICAL = auto()
     LASER = auto()
     TRUE = auto()
+
+
+@unique
+class TargetType(Enum):
+    SINGLE = auto()
+    TEAM = auto()
+    ALL = auto()
+    NONE = auto()
+    SELF = auto()
 
 
 # Player Characters
@@ -4559,15 +4570,14 @@ class DamageCalculator:
         else:
             critical_roll = DamageCalculator.get_critical_roll(**kwargs)
             damage_roll = DamageCalculator.get_damage_roll(**kwargs)
-            if action.get_damage_type == DamageType.PHYSICAL:
+            if action.get_damage_type() == DamageType.PHYSICAL:
                 return DamageCalculator.physical_calculate(action, user, target, damage_roll, critical_roll)
-            elif action.get_damage_type == DamageType.MAGICAL:
+            elif action.get_damage_type() == DamageType.MAGICAL:
                 return DamageCalculator.physical_calculate(action, user, target, damage_roll, critical_roll)
-            elif action.get_damage_type == DamageType.LASER:
+            elif action.get_damage_type() == DamageType.LASER:
                 return DamageCalculator.physical_calculate(action, user, target, damage_roll, critical_roll)
-            elif action.get_damage_type == DamageType.TRUE:
+            elif action.get_damage_type() == DamageType.TRUE:
                 return DamageCalculator.physical_calculate(action, user, target, damage_roll, critical_roll)
-        pass
 
     @staticmethod
     def get_damage_roll(**kwargs):
@@ -4626,7 +4636,9 @@ class DamageCalculator:
 
 class MissRoll:
     @staticmethod
-    def hit_or_miss(action, user: BattleCharacter, target: BattleCharacter or [BattleCharacter]) -> bool or [bool]:
+    def hit_or_miss(action, user: Type[BattleCharacter],
+                    target: Union[Type[BattleCharacter], List[Type[BattleCharacter]]]) -> bool or [bool]:
+        """check for hit or miss on a single target or a list of targets; return True = MISS; return False = HIT"""
         if type(target) == list:
             return [MissRoll.hit_or_miss(action, user, target_) for target_ in target]
         else:
@@ -4635,16 +4647,98 @@ class MissRoll:
 
 
 class ActionEvaluator:
-    def evaluate_action(self, action, user, battle_characters) -> list:
+    """Class for evaluating the situational effectiveness of an action, given a user and target or targets."""
+    @staticmethod
+    def evaluate_action(action, user: Type[BattleCharacter],
+                        target: Union[Type[BattleCharacter], List[Type[BattleCharacter]]]) -> list:
         """take an action, user, and all battle characters;
         return a list of options with [user, action, target, outcome]"""
         pass
 
-    def single_target(self):
+    @staticmethod
+    def single_target():
         pass
 
-    def all_target(self):
+    @staticmethod
+    def all_target():
         pass
 
-    def team_target(self):
+    @staticmethod
+    def team_target():
         pass
+
+
+class ActionEval:
+    def __init__(self, action, user, battle_characters):
+        self.action = action
+        self.user = user
+        self.target = battle_characters
+        self.evaluation = ActionEvaluator.evaluate_action(action, user, battle_characters)
+
+    def vector_add(self, other):
+        return [self.evaluation[index] + other.evaluation[index] for index in range(len(self.evaluation))]
+
+
+class ActionSet:
+    def __init__(self, action_set: List[ActionEval]):
+        self.actions = action_set
+        self.value = self.get_value()
+
+    def get_value(self):
+        eval_sum = self.actions[0].evaluation
+        if len(self.actions) > 1:
+            for i in range(len(self.actions) - 1):
+                eval_sum = self.vector_add(eval_sum, self.actions[i+1].evaluation)
+        eval_sum = [0 for i in self.actions[0].evaluation]
+        for eval in self.actions:
+            eval_sum = eval.vector_add()
+        eval_sum = self.sign_flip(eval_sum)
+        eval_sum = self.normalize(eval_sum)
+        value = sum(eval_sum)
+        return value
+
+    def vector_add(self, v1, v2):
+        return [v1[i] + v2[i] for i in range(len(v1))]
+
+    def normalize(self, eval_sum: List[float]) -> List[float]:
+        return [math.log(i, 10) if i > 1 else i for i in eval_sum]
+
+    def sign_flip(self, eval_sum):
+        """Flips sign on enemy target evaluations to reward healing of allies and damaging of enemies."""
+        return [v if i < 5 else v * -1 for i, v in enumerate(eval_sum())]
+
+    def set_sum(self):
+        if len(self.actions) > 1:
+            return sum(self.actions)
+        else:
+            return self.actions
+
+    def __lt__(self, other):
+        return self.value < other.value
+
+
+class UtilityAI:
+    """Use in battle at the start of turn to select enemy actions. Call UtilityAI.select_actions(),
+    then use selected ActionSet object to set actions"""
+    @staticmethod
+    def select_actions(enemy_characters: Union[Type[BattleCharacter], List[Type[BattleCharacter]]],
+                       battle_characters: List[Type[BattleCharacter]]) -> ActionSet:
+        if not type(enemy_characters) == list:
+            evals = UtilityAI.get_actions_evaluations([enemy_characters], battle_characters)
+        else:
+            evals = UtilityAI.get_actions_evaluations(enemy_characters, battle_characters)
+        action_options = product(evals)
+        actions_sets = [ActionSet(option) for option in action_options]
+        actions_sets.sort(reverse=True)
+        return actions_sets[0]
+
+    @staticmethod
+    def get_actions_evaluations(enemy_characters: List[Type[BattleCharacter]],
+                                battle_characters: List[Type[BattleCharacter]]) -> List[List[ActionEval]]:
+        evals_list = []
+        for character in enemy_characters:
+            evals = [ActionEval(action["action"], character, action["target"]) for action in
+                     character.get_actions(battle_characters, useable=True)]
+            if evals:
+                evals_list.append(evals)
+        return evals_list
