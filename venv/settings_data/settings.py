@@ -4558,7 +4558,6 @@ class SkillTreeGetter:
 class DamageCalculator:
     min_critical_roll = 0
     max_critical_roll = 100
-    critical_threshold = 95
     min_damage_roll = 85
     max_damage_roll = 100
 
@@ -4634,6 +4633,32 @@ class DamageCalculator:
         return power * damage_roll / 100
 
 
+class CriticalRoll:
+    critical_threshold = 95
+
+    @staticmethod
+    def critical_roll(action, user: Type[BattleCharacter],
+                      target: Union[Type[BattleCharacter], List[Type[BattleCharacter]]]) -> bool or [bool]:
+        """check for critical hit or not on a single target or a list of targets; return True = CRITICAL"""
+        if type(target) == list:
+            return [CriticalRoll.critical_roll(action, user, target_) for target_ in target]
+        else:
+            crit_roll = random_int(0, 100)
+            crit_factor = user.get_stat(Stat.CRITICAL_RATE) * user.get_stat(Stat.LUCK) / target.get_stat(Stat.LUCK)
+            return crit_roll * crit_factor > CriticalRoll.critical_threshold
+
+    @staticmethod
+    def get_crit_chance(action, user, target) -> Union[float, int]:
+        crit_factor = user.get_stat(Stat.CRITICAL_RATE) * user.get_stat(Stat.LUCK) / target.get_stat(Stat.LUCK)
+        p = CriticalRoll.critical_threshold / (100 * crit_factor)
+        if 1 - p < 0:
+            return 0
+        elif 1 - p > 1:
+            return 1
+        else:
+            return 1 - p
+
+
 class MissRoll:
     @staticmethod
     def hit_or_miss(action, user: Type[BattleCharacter],
@@ -4645,15 +4670,25 @@ class MissRoll:
             miss_roll = random_int(0, 100)
             return miss_roll * target.get_stat(Stat.LUCK) / user.get_stat(Stat.LUCK) > action.get_accuracy()
 
+    @staticmethod
+    def get_hit_chance(action, user, target) -> float:
+        return action.get_accuracy() * (user.get_stat(Stat.LUCK) / target.get_stat(Stat.LUCK)) / 100
+
 
 class ActionEvaluator:
-    """Class for evaluating the situational effectiveness of an action, given a user and target or targets."""
+    """Class for determining the expected value of an action, given a user and target or targets."""
+
     @staticmethod
     def evaluate_action(action, user: Type[BattleCharacter],
-                        target: Union[Type[BattleCharacter], List[Type[BattleCharacter]]]) -> list:
+                        target: Union[Type[BattleCharacter], List[Type[BattleCharacter]]],
+                        character_map: Type[dict]) -> list:
         """take an action, user, and all battle characters;
         return a list of options with [user, action, target, outcome]"""
-        pass
+        outcome = [0 for i in range(len(character_map.keys()))]
+
+        # Write magic code #
+
+        return outcome
 
     @staticmethod
     def single_target():
@@ -4669,29 +4704,35 @@ class ActionEvaluator:
 
 
 class ActionEval:
-    def __init__(self, action, user, battle_characters):
+    """Object to hold the action, user, target or targets, and expected outcome of an action-option."""
+
+    def __init__(self, action, user: Type[BattleCharacter],
+                 target: Union[Type[BattleCharacter], List[Type[BattleCharacter]]], character_map):
         self.action = action
         self.user = user
-        self.target = battle_characters
-        self.evaluation = ActionEvaluator.evaluate_action(action, user, battle_characters)
-
-    def vector_add(self, other):
-        return [self.evaluation[index] + other.evaluation[index] for index in range(len(self.evaluation))]
+        self.target = target
+        self.evaluation = ActionEvaluator.evaluate_action(action, user, target, character_map)
 
 
 class ActionSet:
-    def __init__(self, action_set: List[ActionEval]):
+    """Holds a combination of actions for one or more enemies. self.value is for use as a comparitor with higher value
+    meaning better option."""
+
+    def __init__(self, action_set: List[ActionEval], character_map):
         self.actions = action_set
         self.value = self.get_value()
+        self.character_map = character_map
 
-    def get_value(self):
+    def get_value(self) -> float:
+        """Combine expected values into a normalized comparitor float value"""
+
+        # vector sum all evaluations
         eval_sum = self.actions[0].evaluation
         if len(self.actions) > 1:
             for i in range(len(self.actions) - 1):
-                eval_sum = self.vector_add(eval_sum, self.actions[i+1].evaluation)
-        eval_sum = [0 for i in self.actions[0].evaluation]
-        for eval in self.actions:
-            eval_sum = eval.vector_add()
+                eval_sum = self.vector_add(eval_sum, self.actions[i + 1].evaluation)
+
+        # flip values on enemy outcome
         eval_sum = self.sign_flip(eval_sum)
         eval_sum = self.normalize(eval_sum)
         value = sum(eval_sum)
@@ -4701,44 +4742,59 @@ class ActionSet:
         return [v1[i] + v2[i] for i in range(len(v1))]
 
     def normalize(self, eval_sum: List[float]) -> List[float]:
+        """squash values above 1"""
         return [math.log(i, 10) if i > 1 else i for i in eval_sum]
 
     def sign_flip(self, eval_sum):
         """Flips sign on enemy target evaluations to reward healing of allies and damaging of enemies."""
-        return [v if i < 5 else v * -1 for i, v in enumerate(eval_sum())]
-
-    def set_sum(self):
-        if len(self.actions) > 1:
-            return sum(self.actions)
-        else:
-            return self.actions
+        return [v if isinstance(self.character_map[i], PlayerCharacter) else v * -1 for i, v in enumerate(eval_sum())]
 
     def __lt__(self, other):
         return self.value < other.value
 
 
 class UtilityAI:
-    """Use in battle at the start of turn to select enemy actions. Call UtilityAI.select_actions(),
-    then use selected ActionSet object to set actions"""
+    """For use in battle at the start of turn to select enemy actions. Call UtilityAI.select_actions(),
+    then use selected ActionSet object to set actions. Model an action-outcome as a list of floats mapped to each
+    BattleCharacter where 1.0 equates to killing or fully healing a BattleCharacter."""
+
     @staticmethod
     def select_actions(enemy_characters: Union[Type[BattleCharacter], List[Type[BattleCharacter]]],
                        battle_characters: List[Type[BattleCharacter]]) -> ActionSet:
-        if not type(enemy_characters) == list:
-            evals = UtilityAI.get_actions_evaluations([enemy_characters], battle_characters)
-        else:
-            evals = UtilityAI.get_actions_evaluations(enemy_characters, battle_characters)
+
+        character_map = {}
+        for i, character in enumerate(battle_characters):
+            character_map[i] = character
+
+        # get an evaluation object for each action-option for each enemy character
+        evals = UtilityAI.get_actions_evaluations(enemy_characters, battle_characters, character_map)
+
+        # get a list of action-option combinations
         action_options = product(evals)
-        actions_sets = [ActionSet(option) for option in action_options]
+
+        # combine each combination into an actionSet object and sort according to the expected value
+        actions_sets = [ActionSet(option, character_map) for option in action_options]
         actions_sets.sort(reverse=True)
+
+        # return the ActionSet with the highest expected value
         return actions_sets[0]
 
     @staticmethod
-    def get_actions_evaluations(enemy_characters: List[Type[BattleCharacter]],
-                                battle_characters: List[Type[BattleCharacter]]) -> List[List[ActionEval]]:
+    def get_actions_evaluations(enemy_characters: Union[List[Type[BattleCharacter]], Type[BattleCharacter]],
+                                battle_characters: List[Type[BattleCharacter]], character_map) -> List[
+        List[ActionEval]]:
         evals_list = []
+
+        # force type: List[BattleCharacter]
+        if not type(enemy_characters) == list:
+            enemy_characters = [enemy_characters]
+
+        # list options while evaluating, filter for usable actions
         for character in enemy_characters:
-            evals = [ActionEval(action["action"], character, action["target"]) for action in
-                     character.get_actions(battle_characters, useable=True)]
+            evals = [ActionEval(action["action"], character, action["target"], character_map) for action in
+                     character.get_actions(battle_characters, usable=True)]
             if evals:
                 evals_list.append(evals)
+
+        # return a list of lists: [[enemy_a_option_eval_1, enemy_a_option_eval_2, ...], [enemy_b_option_eval_1, ...]]
         return evals_list
