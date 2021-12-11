@@ -4590,6 +4590,9 @@ class DamageCalculator:
             max_ = kwargs["damage_max_roll"]
         else:
             max_ = DamageCalculator.max_damage_roll
+        if "average_roll" in kwargs.keys():
+            if kwargs["average_roll"]:
+                return (min_ + max_) / 2
         return random_int(min_, max_)
 
     @staticmethod
@@ -4681,26 +4684,51 @@ class ActionEvaluator:
     @staticmethod
     def evaluate_action(action, user: Type[BattleCharacter],
                         target: Union[Type[BattleCharacter], List[Type[BattleCharacter]]],
-                        character_map: Type[dict]) -> list:
+                        character_map: dict) -> list:
         """take an action, user, and all battle characters;
         return a list of options with [user, action, target, outcome]"""
         outcome = [0 for i in range(len(character_map.keys()))]
 
+        if type(target) == list:
+            for character in target:
+                outcome[character_map[character]] = ActionEvaluator.single_evaluate(action, user, character)
+        elif type(target) == BattleCharacter:
+            outcome[character_map[target]] = ActionEvaluator.single_evaluate(action, user, target)
         # Write magic code #
 
         return outcome
 
     @staticmethod
-    def single_target():
-        pass
+    def single_evaluate(action, user, target) -> Union[int, float]:
+        value = 0
+        # get damage value
+        value += ActionEvaluator.get_damage_value(action, user, target)
+
+        # get effect value
+        value += ActionEvaluator.get_effect_value(action, user, target)
+
+        # get auxiliary value
+        value += ActionEvaluator.get_auxiliary_value(action, user, target)
+
+        return value
 
     @staticmethod
-    def all_target():
-        pass
+    def get_damage_value(action, user, target) -> Union[int, float]:
+        damage = DamageCalculator.calculate(action, user, target, average_roll=True)
+        if damage >= 0:
+            return damage / target.get_remaining_hp()
+        elif damage < 0:
+            return damage / target.get_missing_hp()
+        else:
+            return 0
 
     @staticmethod
-    def team_target():
-        pass
+    def get_effect_value(action, user, target) -> Union[int, float]:
+        return 0
+
+    @staticmethod
+    def get_auxiliary_value(action, user, target) -> Union[int, float]:
+        return 0
 
 
 class ActionEval:
@@ -4764,7 +4792,7 @@ class UtilityAI:
 
         character_map = {}
         for i, character in enumerate(battle_characters):
-            character_map[i] = character
+            character_map[character] = i
 
         # get an evaluation object for each action-option for each enemy character
         evals = UtilityAI.get_actions_evaluations(enemy_characters, battle_characters, character_map)
