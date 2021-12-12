@@ -110,6 +110,18 @@ class TargetType(Enum):
     SELF = auto()
 
 
+@unique
+class EquipmentType(Enum):
+    WEAPON = auto()
+    ARMOR = auto()
+    HELM = auto()
+    BOOTS = auto()
+    SHIELD = auto()
+    CAPE = auto()
+    MEDALLION = auto()
+    ARTIFACT = auto()
+
+
 # Player Characters
 BASE_CLASSES = ["Fighter", "Adept", "Rogue", "Artificer"]
 EXPERIENCE_CURVE = [100, 210, 320, 430, 540, 650, 760, 870, 980, 1090, 1200, 1310, 1420, 1530]
@@ -1914,7 +1926,7 @@ class EquipMenu(object):
         self.relative_index = 0
         self.display_index = 0
         self.parent = parent
-        self.player_index = 0
+        self.player_index = None
         self.bg_1_rect = [X * 8 / 100, Y * 11 / 100, X * 76 / 100, Y * 85 / 100]
         self.bg_2_rect = [X * 8.5 / 100, Y * 12 / 100, X * 75 / 100, Y * 83 / 100]
         self.slot_rects = REGION_MENUS['equip menu']['Top_Slot_Rect']
@@ -1922,7 +1934,20 @@ class EquipMenu(object):
         self.inventory_rects = REGION_MENUS['equip menu']['inventory rects']
 
     def update(self, dt):
-        pass
+        if not self.player_index:
+            self.parent.persist['characters'][0]
+
+    def right_index(self):
+        index = self.parent.persist['characters'].index(self.player_index)
+        index += 1
+        index %= len(self.parent.persist['characters'])
+        self.player_index = self.parent.persist['characters'][index]
+
+    def left_index(self):
+        index = self.parent.persist['characters'].index(self.player_index)
+        index -= 1
+        index %= len(self.parent.persist['characters'])
+        self.player_index = self.parent.persist['characters'][index]
 
     def handle_action(self, action):
         if action == "mouse_move":
@@ -1964,11 +1989,10 @@ class EquipMenu(object):
     def draw(self, surface):
         pygame.draw.rect(surface, (50, 50, 50), self.bg_1_rect, border_radius=int(X / 128))
         pygame.draw.rect(surface, (0, 0, 0), self.bg_2_rect, border_radius=int(X / 128))
-        for n, equip_slot in enumerate(self.parent.persist['characters'][self.player_index].equipment_options):
+        for n, equip_slot in enumerate(self.player_index.get_equipment_options()):
             tw(surface, equip_slot, TEXT_COLOR, self.slot_rects[n], TEXT_FONT)
-            if equip_slot in self.parent.persist['characters'][self.player_index].equipment.keys():
-                text = self.parent.persist['characters'][self.player_index].equipment[
-                    equip_slot].name
+            if equip_slot in self.player_index.equipment.keys():
+                text = self.player_index.equipment[equip_slot].name
             else:
                 text = '-'
             if self.equip_selection_index == n and self.menu_horizontal_index == "Equip":
@@ -1994,16 +2018,14 @@ class EquipMenu(object):
                 tw(surface, '-'.center(12), color, self.inventory_rects[j], TEXT_FONT)
         potential = self.potential_stat()
         for key, value in enumerate(REGION_MENUS['equip menu']['Stat_Rects']):
-            stat = getattr(self.parent.persist['characters'][self.player_index], value)
+            stat = self.player_index.get_stat(Stat[value.upper()])
             if value == 'hp':
-                stat2 = getattr(self.parent.persist['characters'][self.player_index], 'max_hp')
-                tw(surface, value + ':' + str(stat).rjust(8 - len(value)) + '/' + str(stat2),
-                   TEXT_COLOR,
+                stat2 = self.player_index.hp
+                tw(surface, value + ':' + str(stat2).rjust(8 - len(value)) + '/' + str(stat), TEXT_COLOR,
                    REGION_MENUS['equip menu']['Stat_Rects'][value], TEXT_FONT)
             elif value == 'mp':
-                stat2 = getattr(self.parent.persist['characters'][self.player_index], 'max_mp')
-                tw(surface, value + ':' + str(stat).rjust(9 - len(value)) + '/' + str(stat2),
-                   TEXT_COLOR,
+                stat2 = self.player_index.mp
+                tw(surface, value + ':' + str(stat2).rjust(9 - len(value)) + '/' + str(stat), TEXT_COLOR,
                    REGION_MENUS['equip menu']['Stat_Rects'][value], TEXT_FONT)
             else:
                 tw(surface, value + ':' + str(stat).rjust(12 - len(value)), TEXT_COLOR,
