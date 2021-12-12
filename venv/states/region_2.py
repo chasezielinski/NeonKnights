@@ -472,23 +472,23 @@ class StatusBar(object):
             pygame.draw.rect(surface, self.color,
                              [self.skills_button[0], self.skills_button[1] + (i * self.Y * self.offset),
                               self.skills_button[2], self.skills_button[3]], border_radius=6)
-            surface.blit(settings.REGION_STATIC_SPRITES[player.__class__.__name__ + "Icon"],
+            surface.blit(settings.REGION_STATIC_SPRITES[player.class_ + "Icon"],
                          (self.icon_pos[0], self.icon_pos[1] + (i * self.Y * self.offset)))
             pygame.draw.rect(surface, (150, 0, 0),
                              [self.hp_rect[0], self.hp_rect[1] + (i * self.Y * self.offset), self.hp_rect[2],
                               self.hp_rect[3]])
             pygame.draw.rect(surface, (0, 150, 0),
-                             [self.hp_rect[0] + (self.hp_rect[0] * (1 - player.hp / player.max_hp)),
+                             [self.hp_rect[0] + (self.hp_rect[0] * (1 - player.hp / player.get_stat(settings.Stat.HP))),
                               self.hp_rect[1] + (i * self.Y * self.offset),
-                              (self.hp_rect[2] * player.hp / player.max_hp), self.hp_rect[3]])
+                              (self.hp_rect[2] * player.hp / player.get_stat(settings.Stat.HP)), self.hp_rect[3]])
             pygame.draw.rect(surface, (0, 0, 0), self.hp_rect, 4)
             pygame.draw.rect(surface, (150, 0, 0),
                              [self.mp_rect[0], self.mp_rect[1] + (i * self.Y * self.offset), self.mp_rect[2],
                               self.mp_rect[3]])
             pygame.draw.rect(surface, (0, 150, 0),
-                             [self.mp_rect[0] + (self.mp_rect[0] * (1 - player.mp / player.max_mp)),
+                             [self.mp_rect[0] + (self.mp_rect[0] * (1 - player.mp / player.get_stat(settings.Stat.MP))),
                               self.mp_rect[1] + (i * self.Y * self.offset),
-                              (self.mp_rect[2] * player.mp / player.max_mp), self.mp_rect[3]])
+                              (self.mp_rect[2] * player.mp / player.get_stat(settings.Stat.MP)), self.mp_rect[3]])
             pygame.draw.rect(surface, (0, 0, 0), self.mp_rect, 4)
             settings.tw(surface, 'hp', (0, 0, 0),
                         [self.hp_data_rect[0], self.hp_data_rect[1] + (i * self.Y * self.offset), self.hp_data_rect[2],

@@ -177,7 +177,8 @@ class CharacterSelect(BaseState):
         self.persist['region_generate'] = True
         self.persist['region_index'] = 0
         self.persist['characters'] = []
-        self.persist['characters'].append(eval(f"settings.{self.index}")(name=self.name_entry))
+        self.persist['characters'].append(settings.CharacterGetter.get_character(level=1, class_=self.index,
+                                                                                 name=self.name_entry))
         self.persist['supplies'] = 10
         self.persist['chargers'] = 5
         self.persist['elixirs'] = 5
@@ -185,7 +186,6 @@ class CharacterSelect(BaseState):
         self.persist['region_type'] = "None"
         self.persist['inventory'] = [settings.StimPack(), settings.StimPack(), settings.StimPack(),
                                      settings.StimPack(), settings.StimPack()]
-        settings.character_initial(self.persist['characters'][0], self.index)
         self.persist['equip menu indices'] = settings.REGION_MENUS['equip menu']['equip menu indices']
         self.persist['party_abilities'] = PartyAbilityManager()
         self.next_state = "REGION_SELECT"

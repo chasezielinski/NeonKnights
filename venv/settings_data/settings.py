@@ -2901,8 +2901,11 @@ class DamageParticle:
 
 
 class BattleCharacter(pygame.sprite.Sprite):
-    def __init__(self, parent="None"):
+    def __init__(self, data, level, parent=None):
         super().__init__()
+        self.sprites = SpriteSheet(data["sprites"]).load_strip(data["sprite_rect"], data["sprite_count"],
+                                                               data["color_key"])
+        self.level = level
         self.level = 1
         self.flip_state_on_hit = False
         self.flip_state_on_magic = False
@@ -2920,25 +2923,27 @@ class BattleCharacter(pygame.sprite.Sprite):
         self.abilities = {}
         self.ability_tree = None
         self.stats = {}
-        self.hp = 0
-        self.mp = 0
         self.speed = 0
         self.defend = 0
         self.state = "Idle"
         self.action_options = []
         self.attack_action = Attack(self)
         self.battle_action = None
-        self.tick_status = ['dazed', 'disabled', 'stunned', 'perplexed', 'vigilant', 'smitten', 'faith', 'brave',
-                            'calm', 'haste', 'turns', 'quick', 'lucky', 'focus', 'bleed', 'burn', 'toxic', 'curse',
-                            'spite', 'invincible', 'shield', 'ward', 'frail', 'terrify', 'weak', 'distract', 'slow',
-                            'hex', 'dull', 'savage', 'gentle', 'regen', 'speed']
         self.defend_action = Defend(self)
         self.run_action = Run(self)
         self.timer = 0
         self.animation_index = 0
         self.state = "Idle"
-        self.sprites = []
         self.pos = 0, 0
+        for k, v in data["attributes"].items():
+            setattr(self, k, v)
+        for k, v in data["stats"].items():
+            self.stats[Stat[k.upper()]] = v
+        self.animation_index = 0
+        self.image = self.sprites[0]
+        self.rect = pygame.rect.Rect(self.pos[0], self.pos[1], self.image.get_width(), self.image.get_height())
+        self.hp = self.stats[Stat.HP][self.level]
+        self.mp = self.stats[Stat.MP][self.level]
 
     def update(self, dt):
         """Increment animation state, flip image, set new rect if necessary"""
@@ -2968,10 +2973,12 @@ class BattleCharacter(pygame.sprite.Sprite):
     def get_stat(self, stat: Stat) -> int:
         """proper way to get stat"""
         value = self.stats[stat][self.level]
-        for key, equipment in self.equipment.items():
-            value += equipment.get_stat(stat)
-        for key, ability in self.abilities.items():
-            value += ability.get_stat(stat)
+        if self.equipment:
+            for key, equipment in self.equipment.items():
+                value += equipment.get_stat(stat)
+        if self.abilities:
+            for key, ability in self.abilities.items():
+                value += ability.get_stat(stat)
         value *= self.get_status_multiplier(stat)
         return int(value)
 
@@ -3145,20 +3152,21 @@ class BattleCharacter(pygame.sprite.Sprite):
 
 
 class PlayerCharacter(BattleCharacter):
-    def __init__(self, name):
-        super().__init__(parent="None")
+    def __init__(self, data, name, level, class_):
+        super().__init__(data, level, parent="None")
         self.move_selected = False
         self.attack_type = "Attack"
         self.name = name
         self.crit_rate = self.base_crit_rate = 1
         self.crit_damage = self.base_crit_damage = 1
-        self.level = 1
+        self.level = level
         self.exp = 0
-        self.skill_points = 10
+        self.skill_points = level
         self.experience_to_level = 0
-        self.battle_action = NoActionCardSelected(self)
         self.timer = 0
-        self.animation_index = 0
+        self.equipment = {}
+        self.abilities = []
+        self.class_ = class_
 
     def level_check(self):
         if self.level < len(EXPERIENCE_CURVE) + 1:
@@ -3202,14 +3210,6 @@ class Fighter(PlayerCharacter):
         self.pos = 0, 0
         self.image = self.sprites[0]
         self.rect = pygame.rect.Rect(self.pos[0], self.pos[1], self.image.get_width(), self.image.get_height())
-        self.hp = self.max_hp = self.base_hp = 100
-        self.mp = self.max_mp = self.base_mp = 10
-        self.strength = self.base_strength = 100
-        self.defense = self.base_defense = 10
-        self.magic = self.base_magic = 10
-        self.spirit = self.base_spirit = 10
-        self.speed = self.base_speed = 10
-        self.luck = self.base_luck = 10_000
         self.equipment_options = self.base_equipment_options = ["Weapon", "Helm", "Armor", "Boots", "Shield"]
         self.base_attack_type = self.attack_type = "Attack"
         self.equipment = {}
@@ -4507,16 +4507,23 @@ class ImageLoader:
 
 
 class CharacterGetter:
-    def __init__(self):
-        self.data = JsonReader.read_json("venv/settings_data/Class_Data.json")
+    data = JsonReader.read_json("venv/settings_data/Class_Data.json")
 
-    def get_character_by_class(self, name: str):
-        pass
+    @staticmethod
+    def get_character(**kwargs):
+        level = 1
+        if "level" in kwargs.keys():
+            level = kwargs["level"]
 
-    def get_character(self, **kwargs):
-        kwargs_list = list(kwargs.keys())
-        if "class" in kwargs_list:
-            pass
+        class_ = choose_random(list(CharacterGetter.data.keys()))
+        if "class_" in kwargs.keys():
+            class_ = kwargs["class_"]
+
+        name = random_name()
+        if "name" in kwargs.keys():
+            name = kwargs["name"]
+
+        return PlayerCharacter(CharacterGetter.data[class_], name, level, class_)
 
 
 class ActionGetter:
@@ -4694,7 +4701,6 @@ class ActionEvaluator:
                 outcome[character_map[character]] = ActionEvaluator.single_evaluate(action, user, character)
         elif type(target) == BattleCharacter:
             outcome[character_map[target]] = ActionEvaluator.single_evaluate(action, user, target)
-        # Write magic code #
 
         return outcome
 
@@ -4775,7 +4781,12 @@ class ActionSet:
 
     def sign_flip(self, eval_sum):
         """Flips sign on enemy target evaluations to reward healing of allies and damaging of enemies."""
-        return [v if isinstance(self.character_map[i], PlayerCharacter) else v * -1 for i, v in enumerate(eval_sum())]
+        for key, value in self.character_map.items():
+            if isinstance(key, PlayerCharacter):
+                pass
+            else:
+                eval_sum[value] *= -1
+        return eval_sum
 
     def __lt__(self, other):
         return self.value < other.value
