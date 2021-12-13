@@ -3089,6 +3089,46 @@ class BattleCharacter(pygame.sprite.Sprite):
                                                               delay=500 * self.parent.status_particle_index)
                     self.parent.status_particle_index += 1
 
+    def get_remaining_hp(self):
+        return self.hp
+
+    def get_missing_hp(self):
+        return self.stats[Stat.HP] - self.hp
+
+    def get_actions(self, useable=False) -> list:
+        actions = []
+
+        for key, ability in self.abilities.items():
+            if useable:
+                if ability.is_useable():
+                    actions.append(ability)
+            else:
+                actions.append(ability)
+
+        # also get from equipment, ability_tree
+
+        return actions
+
+    def get_action_options(self, ai_characters, enemy_characters, user, useable=False) -> list:
+        actions = self.get_actions(useable)
+        options = []
+
+        for action in actions:
+            if action.get_target_type() == TargetType.SINGLE:
+                for character in ai_characters + enemy_characters:
+                    options.append({"action": action, "target": character})
+            elif action.get_target_type() == TargetType.TEAM:
+                options.append({"action": action, "target": ai_characters})
+                options.append({"action": action, "target": enemy_characters})
+            elif action.get_target_type() == TargetType.NONE:
+                options.append({"action": action, "target": ai_characters + enemy_characters})
+            elif action.get_target_type() == TargetType.ALL:
+                options.append({"action": action, "target": ai_characters + enemy_characters})
+            elif action.get_target_type() == TargetType.SELF:
+                options.append({"action": action, "target": user})
+
+        return actions
+
 
 class PlayerCharacter(BattleCharacter):
     def __init__(self, data, name, level, class_):
@@ -4475,21 +4515,31 @@ class ActionGetter:
 
 class Action:
     def __init__(self, data):
-        fields = ["name", "target_type", "damage_type", "damage_stat", "status", "hits", "modify_character_attack",
+        fields = ["name", "hits", "modify_character_attack",
                   "damage_delay", "mp_cost", "turn_delay", "power"]
         for key, value in data.items():
             if key in fields:
                 setattr(self, key, value)
-        # "source_animation": null,
-        # "target_animation": null,
-        # "screen_animation": null,
-        # "sound": null,
-        # "behavior_objects": null,
-        # "coupled_with": null,
+            elif key == "target_type":
+                setattr(self, key, TargetType[value.upper()])
+            elif key == "damage_type":
+                setattr(self, key, DamageType[value.upper()])
+            elif key == "damage_stat":
+                setattr(self, key, Stat[value.upper()])
+            elif key == "status":
+                setattr(self, key, (Status[value[0].upper()], value[1], value[2]))
 
-    def expected_value(self, user, battle_characters) -> list:
-        value_set = []
-        return value_set
+    def get_target_type(self):
+        getattr(self, "target_type", TargetType.SINGLE)
+
+    def get_damage_type(self):
+        getattr(self, "damage_type", DamageType.PHYSICAL)
+
+    def get_damage_stat(self):
+        getattr(self, "damage_stat", Stat.STRENGTH)
+
+    def get_power(self):
+        getattr(self, "power", 0)
 
     def is_usable(self, user) -> bool:
         # if self.parent.dazed > 0 or self.parent.stunned > 0 or self.parent.mp < self.mp_cost:
@@ -4737,15 +4787,15 @@ class UtilityAI:
     BattleCharacter where 1.0 equates to killing or fully healing a BattleCharacter."""
 
     @staticmethod
-    def select_actions(enemy_characters: Union[Type[BattleCharacter], List[Type[BattleCharacter]]],
-                       battle_characters: List[Type[BattleCharacter]]) -> ActionSet:
+    def select_actions(ai_characters: Union[Type[BattleCharacter], List[Type[BattleCharacter]]],
+                       enemy_characters: List[Type[BattleCharacter]]) -> ActionSet:
 
         character_map = {}
-        for i, character in enumerate(battle_characters):
+        for i, character in enumerate(ai_characters + enemy_characters):
             character_map[character] = i
 
         # get an evaluation object for each action-option for each enemy character
-        evals = UtilityAI.get_actions_evaluations(enemy_characters, battle_characters, character_map)
+        evals = UtilityAI.get_actions_evaluations(ai_characters, ai_characters + enemy_characters, character_map)
 
         # get a list of action-option combinations
         action_options = product(evals)
@@ -4758,19 +4808,19 @@ class UtilityAI:
         return actions_sets[0]
 
     @staticmethod
-    def get_actions_evaluations(enemy_characters: Union[List[Type[BattleCharacter]], Type[BattleCharacter]],
-                                battle_characters: List[Type[BattleCharacter]], character_map) -> List[
+    def get_actions_evaluations(ai_characters: Union[List[Type[BattleCharacter]], Type[BattleCharacter]],
+                                enemy_characters: List[Type[BattleCharacter]], character_map) -> List[
         List[ActionEval]]:
         evals_list = []
 
         # force type: List[BattleCharacter]
-        if not type(enemy_characters) == list:
-            enemy_characters = [enemy_characters]
+        if not type(ai_characters) == list:
+            ai_characters = [ai_characters]
 
         # list options while evaluating, filter for usable actions
-        for character in enemy_characters:
+        for character in ai_characters:
             evals = [ActionEval(action["action"], character, action["target"], character_map) for action in
-                     character.get_actions(battle_characters, usable=True)]
+                     character.get_action_options(ai_characters, enemy_characters, character, useable=True)]
             if evals:
                 evals_list.append(evals)
 
