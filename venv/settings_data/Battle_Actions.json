@@ -1,0 +1,60 @@
+{
+  "Ki Blast": {
+    "name": "Ki Blast",
+    "hits": 1,
+    "modify_character_attack": false,
+    "damage_delay": 1000,
+    "mp_cost":  10,
+    "turn_delay": 0,
+    "power": 40,
+    "target_type": "team",
+    "damage_type": "magical",
+    "damage_stat": "strength"
+  },
+  "Curse": {
+    "name": "Curse",
+    "hits": 1,
+    "modify_character_attack": false,
+    "damage_delay": 1000,
+    "mp_cost":  5,
+    "turn_delay": 0,
+    "power": 0,
+    "target_type": "single",
+    "damage_type": "magical",
+    "damage_stat": "strength",
+    "status": {
+      "curse": [75, 3],
+      "spite": [75, 3],
+      "hex": [75, 3]
+    }},
+  "Shatter": {
+    "name": "Shatter",
+    "hits": 1,
+    "modify_character_attack": false,
+    "damage_delay": 1000,
+    "mp_cost":  5,
+    "turn_delay": 0,
+    "power": 60,
+    "target_type": "single",
+    "damage_type": "physical",
+    "damage_stat": "strength",
+    "status": {
+      "frail": [50, 4],
+      "weak": [50, 4]
+    }},
+  "Bolster": {
+    "name": "Bolster",
+    "hits": 1,
+    "modify_character_attack": false,
+    "damage_delay": 1000,
+    "mp_cost":  10,
+    "turn_delay": 0,
+    "power": 40,
+    "target_type": "team",
+    "damage_type": "magical",
+    "damage_stat": "strength",
+    "status": {
+        "brave": [100, 3],
+        "vigilant": [100, 3]
+      }}
+}

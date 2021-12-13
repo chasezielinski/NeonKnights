@@ -4506,11 +4506,17 @@ class CharacterGetter:
 
 
 class ActionGetter:
-    def __init__(self):
-        self.data = JsonReader.read_json("venv/settings_data/Battle_Actions.json")
-        self.actions = []
-        for name, action in self.data.items():
-            self.actions.append(Action(action))
+    data = JsonReader.read_json("venv/settings_data/Battle_Actions.json")
+
+    @staticmethod
+    def get_action(**kwargs):
+        if "name" in kwargs.keys():
+            if kwargs["name"] in ActionGetter.data.keys():
+                return Action(ActionGetter.data[kwargs["name"]])
+
+        if "random" in kwargs.keys():
+            if kwargs["random"]:
+                return Action(ActionGetter.data[choose_random(list(ActionGetter.data.keys()))])
 
 
 class Action:
@@ -4527,7 +4533,9 @@ class Action:
             elif key == "damage_stat":
                 setattr(self, key, Stat[value.upper()])
             elif key == "status":
-                setattr(self, key, (Status[value[0].upper()], value[1], value[2]))
+                self.status = {}
+                for k, v in data["status"].items():
+                    self.status[Status[k.upper()]] = (v[0], v[1])
 
     def get_target_type(self):
         getattr(self, "target_type", TargetType.SINGLE)

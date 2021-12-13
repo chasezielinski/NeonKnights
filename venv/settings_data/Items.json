@@ -1,0 +1,22 @@
+{
+    "Item": {
+        "Stimpack": {
+            "Name": "Stimpack", 
+            "Buy_Value": 25, 
+            "Sell_Value": 10, 
+            "Type": "Consumable"
+            }
+        },
+    "Weapon": {
+        "DevSword": {
+            "Properties": {
+                "name": "DevSword",
+                "buy_value": 50,
+                "sell_value":40,
+                "attack": 50
+                },
+            "Behaviors": {
+            }
+            }
+        }
+        }
