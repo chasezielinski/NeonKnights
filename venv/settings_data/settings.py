@@ -4538,20 +4538,24 @@ class Action:
                     self.status[Status[k.upper()]] = (v[0], v[1])
 
     def get_target_type(self):
-        getattr(self, "target_type", TargetType.SINGLE)
+        return getattr(self, "target_type", TargetType.SINGLE)
 
     def get_damage_type(self):
-        getattr(self, "damage_type", DamageType.PHYSICAL)
+        return getattr(self, "damage_type", DamageType.PHYSICAL)
 
     def get_damage_stat(self):
-        getattr(self, "damage_stat", Stat.STRENGTH)
+        return getattr(self, "damage_stat", Stat.STRENGTH)
 
     def get_power(self):
-        getattr(self, "power", 0)
+        return getattr(self, "power", 0)
 
     def is_usable(self, user) -> bool:
         # if self.parent.dazed > 0 or self.parent.stunned > 0 or self.parent.mp < self.mp_cost:
         return True
+
+    def do_action(self):
+        if self.get_power() > 0:
+            pass
 
 
 class SkillTreeGetter:

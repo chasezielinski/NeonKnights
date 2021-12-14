@@ -103,16 +103,6 @@ class Battle(BaseState):
                             self.to_action_select(player)
                 if action == "t":
                     self.turn_sub_state = "Confirm"
-            elif self.turn_sub_state == "Move_Select":
-                pass
-
-            elif self.turn_sub_state == "Skill":
-                self.battle_overlay.handle_action(action)
-                if action == "backspace":
-                    self.turn_sub_state = "Move_Select"
-
-            elif self.turn_sub_state == "Item":
-                self.battle_overlay.handle_action(action)
 
             elif self.turn_sub_state == "Target":
                 if action == "click":
