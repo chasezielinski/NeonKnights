@@ -15,6 +15,8 @@ from region_2 import Region
 from battle2 import Battle
 from map_bounds import MapBounds
 from region_select import RegionSelect
+from test_menu import TestMenu
+from battle_test import BattleTest
 
 pygame.mixer.set_num_channels(16)
 # enumerate states
@@ -27,6 +29,8 @@ states = {
     "BATTLE": Battle(),
     "MAP_BOUNDS": MapBounds(),
     "REGION_SELECT": RegionSelect(),
+    "TEST_MENU": TestMenu(),
+    "BATTLE_TEST": BattleTest(),
     #    "GAMEPLAY": Gameplay(),
     #    "GAME_OVER": GameOver(),
     #    "PAUSE": Pause(),

@@ -4518,6 +4518,10 @@ class ActionGetter:
             if kwargs["random"]:
                 return Action(ActionGetter.data[choose_random(list(ActionGetter.data.keys()))])
 
+    @staticmethod
+    def get_actions_list():
+        return [x for x in ActionGetter.data]
+
 
 class Action:
     def __init__(self, data):

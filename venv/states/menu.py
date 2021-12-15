@@ -8,7 +8,7 @@ class Menu(BaseState):
     def __init__(self):
         super(Menu, self).__init__()
         self.active_index = 0
-        self.options = ["Start Game", "Map Bounds", "Quit Game"]
+        self.options = ["Start Game", "Map Bounds", "Test Menu", "Quit Game"]
         self.next_state = "CHARACTER_SELECT"
         self.rects = {0: [settings.X * 35 / 100, settings.Y / 3, settings.X * 30 / 100, settings.Y * 10 / 100],
                       1: [settings.X * 35 / 100, settings.Y / 3 + settings.Y * 10 / 100, settings.X * 30 / 100,
@@ -44,7 +44,11 @@ class Menu(BaseState):
                 self.done = True
                 self.next_state = "MAP_BOUNDS"
                 self.persist['Music'].fade_out(1000)
-            elif self.active_index == 2:
+            if self.active_index == 2:
+                self.done = True
+                self.next_state = "TEST_MENU"
+                self.persist['Music'].fade_out(1000)
+            elif self.active_index == 3:
                 self.quit = True
         elif action == "mouse_move":
             for i in range(len(self.options)):
