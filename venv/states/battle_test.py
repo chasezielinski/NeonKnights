@@ -10,7 +10,7 @@ class BattleTest(BaseState):
         super(BattleTest, self).__init__()
         self.next_state = "TEST_MENU"
         self.state = "setup"
-        self.character_options = {
+        self.setup_options = {
             "team_1_a": PlayerOptions(0),
             "team_1_b": PlayerOptions(1),
             "team_1_c": PlayerOptions(2),
@@ -21,14 +21,24 @@ class BattleTest(BaseState):
             "team_2_c": PlayerOptions(7),
             "team_2_d": PlayerOptions(8),
             "team_2_e": PlayerOptions(9),
+            "battle_options": BattleOptions(),
+            "start": "start",
+            "return": "return",
         }
-        self.battle_options = BattleOptions()
+        self.setup_index = list(self.setup_options)[0]
 
     def update(self, dt):
         pass
 
     def draw(self, surface):
         surface.fill(pygame.Color("black"))
+        if self.state == "setup":
+            for i, value in enumerate(list(self.setup_options)):
+                color = settings.TEXT_COLOR
+                if self.setup_index == value:
+                    color = settings.SELECTED_COLOR
+                rect = [0, settings.Y * (10/100 + 7/100 * i), settings.X, settings.Y * 7/100]
+                settings.tw(surface, value, color, rect, settings.HEADING_FONT, x_mode="center")
 
     def get_event(self, event):
         if event.type == pygame.QUIT:
@@ -55,12 +65,38 @@ class BattleTest(BaseState):
                 self.handle_action("space")
 
     def handle_action(self, action):
-        pass
+        if self.state == "setup":
+            if action == "Up":
+                self.change_option(self.setup_options, up=True)
+            elif action == "Down":
+                self.change_option(self.setup_options)
+            elif action == "Return":
+                self.menu_select()
+
+    def change_option(self, options, up=False):
+        if self.setup_index in list(options):
+            dir = 1
+            if up:
+                dir = -1
+            index = list(options).index(self.setup_index) + dir
+            index %= len(options)
+            self.setup_index = list(options)[index]
+        else:
+            self.setup_index = list(options)[0]
+
+    def menu_select(self):
+        if self.setup_index == "return":
+            self.next_state = "TEST_MENU"
+            self.done = True
+        elif self.setup_index == "start":
+            pass
 
 
 class PlayerOptions:
     def __init__(self, slot):
-        self.team = "team_1"
+        self.team = "team_2"
+        if slot in [0, 1, 2, 3, 4]:
+            self.team = "team_1"
         self.slot = slot
         self.type = "Fighter"
         self.active = True
