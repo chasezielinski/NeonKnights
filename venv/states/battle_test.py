@@ -10,7 +10,7 @@ class BattleTest(BaseState):
         super(BattleTest, self).__init__()
         self.next_state = "TEST_MENU"
         self.state = "setup"
-        self.characters = {
+        self.character_options = {
             "team_1_a": PlayerOptions(0),
             "team_1_b": PlayerOptions(1),
             "team_1_c": PlayerOptions(2),
