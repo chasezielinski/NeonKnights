@@ -28,7 +28,8 @@ class BattleTest(BaseState):
         self.setup_index = list(self.setup_options)[0]
 
     def update(self, dt):
-        pass
+        if self.state == "detail":
+            self.setup_options[self.setup_index].update(dt)
 
     def draw(self, surface):
         surface.fill(pygame.Color("black"))
@@ -37,8 +38,10 @@ class BattleTest(BaseState):
                 color = settings.TEXT_COLOR
                 if self.setup_index == value:
                     color = settings.SELECTED_COLOR
-                rect = [0, settings.Y * (10/100 + 7/100 * i), settings.X, settings.Y * 7/100]
+                rect = [0, settings.Y * (5/100 + 7/100 * i), settings.X, settings.Y * 7/100]
                 settings.tw(surface, value, color, rect, settings.HEADING_FONT, x_mode="center")
+        elif self.state == "detail":
+            self.setup_options[self.setup_index].draw(surface)
 
     def get_event(self, event):
         if event.type == pygame.QUIT:
@@ -72,6 +75,8 @@ class BattleTest(BaseState):
                 self.change_option(self.setup_options)
             elif action == "Return":
                 self.menu_select()
+        elif self.state == "detail":
+            self.setup_options[self.setup_index].handle_action(action)
 
     def change_option(self, options, up=False):
         if self.setup_index in list(options):
@@ -90,10 +95,24 @@ class BattleTest(BaseState):
             self.done = True
         elif self.setup_index == "start":
             pass
+        else:
+            self.state = "detail"
 
 
 class PlayerOptions:
     def __init__(self, slot):
+        self.state = "overview"
+        self.options = {"team": None,
+                        "slot": None,
+                        "type": None,
+                        "active": None,
+                        "level": None,
+                        "equipment": None,
+                        "abilities": None,
+                        "items": None,
+                        "return": None
+                        }
+        self.index = list(self.options)[0]
         self.team = "team_2"
         if slot in [0, 1, 2, 3, 4]:
             self.team = "team_1"
@@ -104,6 +123,41 @@ class PlayerOptions:
         self.equipment = {}
         self.abilities = {}
         self.items = []
+
+    def draw(self, surface):
+        if self.state == "overview":
+            for i, value in enumerate(list(self.options)):
+                color = settings.TEXT_COLOR
+                if self.index == value:
+                    color = settings.SELECTED_COLOR
+                rect = [0, settings.Y * (5/100 + (i * 6/100)), settings.X * 25/100, settings.Y * 5/100]
+                settings.tw(surface, value, color, rect, settings.TEXT_FONT, x_mode="rjust")
+
+    def handle_action(self, action):
+        if self.state == "overview":
+            if action == "Up":
+                self.change_option(self.options, up=True)
+            elif action == "Down":
+                self.change_option(self.options)
+            elif action == "Return":
+                self.menu_select()
+
+    def change_option(self, options, up=False):
+        if self.index in list(options):
+            dir = 1
+            if up:
+                dir = -1
+            index = list(options).index(self.index) + dir
+            index %= len(options)
+            self.index = list(options)[index]
+        else:
+            self.index = list(options)[0]
+
+    def menu_select(self):
+        pass
+
+    def update(self, dt):
+        pass
 
 
 class BattleOptions:
