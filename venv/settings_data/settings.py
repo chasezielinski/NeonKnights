@@ -122,6 +122,14 @@ class EquipmentType(Enum):
     ARTIFACT = auto()
 
 
+@unique
+class CharacterClass(Enum):
+    FIGHTER = auto()
+    ROGUE = auto()
+    ADEPT = auto()
+    ARTIFICER = auto()
+
+
 # Player Characters
 BASE_CLASSES = ["Fighter", "Adept", "Rogue", "Artificer"]
 EXPERIENCE_CURVE = [100, 210, 320, 430, 540, 650, 760, 870, 980, 1090, 1200, 1310, 1420, 1530]
@@ -4503,6 +4511,30 @@ class CharacterGetter:
             name = kwargs["name"]
 
         return PlayerCharacter(CharacterGetter.data[class_], name, level, class_)
+
+    @staticmethod
+    def get_list() -> list:
+        return [x for x in list(CharacterGetter.data)]
+
+
+class EnemyGetter:
+    data = JsonReader.read_json("venv/settings_data/Enemy_Data.json")
+
+    @staticmethod
+    def get_enemy(**kwargs):
+        level = 1
+        if "level" in kwargs.keys():
+            level = kwargs["level"]
+
+        class_ = choose_random(list(EnemyGetter.data))
+        if "name" in kwargs.keys():
+            class_ = kwargs["name"]
+
+        return BattleCharacter(EnemyGetter.data[class_], level)
+
+    @staticmethod
+    def get_list() -> list:
+        return [x for x in list(EnemyGetter.data)]
 
 
 class ActionGetter:

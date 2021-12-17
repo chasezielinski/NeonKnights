@@ -10,9 +10,9 @@ class TestMenu(BaseState):
         super(TestMenu, self).__init__()
         self.next_state = "MENU"
         self.menu_options = {
-            "Return to Main Menu": self.return_to_main,
             "Run Actions Test": self.run_actions_test,
             "To Battle Test Menu": self.to_battle_test_menu,
+            "Return to Main Menu": self.return_to_main,
         }
         self.index = "Return to Main Menu"
 

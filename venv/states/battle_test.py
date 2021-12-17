@@ -112,19 +112,9 @@ class PlayerOptions:
         team = "team_2"
         if slot in [0, 1, 2, 3, 4]:
             team = "team_1"
-        self.settings = {"team": team,
-                         "slot": slot,
-                         "type": None,
-                         "active": None,
-                         "level": None,
-                         "equipment": None,
-                         "abilities": None,
-                         "items": None,
-                         "return to menu": None
-                         }
         self.options = {"team": team,
                         "slot": slot,
-                        "type": None,  # get list of all enemies and characters
+                        "type": settings.CharacterGetter.get_list() + settings.EnemyGetter.get_list() + ["random"],
                         "active": [True, False],
                         "level": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
                         "equipment": None,  # get list of all equipment
@@ -132,6 +122,16 @@ class PlayerOptions:
                         "items": None,  # get list of all battle items
                         "return to menu": None
                         }
+        self.settings = {"team": team,
+                         "slot": slot,
+                         "type": self.options["type"][0],
+                         "active": self.options["active"][0],
+                         "level": self.options["level"][0],
+                         "equipment": None,
+                         "abilities": None,
+                         "items": None,
+                         "return to menu": None
+                         }
         self.index = list(self.settings)[0]
         self.slot = slot
         self.type = "Fighter"
@@ -164,6 +164,20 @@ class PlayerOptions:
             elif action == "Return":
                 self.menu_select()
 
+    def menu_select(self):
+        if self.index == "return to menu":
+            self.done = True
+        elif isinstance(self.options[self.index], list):
+            self.increment_option()
+        elif isinstance(self.options[self.index], int):
+            self.state = "input"
+            self.get_input.integer_input(self.index)
+
+    def increment_option(self):
+        index = self.options[self.index].index(self.settings[self.index]) + 1
+        index %= len(self.options[self.index])
+        self.settings[self.index] = self.options[self.index][index]
+
     def change_option(self, options, up=False):
         if self.index in list(options):
             dir = 1
@@ -174,10 +188,6 @@ class PlayerOptions:
             self.index = list(options)[index]
         else:
             self.index = list(options)[0]
-
-    def menu_select(self):
-        if self.index == "return to menu":
-            self.done = True
 
     def update(self, dt):
         pass
