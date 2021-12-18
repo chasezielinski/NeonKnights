@@ -4568,7 +4568,7 @@ class Action:
 
     def do_action(self, test=False):
         if self.get_power() > 0:
-            DamageCalculator.calculate()
+            DamageCalculator.calculate(self, self.parent, self.target)
 
     def get_stat(self, stat):
         return 0
