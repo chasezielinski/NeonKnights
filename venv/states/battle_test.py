@@ -318,6 +318,11 @@ class BattleOptions:
     def menu_select(self):
         if self.index == "return to menu":
             self.done = True
+        elif self.index == "equipment":
+            self.state = "equipment"
+        elif self.index == "abilities":
+            self.pick_from_list = ListPicker(self.options[self.index])
+            self.state = "pick_from_list"
         elif isinstance(self.options[self.index], list):
             self.increment_option()
         elif isinstance(self.options[self.index], int):

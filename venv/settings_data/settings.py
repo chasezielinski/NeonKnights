@@ -3108,7 +3108,7 @@ class BattleCharacter(pygame.sprite.Sprite):
 
         for key, ability in self.abilities.items():
             if useable:
-                if ability.is_useable():
+                if ability.is_useable(self):
                     actions.append(ability)
             else:
                 actions.append(ability)
@@ -3135,7 +3135,7 @@ class BattleCharacter(pygame.sprite.Sprite):
             elif action.get_target_type() == TargetType.SELF:
                 options.append({"action": action, "target": user})
 
-        return actions
+        return options
 
 
 class PlayerCharacter(BattleCharacter):
@@ -4562,7 +4562,7 @@ class Action:
     def get_power(self):
         return getattr(self, "power", 0)
 
-    def is_usable(self, user) -> bool:
+    def is_useable(self, user) -> bool:
         # if self.parent.dazed > 0 or self.parent.stunned > 0 or self.parent.mp < self.mp_cost:
         return True
 
@@ -4775,13 +4775,14 @@ class ActionSet:
 
     def __init__(self, action_set: List[ActionEval], character_map):
         self.actions = action_set
-        self.value = self.get_value()
         self.character_map = character_map
+        self.value = self.get_value()
 
     def get_value(self) -> float:
         """Combine expected values into a normalized comparitor float value"""
 
         # vector sum all evaluations
+        print(self.actions)
         eval_sum = self.actions[0].evaluation
         if len(self.actions) > 1:
             for i in range(len(self.actions) - 1):
@@ -4830,7 +4831,7 @@ class UtilityAI:
         evals = UtilityAI.get_actions_evaluations(ai_characters, ai_characters + enemy_characters, character_map)
 
         # get a list of action-option combinations
-        action_options = product(evals)
+        action_options = list(product(evals))[0]
 
         # combine each combination into an actionSet object and sort according to the expected value
         actions_sets = [ActionSet(option, character_map) for option in action_options]
