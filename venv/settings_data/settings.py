@@ -4392,67 +4392,51 @@ class PauseMenu(object):
         pass
 
 
-class ItemGetter:
-    def __init__(self):
-        self.item_dict = JsonReader().read_json("venv/settings_data/Items.json")
-        self.construct_dict = {"Weapon": self.construct_weapon,
-                               "Armor": self.construct_armor,
-                               "Helm": self.construct_helm,
-                               "Boots": self.construct_boots,
-                               "Cape": self.construct_cape,
-                               "Shield": self.construct_shield,
-                               "Artifact": self.construct_artifact,
-                               "Medallion": self.construct_medallion,
-                               "Item": self.construct_item,
-                               }
+class JsonReader:
+    @staticmethod
+    def read_json(file):
+        with open(file) as f:
+            data = json.load(f)
+        return data
 
-    def get_item(self, **kwargs):
+
+class ImageLoader:
+    def load_image(self, file_path, color_key=COLOR_KEY):
+        image = pygame.image.load(file_path).convert()
+        image.set_colorkey(color_key)
+        return image
+
+
+class ItemGetter:
+    item_dict = JsonReader().read_json("venv/settings_data/Items.json")
+
+    @staticmethod
+    def get_item(**kwargs):
         kwargs_list = list(kwargs.keys())
         if "name" in kwargs_list:
-            return self.construct_by_name(kwargs["name"])
+            pass
         elif "names" in kwargs_list:
-            return self.construct_by_name(choose_random(kwargs["names"]))
+            pass
         elif "type" in kwargs_list:
-            return self.construct_dict[kwargs["type"]](choose_random(self.item_dict[kwargs["type"]].keys()))
+            pass
         else:
-            type = choose_random(self.item_dict.keys())
-            return self.construct_dict[type](choose_random(self.item_dict[type].keys()))
+            type = choose_random(ItemGetter.item_dict.keys())
+            pass
 
-    def construct_by_name(self, name):
-        type = self.get_type_by_name(name)
-        return self.construct_dict[type](name)
+    @staticmethod
+    def construct_by_name(name):
+        type = ItemGetter.get_type_by_name(name)
+        pass
 
-    def get_type_by_name(self, name: str):
-        for key, value in self.item_dict.times():
+    @staticmethod
+    def get_type_by_name(name: str):
+        for key, value in ItemGetter.item_dict.times():
             if name in value.keys():
                 return key
 
-    def construct_weapon(self, name: str):
-        return Weapon(self.item_dict["Weapon"][name]["Properties"], self.item_dict["Weapon"][name]["Behaviors"])
-
-    def construct_armor(self, name: str):
-        return Weapon(self.item_dict["Weapon"][name]["Properties"], self.item_dict["Weapon"][name]["Behaviors"])
-
-    def construct_boots(self, name: str):
-        return Weapon(self.item_dict["Weapon"][name]["Properties"], self.item_dict["Weapon"][name]["Behaviors"])
-
-    def construct_helm(self, name: str):
-        return Weapon(self.item_dict["Weapon"][name]["Properties"], self.item_dict["Weapon"][name]["Behaviors"])
-
-    def construct_shield(self, name: str):
-        return Weapon(self.item_dict["Weapon"][name]["Properties"], self.item_dict["Weapon"][name]["Behaviors"])
-
-    def construct_cape(self, name: str):
-        return Weapon(self.item_dict["Weapon"][name]["Properties"], self.item_dict["Weapon"][name]["Behaviors"])
-
-    def construct_artifact(self, name: str):
-        return Weapon(self.item_dict["Weapon"][name]["Properties"], self.item_dict["Weapon"][name]["Behaviors"])
-
-    def construct_medallion(self, name: str):
-        return Weapon(self.item_dict["Weapon"][name]["Properties"], self.item_dict["Weapon"][name]["Behaviors"])
-
-    def construct_item(self, name: str):
-        return Weapon(self.item_dict["Weapon"][name]["Properties"], self.item_dict["Weapon"][name]["Behaviors"])
+    @staticmethod
+    def get_list_by_type(type_) -> list:
+        return list(ItemGetter.item_dict[type_.name])
 
 
 class RegionGetter:
@@ -4478,21 +4462,6 @@ class RegionGetter:
         return name_list
 
 
-class JsonReader:
-    @staticmethod
-    def read_json(file):
-        with open(file) as f:
-            data = json.load(f)
-        return data
-
-
-class ImageLoader:
-    def load_image(self, file_path, color_key=COLOR_KEY):
-        image = pygame.image.load(file_path).convert()
-        image.set_colorkey(color_key)
-        return image
-
-
 class CharacterGetter:
     data = JsonReader.read_json("venv/settings_data/Class_Data.json")
 
@@ -4516,6 +4485,10 @@ class CharacterGetter:
     def get_list() -> list:
         return [x for x in list(CharacterGetter.data)]
 
+    @staticmethod
+    def class_exist(class_):
+        return class_ in CharacterGetter.data
+
 
 class EnemyGetter:
     data = JsonReader.read_json("venv/settings_data/Enemy_Data.json")
@@ -4527,8 +4500,8 @@ class EnemyGetter:
             level = kwargs["level"]
 
         class_ = choose_random(list(EnemyGetter.data))
-        if "name" in kwargs.keys():
-            class_ = kwargs["name"]
+        if "class" in kwargs.keys():
+            class_ = kwargs["class"]
 
         return BattleCharacter(EnemyGetter.data[class_], level)
 
@@ -4551,7 +4524,9 @@ class ActionGetter:
                 return Action(ActionGetter.data[choose_random(list(ActionGetter.data.keys()))])
 
     @staticmethod
-    def get_actions_list():
+    def get_actions_list(learnable=False):
+        if learnable:
+            return [x for x in ActionGetter.data if ActionGetter.data[x]["learnable"]]
         return [x for x in ActionGetter.data]
 
 
@@ -4572,6 +4547,8 @@ class Action:
                 self.status = {}
                 for k, v in data["status"].items():
                     self.status[Status[k.upper()]] = (v[0], v[1])
+        self.parent = None
+        self.target = None
 
     def get_target_type(self):
         return getattr(self, "target_type", TargetType.SINGLE)
@@ -4589,9 +4566,16 @@ class Action:
         # if self.parent.dazed > 0 or self.parent.stunned > 0 or self.parent.mp < self.mp_cost:
         return True
 
-    def do_action(self):
+    def do_action(self, test=False):
         if self.get_power() > 0:
-            pass
+            DamageCalculator.calculate()
+
+    def get_stat(self, stat):
+        return 0
+
+    def set_target(self, user, target):
+        self.parent = user
+        self.target = target
 
 
 class SkillTreeGetter:
