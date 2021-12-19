@@ -2940,6 +2940,12 @@ class BattleCharacter(pygame.sprite.Sprite):
         value *= self.get_status_multiplier(stat)
         return int(value)
 
+    def get_status(self, status) -> int:
+        if status in self.status:
+            return self.status[status]
+        else:
+            return 0
+
     def get_status_multiplier(self, stat: Stat) -> float or int:
         value = 1
         if stat == Stat.HP or stat == Stat.MP:
@@ -3155,6 +3161,13 @@ class BattleCharacter(pygame.sprite.Sprite):
     def miss(self, delay=0, test=False):
         if not test:
             self.parent.damage_particle.add_particles(self.rect.centerx, self.rect.centery, "MISS", delay=delay)
+
+    def encode(self) -> List[int]:
+        encoding = [self.get_stat(x) for x in list(Stat)]
+        encoding.append(self.get_remaining_hp())
+        encoding.append(self.get_remaining_mp())
+        encoding += [self.get_status(x) for x in list(Status)]
+        return encoding
 
 
 class PlayerCharacter(BattleCharacter):
@@ -4646,6 +4659,25 @@ class Action:
 
     def get_mp_cost(self) -> int:
         return getattr(self, "mp_cost", 0)
+
+    def encode(self, ai_characters, enemy_characters):
+        if not self.target and self.get_target_type() != TargetType.NONE:
+            raise AttributeError('No valid target')
+        if not self.parent:
+            raise AttributeError('No action user')
+        properties = [self.get_power(), self.get_mp_cost(), self.get_accuracy(), self.hits]
+        damage_type_one_hot = [1 if x == self.get_damage_type() else 0 for x in list(DamageType)]
+        damage_stat_one_hot = [1 if x == self.get_damage_stat() else 0 for x in list(Stat)]
+        character_map = self.get_character_map(ai_characters, enemy_characters)
+        target_multi_hot = [1 if character_map[i] in self.target or character_map[i] == self.target else 0 for i in range(10)]
+        status_turns_multi_hot = [x[1] if x in self.status else 0 for x in list(Status)]
+        status_chance_one_hot = [x[0] if x in self.status else 0 for x in list(Status)]
+
+    def get_character_map(self, ai_characters, enemy_characters):
+        ai = ai_characters + [None for i in range(5 - len(ai_characters))]
+        enemy = enemy_characters + [None for i in range(5 - len(enemy_characters))]
+        return ai + enemy
+
 
 
 class SkillTreeGetter:
