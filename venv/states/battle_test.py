@@ -3,6 +3,7 @@ import settings
 from base import BaseState
 import settings
 import unittest
+from random import shuffle
 
 
 class BattleTest(BaseState):
@@ -36,6 +37,9 @@ class BattleTest(BaseState):
                 self.setup_options[self.setup_index].done = False
         elif self.state == "battle":
             self.battle_manager.update(dt)
+            if self.battle_manager.done:
+                self.state = "setup"
+                self.battle_manager.done = False
 
     def draw(self, surface):
         surface.fill(pygame.Color("black"))
@@ -77,7 +81,7 @@ class BattleTest(BaseState):
             elif event.key == pygame.K_TAB:
                 self.handle_action("Tab")
             elif 0 <= event.key <= 122:
-                print("{}".format(event.unicode))
+                # print("{}".format(event.unicode))
                 self.handle_action("{}".format(event.unicode))
 
     def handle_action(self, action):
@@ -162,7 +166,7 @@ class PlayerOptions:
                          "equipment": None,
                          "equipment option": self.options["equipment option"][0],
                          "abilities": None,
-                         "abilities option": self.options["abilities option"][0],
+                         "abilities option": self.options["abilities option"][1],
                          "items": None,
                          "items option": self.options["items option"][0],
                          "return to menu": None
@@ -264,8 +268,8 @@ class BattleOptions:
         self.done = False
         self.state = "overview"
         self.settings = {"number of games": 1,
-                         "team 1 AI mode": "manual",
-                         "team 2 AI mode": "manual",
+                         "team 1 AI mode": "utility AI",
+                         "team 2 AI mode": "utility AI",
                          "step mode": "off",
                          "return to menu": None
                          }
@@ -341,8 +345,8 @@ class BattleOptions:
                 self.settings[self.index] = self.get_input.input
                 self.state = "overview"
 
-    def get_n_games(self):
-        return self.settings["number of games"]
+    def get_n_games(self) -> int:
+        return int(self.settings["number of games"])
 
     def toggle_active(self):
         pass
@@ -628,40 +632,52 @@ class BattleTestManager:
             self.state = "pre_turn_team_1_wait"
 
         elif self.state == "pre_turn_team_1_wait":
-            pass
+            if self.options.settings["step mode"] == "off":
+                self.state = "pre_turn_team_2"
 
         elif self.state == "pre_turn_team_2":
             self.team_2_get_actions()
             self.state = "pre_turn_team_2_wait"
 
         elif self.state == "pre_turn_team_2_wait":
+            shuffle(self.battle_actions)
             self.battle_actions.sort(reverse=True)
+            if self.options.settings["step mode"] == "off":
+                self.state = "pre_action"
 
         elif self.state == "pre_action":
             self.state = "action"
 
         elif self.state == "action":
             if self.battle_actions:
+                # for actionCard in self.battle_actions:
+                    # print(actionCard.action.name)
+                self.battle_actions[0].do_action(test=True)
+                del self.battle_actions[0]
                 self.state = "action_wait"
             else:
                 self.state = "post_turn"
 
         elif self.state == "action_wait":
-            self.battle_actions[0].do_action()
-            del self.battle_actions[0]
+            if self.options.settings["step mode"] == "off":
+                self.state = "post_turn"
 
         elif self.state == "post_turn":
             self.state = "post_turn_wait"
 
         elif self.state == "post_turn_wait":
-            pass
+            if self.options.settings["step mode"] == "off":
+                self.state = "pre_turn_team_1"
 
     def handle_action(self, action):
         if action == "Space":
             self.increment_step()
 
     def increment_step(self):
-        if self.state == "pre_turn_team_1_wait":
+        if self.state == "pre_battle":
+            self.state = "pre_turn_team_1"
+
+        elif self.state == "pre_turn_team_1_wait":
             self.state = "pre_turn_team_2"
 
         elif self.state == "pre_turn_team_2_wait":
@@ -679,6 +695,7 @@ class BattleTestManager:
         self.options = options
         self.team_1 = [TestCharacterGetter.get_character(x) for x in team_1 if x.settings["active"]]
         self.team_2 = [TestCharacterGetter.get_character(x) for x in team_2 if x.settings["active"]]
+        self.battle_actions.clear()
 
     def victory_check(self):
         if self.team_1 and not self.team_2:
@@ -694,7 +711,7 @@ class BattleTestManager:
         self.set_battle(self.options, self.team_1_call, self.team_2_call)
 
     def team_2_win(self):
-        self.team_1_score += 1
+        self.team_2_score += 1
         self.state = "pre_battle"
         self.set_battle(self.options, self.team_1_call, self.team_2_call)
 
@@ -711,7 +728,11 @@ class BattleTestManager:
             self.match_done()
 
     def match_done(self):
-        pass
+        print(f"team_1 score: {self.team_1_score}")
+        print(f"team_2 score: {self.team_2_score}")
+        self.team_1_score = 0
+        self.team_2_score = 0
+        self.done = True
 
     def team_1_get_actions(self):
         if self.options.settings["team 1 AI mode"] == "manual":
@@ -767,7 +788,7 @@ class TestCharacterGetter:
     @staticmethod
     def get_abilities(data):
         if data.settings["abilities option"] == "set":
-            return [settings.ActionGetter.get_action(name=x) for x in data.settings["abilities"]]
+            return {x: settings.ActionGetter.get_action(name=x) for x in data.settings["abilities"]}
         elif data.settings["abilities option"] == "random":
             n = settings.random_int(0, len(data.options["abilities"]) - 1)
             abilities = [x for x in data.options["abilities"]]
@@ -784,12 +805,13 @@ class TestActionCard:
         self.speed = source.get_stat(settings.Stat.SPEED)
         self.action = action
         self.target = target
+        action.set_target(source, target)
 
     def __lt__(self, other):
         return self.speed < other.speed
 
-    def do_action(self):
-        self.action.do_action()
+    def do_action(self, test=False):
+        self.action.do_action(test)
 
 
 class StateEncoder:

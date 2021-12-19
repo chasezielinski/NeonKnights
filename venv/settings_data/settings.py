@@ -49,6 +49,7 @@ class Status(Enum):
     DISABLED = auto()  # can't use attack
     STUNNED = auto()  # can't act
     PERPLEXED = auto()  # CAN'T USE ITEM
+    TRAPPED = auto()    # CAN'T RUN
     VIGILANT = auto()  # DEFENSE UP
     SMITTEN = auto()  # CAN'T DEFEND
     FAITH = auto()  # SPIRIT UP
@@ -128,6 +129,15 @@ class CharacterClass(Enum):
     ROGUE = auto()
     ADEPT = auto()
     ARTIFICER = auto()
+
+
+@unique
+class ActionType(Enum):
+    ATTACK = auto()
+    ABILITY = auto()
+    ITEM = auto()
+    RUN = auto()
+    DEFEND = auto()
 
 
 # Player Characters
@@ -2864,10 +2874,10 @@ class BattleCharacter(pygame.sprite.Sprite):
         self.defend = 0
         self.state = "Idle"
         self.action_options = []
-        self.attack_action = Attack(self)
+        self.attack_action = ActionGetter.get_action(name="Attack")
         self.battle_action = None
-        self.defend_action = Defend(self)
-        self.run_action = Run(self)
+        self.defend_action = ActionGetter.get_action(name="Defend")
+        self.run_action = ActionGetter.get_action(name="Run")
         self.timer = 0
         self.animation_index = 0
         self.state = "Idle"
@@ -2907,10 +2917,11 @@ class BattleCharacter(pygame.sprite.Sprite):
         self.rect.center = pos
         self.pos = self.rect.topleft
 
-    def change_hp(self, damage, delay):
+    def change_hp(self, damage, delay, test=False):
         """Provide damage to BC, spawn particle and check for hp < min and hp > max"""
         damage = int(damage)
-        self.parent.damage_particle.add_particles(self.rect.centerx, self.rect.centery, damage, delay=delay)
+        if not test:
+            self.parent.damage_particle.add_particles(self.rect.centerx, self.rect.centery, damage, delay=delay)
         self.hp -= damage
         if self.hp < 0:
             self.hp = 0
@@ -2982,52 +2993,40 @@ class BattleCharacter(pygame.sprite.Sprite):
                 value /= 1.5
             return value
 
-    def damage(self, damage, action, delay=0):
+    def check_status(self, status: Status) -> bool:
+        return status in self.status
+
+    def spend_mp(self, cost):
+        self.mp -= cost
+        if self.mp < 0:
+            self.mp = 0
+
+    def apply_status(self, status: Status, turns: int, delay, test=False):
+        self.status[status] += turns
+        if not test:
+            self.status_particle(status, turns, delay)
+
+    def damage(self, damage, action, delay=0, test=False):
         """Provide damage amount, action ref, and optional delay to for particle, to deliver damage or healing to BC"""
-        if damage == 'miss':
-            self.parent.damage_particle.add_particles(self.rect.centerx, self.rect.centery, damage, delay=delay)
-        elif damage == 'effect':
-            pass
-        elif damage < 0:
+        # print(damage)
+        if damage < 0:
             self.change_hp(damage, delay)
-        elif Status.INVINCIBLE in self.status.keys():
+        elif Status.INVINCIBLE in self.status:
             self.parent.damage_particle.add_particles(self.rect.centerx, self.rect.centery, "immune")
         else:
-            if action.defend_stat == "defense" or action.defend_stat == "lowest":
-                if Status.SHIELD in self.status.keys():
+            if action.get_damage_type() == DamageType.PHYSICAL or action.get_damage_type() == DamageType.LASER:
+                if Status.SHIELD in self.status:
                     damage /= 2
-            if action.defend_stat == "spirit" or action.defend_stat == "lowest":
-                if Status.WARD in self.status.keys():
+            if action.get_damage_type() == DamageType.MAGICAL or action.get_damage_type() == DamageType.LASER:
+                if Status.WARD in self.status:
                     damage /= 2
-            if Status.SPITE in self.status.keys():
+            if Status.SPITE in self.status:
                 damage += 10
             if Status.CURSE in self.status.keys():
                 damage *= 2
-            self.change_hp(damage, delay)
-        if damage != 'miss':
-            if hasattr(action, 'effects'):
-                for index, effect in enumerate(action.effects):
-                    if random_int(0, 100) <= (action.parent.luck / self.luck) * effect[2]:
-                        setattr(self, effect[0], getattr(self, effect[0]) + effect[1])
-                        self.parent.damage_particle.add_particles(self.rect.centerx, self.rect.centery,
-                                                                  effect[0] + '+' + str(effect[1]).rjust(3),
-                                                                  delay=(index + 2) * 200)
+            self.change_hp(damage, delay, test)
 
-    #        def call_effects(self):
-    #            if self.current_action.target_type == "Single":
-    #                if len(self.apply_effects) > 0:
-    #                    status = self.apply_effects[0][0]
-    #                    turns = self.apply_effects[0][1]
-    #                    self.apply_effects = self.apply_effects[1:]
-    #                    setattr(getattr(self, self.current_action.target), status, turns +
-    #                            getattr(getattr(self, self.current_action.target), status))
-    #                    self.damage_particle.add_particles(getattr(self, self.current_action.target).x +
-    #                                                       getattr(self, self.current_action.target).rect[2] / 2,
-    #                                                       getattr(self, self.current_action.target).y +
-    #                                                       getattr(self, self.current_action.target).rect[3] / 2,
-    #                                                       status + str(turns).rjust(3))
-
-    def give_options(self):
+    def give_options(self): # can be removed once in-game battle system is updated
         options = []
         if hasattr(self, 'action'):
             if getattr(self.action, 'name', "None") != "None":
@@ -3074,31 +3073,36 @@ class BattleCharacter(pygame.sprite.Sprite):
             if action.defend_stat == "spirit" or action.defend_stat == "lowest":
                 self.flip_state()
 
-    def on_end_turn(self):
+    def on_end_turn(self, test=False):
         """called after all actions on each turn, tick down status effects and trigger any other desired effects"""
-        for effect in self.tick_status:
-            if getattr(self, effect) > 0:
-                damage = None
-                if effect == "bleed":
-                    damage = int(self.hp * 5 / 100)
-                elif effect == "burn":
-                    damage = int(self.max_hp * 5 / 100)
-                elif effect == "toxic":
-                    damage = int((self.max_hp - self.hp) * 5 / 100)
-                if damage is not None:
-                    self.hp -= damage
+        status_keys = list(self.status)
+        delay_index = 0
+        for status in status_keys:
+            damage = 0
+            if status == Status.BLEED:
+                damage = int(self.get_remaining_hp() * 5 / 100)
+            elif status == Status.BURN:
+                damage = int(self.get_stat(Stat.HP) * 5 / 100)
+            elif status == Status.TOXIC:
+                damage = int(self.get_missing_hp() * 5 / 100)
+            if damage:
+                self.change_hp(damage, 500*delay_index, test)
+                delay_index += 1
+            self.status[status] -= 1
+            if self.status[status] <= 0:
+                del self.status[status]
+                if not test:
                     self.parent.damage_particle.add_particles(self.rect.centerx, self.rect.centery,
-                                                              damage, delay=500 * self.parent.status_particle_index)
-                    self.parent.status_particle_index += 1
-                setattr(self, effect, getattr(self, effect) - 1)
-                if getattr(self, effect) == 0:
-                    self.parent.damage_particle.add_particles(self.rect.centerx, self.rect.centery,
-                                                              effect + " has worn off",
-                                                              delay=500 * self.parent.status_particle_index)
-                    self.parent.status_particle_index += 1
+                                                              f"{status.name} has worn off", delay=500*delay_index)
+
+    def status_damage(self, status, damage):
+        pass
 
     def get_remaining_hp(self):
         return self.hp
+
+    def get_remaining_mp(self):
+        return self.mp
 
     def get_missing_hp(self):
         return self.stats[Stat.HP] - self.hp
@@ -3112,6 +3116,13 @@ class BattleCharacter(pygame.sprite.Sprite):
                     actions.append(ability)
             else:
                 actions.append(ability)
+
+        if self.attack_action.is_useable(self):
+            actions.append(self.attack_action)
+
+        if self.defend_action.is_useable(self):
+            actions.append(self.defend_action)
+
 
         # also get from equipment, ability_tree
 
@@ -3136,6 +3147,14 @@ class BattleCharacter(pygame.sprite.Sprite):
                 options.append({"action": action, "target": user})
 
         return options
+
+    def status_particle(self, status, turns, delay):
+        self.parent.damage_particle.add_particles(self.rect.centerx, self.rect.centery,
+                                                  f"{status.name} +{turns}", delay=delay)
+
+    def miss(self, delay=0, test=False):
+        if not test:
+            self.parent.damage_particle.add_particles(self.rect.centerx, self.rect.centery, "MISS", delay=delay)
 
 
 class PlayerCharacter(BattleCharacter):
@@ -4547,6 +4566,8 @@ class Action:
                 self.status = {}
                 for k, v in data["status"].items():
                     self.status[Status[k.upper()]] = (v[0], v[1])
+            elif key == "action_type":
+                setattr(self, key, ActionType[value.upper()])
         self.parent = None
         self.target = None
 
@@ -4563,19 +4584,68 @@ class Action:
         return getattr(self, "power", 0)
 
     def is_useable(self, user) -> bool:
+        if user.check_status(Status.DAZED) and self.action_type == ActionType.ABILITY:
+            return False
+
+        elif user.check_status(Status.DISABLED) and self.action_type == ActionType.ATTACK:
+            return False
+
+        elif user.check_status(Status.TRAPPED) and self.action_type == ActionType.RUN:
+            return False
+
+        elif user.check_status(Status.PERPLEXED) and self.action_type == ActionType.ITEM:
+            return False
+
+        elif user.check_status(Status.SMITTEN) and self.action_type == ActionType.DEFEND:
+            return False
+
+        elif user.check_status(Status.STUNNED):
+            return False
+
+        elif user.get_remaining_mp() < self.get_mp_cost():
+            return False
+
         # if self.parent.dazed > 0 or self.parent.stunned > 0 or self.parent.mp < self.mp_cost:
         return True
 
     def do_action(self, test=False):
-        if self.get_power() > 0:
-            DamageCalculator.calculate(self, self.parent, self.target)
+        self.parent.spend_mp(self.get_mp_cost())
 
-    def get_stat(self, stat):
+        if isinstance(self.target, BattleCharacter):
+            self.single_action(test=test)
+        elif isinstance(self.target, list):
+            self.multi_action(test=test)
+
+    def single_action(self, test=False):
+        for hits in range(self.hits):
+            if not MissRoll.hit_or_miss(self, self.parent, self.target):
+                damage = DamageCalculator.calculate(self, self.parent, self.target)
+                self.target.damage(damage, self, self.damage_delay, test)
+            else:
+                self.target.miss(test=test)
+
+    def multi_action(self, test=False):
+        for hits in range(self.hits):
+            miss_list = MissRoll.hit_or_miss(self, self.parent, self.target)
+            for i, target in enumerate(self.target):
+                if not miss_list[i]:
+                    damage = DamageCalculator.calculate(self, self.parent, target)
+                    target.damage(damage, self, self.damage_delay, test)
+                else:
+                    target.miss(test=test)
+
+    def get_stat(self, stat) -> int:
         return 0
 
     def set_target(self, user, target):
         self.parent = user
         self.target = target
+
+    def get_accuracy(self) -> int:
+        return getattr(self, "accuracy", 100)
+
+    def get_mp_cost(self) -> int:
+        return getattr(self, "mp_cost", 0)
 
 
 class SkillTreeGetter:
@@ -4702,6 +4772,16 @@ class MissRoll:
             return miss_roll * target.get_stat(Stat.LUCK) / user.get_stat(Stat.LUCK) > action.get_accuracy()
 
     @staticmethod
+    def effect_hit_or_miss(accuracy, user: Type[BattleCharacter],
+                    target: Union[Type[BattleCharacter], List[Type[BattleCharacter]]]) -> bool or [bool]:
+        """check for hit or miss on a single target or a list of targets; return True = MISS; return False = HIT"""
+        if type(target) == list:
+            return [MissRoll.hit_or_miss(accuracy, user, target_) for target_ in target]
+        else:
+            miss_roll = random_int(0, 100)
+            return miss_roll * target.get_stat(Stat.LUCK) / user.get_stat(Stat.LUCK) > accuracy()
+
+    @staticmethod
     def get_hit_chance(action, user, target) -> float:
         return action.get_accuracy() * (user.get_stat(Stat.LUCK) / target.get_stat(Stat.LUCK)) / 100
 
@@ -4773,7 +4853,8 @@ class ActionSet:
     """Holds a combination of actions for one or more enemies. self.value is for use as a comparitor with higher value
     meaning better option."""
 
-    def __init__(self, action_set: List[ActionEval], character_map):
+    def __init__(self, action_set: List[ActionEval], character_map, ai_characters):
+        self.ai_characters = ai_characters
         self.actions = action_set
         self.character_map = character_map
         self.value = self.get_value()
@@ -4782,7 +4863,6 @@ class ActionSet:
         """Combine expected values into a normalized comparitor float value"""
 
         # vector sum all evaluations
-        print(self.actions)
         eval_sum = self.actions[0].evaluation
         if len(self.actions) > 1:
             for i in range(len(self.actions) - 1):
@@ -4804,14 +4884,17 @@ class ActionSet:
     def sign_flip(self, eval_sum):
         """Flips sign on enemy target evaluations to reward healing of allies and damaging of enemies."""
         for key, value in self.character_map.items():
-            if isinstance(key, PlayerCharacter):
-                pass
-            else:
+            if value in self.ai_characters:
                 eval_sum[value] *= -1
+            else:
+                pass
         return eval_sum
 
     def __lt__(self, other):
         return self.value < other.value
+
+    def get_number_of_actions(self):
+        return len(self.actions)
 
 
 class UtilityAI:
@@ -4827,18 +4910,37 @@ class UtilityAI:
         for i, character in enumerate(ai_characters + enemy_characters):
             character_map[character] = i
 
-        # get an evaluation object for each action-option for each enemy character
+        n_ai = 1
+        if isinstance(ai_characters, list):
+            n_ai = len(ai_characters)
+        n_enemy = 1
+        if isinstance(enemy_characters, list):
+            n_enemy = len(enemy_characters)
+        if not len(character_map) == n_ai + n_enemy:
+            raise ValueError(f"Character map is wrong size. Expected {n_ai + n_enemy}, but "
+                             f"recieved {len(character_map)}.")
+
+        # get an evaluation object for each action-option for each ai character
         evals = UtilityAI.get_actions_evaluations(ai_characters, ai_characters + enemy_characters, character_map)
+        if not len(evals) == len(ai_characters):
+            raise ValueError(f"worng amount of eval sets Expected {len(ai_characters)}, but recieved {len(evals)}.")
 
         # get a list of action-option combinations
-        action_options = list(product(evals))[0]
+        if len(ai_characters) == 1:
+            action_options = product(evals[0])
+        else:
+            action_options = list(product(*evals))
 
         # combine each combination into an actionSet object and sort according to the expected value
-        actions_sets = [ActionSet(option, character_map) for option in action_options]
+        actions_sets = [ActionSet(option, character_map, ai_characters) for option in action_options]
         actions_sets.sort(reverse=True)
 
         # return the ActionSet with the highest expected value
-        return actions_sets[0]
+        if len(ai_characters) == actions_sets[0].get_number_of_actions():
+            return actions_sets[0]
+        else:
+            raise ValueError(f"Wrong number of actions returned. Expected {len(ai_characters)}, but recieved "
+                             f"{actions_sets[0].get_number_of_actions()}.")
 
     @staticmethod
     def get_actions_evaluations(ai_characters: Union[List[Type[BattleCharacter]], Type[BattleCharacter]],
@@ -4854,8 +4956,14 @@ class UtilityAI:
         for character in ai_characters:
             evals = [ActionEval(action["action"], character, action["target"], character_map) for action in
                      character.get_action_options(ai_characters, enemy_characters, character, useable=True)]
-            if evals:
-                evals_list.append(evals)
+            evals_pos = [x for x in evals if ActionSet([x], character_map, ai_characters).value > 0]
+
+            if evals_pos:
+                evals_list.append(evals_pos)
+            else:
+                evals_neg = [(x, ActionSet([x], character_map, ai_characters).value) for x in evals]
+                evals_neg.sort(key=lambda x: x[1], reverse=True)
+                evals_list.append([evals_neg[0][0]])
 
         # return a list of lists: [[enemy_a_option_eval_1, enemy_a_option_eval_2, ...], [enemy_b_option_eval_1, ...]]
         return evals_list
