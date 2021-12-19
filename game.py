@@ -7,7 +7,7 @@ class Game(object):
         self.done = False
         self.screen = screen
         self.clock = pygame.time.Clock()
-        self.fps = 1000
+        self.fps = 60
         self.states = states
         self.state_name = start_state
         self.state = self.states[self.state_name]
