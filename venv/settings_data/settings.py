@@ -4660,18 +4660,22 @@ class Action:
     def get_mp_cost(self) -> int:
         return getattr(self, "mp_cost", 0)
 
+    def get_hits(self):
+        return getattr(self, "hits", 1)
+
     def encode(self, ai_characters, enemy_characters):
         if not self.target and self.get_target_type() != TargetType.NONE:
             raise AttributeError('No valid target')
         if not self.parent:
             raise AttributeError('No action user')
-        properties = [self.get_power(), self.get_mp_cost(), self.get_accuracy(), self.hits]
+        properties = [self.get_power(), self.get_mp_cost(), self.get_accuracy(), self.get_hits()]
         damage_type_one_hot = [1 if x == self.get_damage_type() else 0 for x in list(DamageType)]
         damage_stat_one_hot = [1 if x == self.get_damage_stat() else 0 for x in list(Stat)]
         character_map = self.get_character_map(ai_characters, enemy_characters)
         target_multi_hot = [1 if character_map[i] in self.target or character_map[i] == self.target else 0 for i in range(10)]
         status_turns_multi_hot = [x[1] if x in self.status else 0 for x in list(Status)]
         status_chance_one_hot = [x[0] if x in self.status else 0 for x in list(Status)]
+        return properties + damage_type_one_hot + damage_stat_one_hot + target_multi_hot + status_turns_multi_hot + status_chance_one_hot
 
     def get_character_map(self, ai_characters, enemy_characters):
         ai = ai_characters + [None for i in range(5 - len(ai_characters))]
