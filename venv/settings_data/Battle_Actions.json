@@ -75,7 +75,7 @@
     "damage_delay": 1000,
     "mp_cost":  0,
     "turn_delay": 0,
-    "power": 10,
+    "power": 20,
     "target_type": "single",
     "damage_type": "physical",
     "damage_stat": "strength"

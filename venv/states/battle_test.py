@@ -4,6 +4,8 @@ from base import BaseState
 import settings
 import unittest
 from random import shuffle
+from dataclasses import dataclass
+from typing import Type, List
 
 
 class BattleTest(BaseState):
@@ -132,6 +134,7 @@ class BattleTest(BaseState):
 
 class PlayerOptions:
     def __init__(self, slot):
+        print(settings.CharacterGetter.get_list() + settings.EnemyGetter.get_list())
         self.done = False
         self.state = "overview"
         team = "team_2"
@@ -141,7 +144,7 @@ class PlayerOptions:
                         "slot": slot,
                         "active": [True, False],
                         "type": settings.CharacterGetter.get_list() + settings.EnemyGetter.get_list(),
-                        "type option": ["set", "random"],
+                        "type option": ["set", "random_character", "random_enemy", "random_all"],
                         "level": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
                         "level option": ["set", "random", "range"],
                         "level upper": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
@@ -158,11 +161,11 @@ class PlayerOptions:
                          "slot": slot,
                          "active": self.options["active"][0],
                          "type": self.options["type"][0],
-                         "type option": self.options["type option"][0],
+                         "type option": self.options["type option"][1],
                          "level": self.options["level"][0],
-                         "level option": self.options["level option"][0],
-                         "level upper": self.options["level upper"][0],
-                         "level lower": self.options["level lower"][0],
+                         "level option": self.options["level option"][2],
+                         "level upper": self.options["level upper"][14],
+                         "level lower": self.options["level lower"][11],
                          "equipment": None,
                          "equipment option": self.options["equipment option"][0],
                          "abilities": None,
@@ -271,12 +274,14 @@ class BattleOptions:
                          "team 1 AI mode": "utility AI",
                          "team 2 AI mode": "utility AI",
                          "step mode": "off",
+                         "stats logging": "on",
                          "return to menu": None
                          }
         self.options = {"number of games": 1,
                         "team 1 AI mode": ["manual", "utility AI"],
                         "team 2 AI mode": ["manual", "utility AI"],
                         "step mode": ["off", "turn", "battle"],
+                        "stats logging": ["off", "on"],
                         "return to menu": None
                         }
         self.index = list(self.settings)[0]
@@ -578,6 +583,84 @@ class EquipmentPicker:
             self.index = list(options)[0]
 
 
+@dataclass
+class GameData:
+    """Class for recording test game data."""
+    turns: int
+    class_log: List[str]
+    class_win: List[str]
+
+
+class DataLogger:
+    def __init__(self):
+        self.turns = 0
+        self.team_1 = []
+        self.team_2 = []
+        self.data_list = []
+
+    def set_class(self, team_1, team_2):
+        self.team_1 = team_1
+        self.team_2 = team_2
+
+    def new_turn(self):
+        self.turns += 1
+
+    def game_end(self, team_1=False, team_2=False):
+        if team_1:
+            self.data_list.append(GameData(self.turns, self.team_1 + self.team_2, self.team_1))
+        elif team_2:
+            self.data_list.append(GameData(self.turns, self.team_1 + self.team_2, self.team_2))
+        self.reset()
+
+    def reset(self):
+        self.turns = 0
+
+    def get_turn(self):
+        return self.turns
+
+    def report(self):
+        data = {}
+        turn_list = [x.turns for x in self.data_list]
+        data["average turns"] = sum(turn_list) / len(turn_list)
+        class_total = sum([x.class_log for x in self.data_list], [])
+        class_win = sum([x.class_win for x in self.data_list], [])
+        for class_ in settings.CharacterGetter.get_list():
+            if sum([1 if x == class_ else 0 for x in class_total]) > 0:
+                data[class_] = sum([1 if x == class_ else 0 for x in class_win]) \
+                               / sum([1 if x == class_ else 0 for x in class_total])
+        print(data)
+
+
+@dataclass
+class ActionLog:
+    """Class for recording test game data."""
+    game_number: int
+    turn_number: int
+    action: str
+
+    def print_(self):
+        print(f"game: {self.game_number}, turn: {self.turn_number}, action: {self.action}")
+
+    def __lt__(self, other):
+        if self.game_number == other.game_number:
+            return self.turn_number < other.turn_number
+        else:
+            return self.game_number < other.game_number
+
+
+class ActionLogger:
+    def __init__(self):
+        self.data = []
+
+    def log(self, game_number, turn_number, action):
+        self.data.append(ActionLog(game_number, turn_number, action))
+
+    def report(self):
+        self.data.sort()
+        for data_point in self.data:
+            data_point.print_()
+
+
 class BattleTestManager:
     def __init__(self):
         self.state = "pre_battle"
@@ -591,6 +674,8 @@ class BattleTestManager:
         self.team_2_call = None
         self.options = None
         self.battle_actions = []
+        self.data_logger = DataLogger()
+        self.action_logger = ActionLogger()
 
     def draw(self, surface):
         settings.tw(surface, f"team 1 {self.team_1_score}", settings.TEXT_COLOR,
@@ -628,6 +713,7 @@ class BattleTestManager:
                 self.state = "pre_turn_team_1"
 
         elif self.state == "pre_turn_team_1":
+            self.data_logger.new_turn()
             self.team_1_get_actions()
             self.state = "pre_turn_team_1_wait"
 
@@ -637,6 +723,8 @@ class BattleTestManager:
 
         elif self.state == "pre_turn_team_2":
             self.team_2_get_actions()
+            for action in self.battle_actions:
+                self.action_logger.log(self.team_1_score + self.team_2_score, self.data_logger.get_turn(), action.action.name)
             self.state = "pre_turn_team_2_wait"
 
         elif self.state == "pre_turn_team_2_wait":
@@ -660,9 +748,13 @@ class BattleTestManager:
 
         elif self.state == "action_wait":
             if self.options.settings["step mode"] == "off":
-                self.state = "post_turn"
+                self.state = "pre_action"
 
         elif self.state == "post_turn":
+            for character in self.team_1:
+                character.on_end_turn(test=True)
+            for character in self.team_2:
+                character.on_end_turn(test=True)
             self.state = "post_turn_wait"
 
         elif self.state == "post_turn_wait":
@@ -695,15 +787,19 @@ class BattleTestManager:
         self.options = options
         self.team_1 = [TestCharacterGetter.get_character(x) for x in team_1 if x.settings["active"]]
         self.team_2 = [TestCharacterGetter.get_character(x) for x in team_2 if x.settings["active"]]
+        self.data_logger.set_class([x.get_class() for x in self.team_1], [x.get_class() for x in self.team_2])
         self.battle_actions.clear()
 
     def victory_check(self):
         if self.team_1 and not self.team_2:
             self.team_1_win()
+            self.data_logger.game_end(team_1=True)
         elif self.team_2 and not self.team_1:
             self.team_2_win()
+            self.data_logger.game_end(team_2=True)
         elif not self.team_1 and not self.team_2:
             self.draw_result()
+            self.data_logger.game_end()
 
     def team_1_win(self):
         self.team_1_score += 1
@@ -730,6 +826,8 @@ class BattleTestManager:
     def match_done(self):
         print(f"team_1 score: {self.team_1_score}")
         print(f"team_2 score: {self.team_2_score}")
+        self.action_logger.report()
+        self.data_logger.report()
         self.team_1_score = 0
         self.team_2_score = 0
         self.done = True
@@ -773,8 +871,12 @@ class TestCharacterGetter:
     def get_type(data):
         if data.settings["type option"] == "set":
             return data.settings["type"]
-        elif data.settings["type option"] == "random":
-            return settings.choose_random(data.options["type"])
+        elif data.settings["type option"] == "random_character":
+            return settings.choose_random(settings.CharacterGetter.get_list())
+        elif data.settings["type option"] == "random_enemy":
+            return settings.choose_random(settings.EnemyGetter.get_list())
+        elif data.settings["type option"] == "random_all":
+            return settings.choose_random(settings.CharacterGetter.get_list() + settings.EnemyGetter.get_list())
 
     @staticmethod
     def get_level(data):

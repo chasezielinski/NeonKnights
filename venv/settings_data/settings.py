@@ -2896,6 +2896,10 @@ class BattleCharacter(pygame.sprite.Sprite):
         self.rect = pygame.rect.Rect(self.pos[0], self.pos[1], self.image.get_width(), self.image.get_height())
         self.hp = self.stats[Stat.HP][self.level]
         self.mp = self.stats[Stat.MP][self.level]
+        self.class_ = data["attributes"]["class_type"]
+
+    def get_class(self):
+        return self.class_
 
     def update(self, dt):
         """Increment animation state, flip image, set new rect if necessary"""
@@ -2930,7 +2934,7 @@ class BattleCharacter(pygame.sprite.Sprite):
 
     def get_stat(self, stat: Stat) -> int:
         """proper way to get stat"""
-        value = self.stats[stat][self.level]
+        value = self.stats[stat][self.level - 1]
         if self.equipment:
             for key, equipment in self.equipment.items():
                 value += equipment.get_stat(stat)
@@ -3208,6 +3212,8 @@ class PlayerCharacter(BattleCharacter):
                 parent.battle_actions.add(self.battle_action)
                 parent.battle_objects.add(self.battle_action)
 
+    def get_class(self):
+        return self.class_
 
 class Fighter(PlayerCharacter):
     def __init__(self, name):
@@ -4683,7 +4689,6 @@ class Action:
         return ai + enemy
 
 
-
 class SkillTreeGetter:
     def __init__(self):
         self.data = JsonReader.read_json("venv/settings_data/Tree_Nodes.json")
@@ -4831,12 +4836,12 @@ class ActionEvaluator:
                         character_map: dict) -> list:
         """take an action, user, and all battle characters;
         return a list of options with [user, action, target, outcome]"""
-        outcome = [0 for i in range(len(character_map.keys()))]
+        outcome = np.zeros(len(character_map))
 
         if type(target) == list:
             for character in target:
                 outcome[character_map[character]] = ActionEvaluator.single_evaluate(action, user, character)
-        elif type(target) == BattleCharacter:
+        elif isinstance(target, BattleCharacter):
             outcome[character_map[target]] = ActionEvaluator.single_evaluate(action, user, target)
 
         return outcome
@@ -4899,10 +4904,13 @@ class ActionSet:
         """Combine expected values into a normalized comparitor float value"""
 
         # vector sum all evaluations
-        eval_sum = self.actions[0].evaluation
-        if len(self.actions) > 1:
-            for i in range(len(self.actions) - 1):
-                eval_sum = self.vector_add(eval_sum, self.actions[i + 1].evaluation)
+        # eval_sum = self.actions[0].evaluation
+        # if len(self.actions) > 1:
+        #     for i in range(len(self.actions) - 1):
+        #         eval_sum = self.vector_add(eval_sum, self.actions[i + 1].evaluation)
+
+        list_of_evals = [x.evaluation for x in self.actions]
+        eval_sum = np.sum(list_of_evals, axis=1)
 
         # flip values on enemy outcome
         eval_sum = self.sign_flip(eval_sum)
@@ -4915,7 +4923,7 @@ class ActionSet:
 
     def normalize(self, eval_sum: List[float]) -> List[float]:
         """squash values above 1"""
-        return [math.log(i, 10) if i > 1 else i for i in eval_sum]
+        return [math.log(i, 10) + 1 if i > 1 else i for i in eval_sum]
 
     def sign_flip(self, eval_sum):
         """Flips sign on enemy target evaluations to reward healing of allies and damaging of enemies."""
@@ -4952,7 +4960,7 @@ class UtilityAI:
         n_enemy = 1
         if isinstance(enemy_characters, list):
             n_enemy = len(enemy_characters)
-        if not len(character_map) == n_ai + n_enemy:
+        if len(character_map) != n_ai + n_enemy:
             raise ValueError(f"Character map is wrong size. Expected {n_ai + n_enemy}, but "
                              f"recieved {len(character_map)}.")
 
@@ -4994,12 +5002,19 @@ class UtilityAI:
                      character.get_action_options(ai_characters, enemy_characters, character, useable=True)]
             evals_pos = [x for x in evals if ActionSet([x], character_map, ai_characters).value > 0]
 
-            if evals_pos:
-                evals_list.append(evals_pos)
-            else:
-                evals_neg = [(x, ActionSet([x], character_map, ai_characters).value) for x in evals]
-                evals_neg.sort(key=lambda x: x[1], reverse=True)
-                evals_list.append([evals_neg[0][0]])
+            # if evals_pos:
+            #     evals_list.append(evals_pos)
+            # else:
+            #     evals_neg = [(x, ActionSet([x], character_map, ai_characters).value) for x in evals]
+            #     evals_neg.sort(key=lambda x: x[1], reverse=True)
+            #     evals_list.append([evals_neg[0][0]])
+            cull_factor = int(60 / len(ai_characters + enemy_characters))
+
+            evals_cull_list = [(x, ActionSet([x], character_map, ai_characters).value) for x in evals]
+            evals_cull_list.sort(key=lambda x: x[1], reverse=True)
+            evals_cull_list = evals_cull_list[:cull_factor]
+            survive_list = [x[0] for x in evals_cull_list]
+            evals_list.append(survive_list)
 
         # return a list of lists: [[enemy_a_option_eval_1, enemy_a_option_eval_2, ...], [enemy_b_option_eval_1, ...]]
         return evals_list

@@ -472,7 +472,7 @@ class StatusBar(object):
             pygame.draw.rect(surface, self.color,
                              [self.skills_button[0], self.skills_button[1] + (i * self.Y * self.offset),
                               self.skills_button[2], self.skills_button[3]], border_radius=6)
-            surface.blit(settings.REGION_STATIC_SPRITES[player.class_ + "Icon"],
+            surface.blit(settings.REGION_STATIC_SPRITES[player.class_log + "Icon"],
                          (self.icon_pos[0], self.icon_pos[1] + (i * self.Y * self.offset)))
             pygame.draw.rect(surface, (150, 0, 0),
                              [self.hp_rect[0], self.hp_rect[1] + (i * self.Y * self.offset), self.hp_rect[2],
