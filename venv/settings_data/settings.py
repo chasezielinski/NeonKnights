@@ -8,7 +8,6 @@ import pytweening
 from threading import Timer
 import json
 from enum import Enum, unique, auto
-from dataclasses import dataclass
 from itertools import product
 from typing import List, Type, Union
 
@@ -1896,245 +1895,6 @@ class ScreenTransition(object):
         self.state = "Clear"
 
 
-class EquipMenu(object):
-    def __init__(self, parent):
-        self.scroll_index = 0
-        self.inventory_selection_index = -1
-        self.equip_selection_index = -1
-        self.menu_horizontal_index = "None"
-        self.relative_index = 0
-        self.display_index = 0
-        self.parent = parent
-        self.player_index = None
-        self.bg_1_rect = [X * 8 / 100, Y * 11 / 100, X * 76 / 100, Y * 85 / 100]
-        self.bg_2_rect = [X * 8.5 / 100, Y * 12 / 100, X * 75 / 100, Y * 83 / 100]
-        self.slot_rects = REGION_MENUS['equip menu']['Top_Slot_Rect']
-        self.equip_rects = REGION_MENUS['equip menu']['Top_Equip_Rect']
-        self.inventory_rects = REGION_MENUS['equip menu']['inventory rects']
-
-    def update(self, dt):
-        if not self.player_index:
-            self.player_index = self.parent.persist['characters'][0]
-
-    def right_index(self):
-        index = self.parent.persist['characters'].index(self.player_index)
-        index += 1
-        index %= len(self.parent.persist['characters'])
-        self.player_index = self.parent.persist['characters'][index]
-
-    def left_index(self):
-        index = self.parent.persist['characters'].index(self.player_index)
-        index -= 1
-        index %= len(self.parent.persist['characters'])
-        self.player_index = self.parent.persist['characters'][index]
-
-    def handle_action(self, action):
-        if action == "mouse_move":
-            pos = (int(pygame.mouse.get_pos()[0] * 100 / 1280), int(pygame.mouse.get_pos()[1] * 100 / 720))
-            print(pos)
-            for n, equip_slot in enumerate(self.player_index.get_equipment_options()):
-                if click_check(self.equip_rects[n]):
-                    self.equip_selection_index = n
-                    self.menu_horizontal_index = "Equip"
-                    break
-            else:
-                self.equip_selection_index = -1
-                self.menu_horizontal_index = "None"
-            for key in REGION_MENUS['equip menu']['inventory rects'].keys():
-                if click_check(REGION_MENUS['equip menu']['inventory rects'][key]):
-                    self.inventory_selection_index = key + self.display_index
-                    self.relative_index = key
-                    self.menu_horizontal_index = "Inventory"
-                    break
-                else:
-                    self.inventory_selection_index = -1
-        elif action == "tab":
-            self.parent.state = "Skill_Tree"
-        elif action == "click":
-            self.equip_unequip()
-            if not click_check(self.bg_1_rect):
-                self.parent.state = "Browse"
-        elif action == "wheel_up":
-            if self.menu_horizontal_index == "Inventory":
-                if self.scroll_index > 0:
-                    self.scroll_index -= 1
-                    self.display_index -= 1
-        elif action == "wheel_down":
-            if self.menu_horizontal_index == "Inventory":
-                if self.scroll_index + 8 < len(self.parent.persist['inventory']):
-                    self.scroll_index += 1
-                    self.display_index += 1
-
-    def draw(self, surface):
-        pygame.draw.rect(surface, (50, 50, 50), self.bg_1_rect, border_radius=int(X / 128))
-        pygame.draw.rect(surface, (0, 0, 0), self.bg_2_rect, border_radius=int(X / 128))
-        for n, equip_slot in enumerate(self.player_index.get_equipment_options()):
-            tw(surface, equip_slot, TEXT_COLOR, self.slot_rects[n], TEXT_FONT)
-            if equip_slot in self.player_index.equipment.keys():
-                text = self.player_index.equipment[equip_slot].name
-            else:
-                text = '-'
-            if self.equip_selection_index == n and self.menu_horizontal_index == "Equip":
-                color = SELECTED_COLOR
-            else:
-                color = TEXT_COLOR
-            tw(surface, text, color, self.equip_rects[n], TEXT_FONT)
-        for i, item in enumerate(self.parent.persist['inventory']):
-            color = TEXT_COLOR
-            if not isinstance(item, Equipment):
-                color = (50, 50, 50)
-                if self.inventory_selection_index == i and self.menu_horizontal_index == "Inventory":
-                    color = (100, 100, 100)
-            elif self.inventory_selection_index == i and self.menu_horizontal_index == "Inventory":
-                color = SELECTED_COLOR
-            if 7 >= i - self.scroll_index >= 0:
-                tw(surface, item.name, color, self.inventory_rects[i - self.scroll_index], TEXT_FONT)
-        if len(self.parent.persist['inventory']) < 8:
-            for j in range(len(self.parent.persist['inventory']), 8):
-                color = (50, 50, 50)
-                if self.inventory_selection_index == j and self.menu_horizontal_index == "Inventory":
-                    color = (100, 100, 100)
-                tw(surface, '-'.center(12), color, self.inventory_rects[j], TEXT_FONT)
-        equipped = None
-        selected = None
-        if len(self.parent.persist['inventory']) > self.inventory_selection_index >= 0:
-            selected = self.parent.persist['inventory'][self.inventory_selection_index]
-        if type(selected).__name__ in self.player_index.equipment.keys():
-            equipped = self.player_index.equipment[type(selected).__name__]
-        potential = self.potential_stat(equipped=equipped, prospect=selected)
-        for key, value in enumerate(REGION_MENUS['equip menu']['Stat_Rects']):
-            stat = self.player_index.get_stat(Stat[value.upper()])
-            if value == 'hp':
-                stat2 = self.player_index.hp
-                tw(surface, value + ':' + str(stat2).rjust(8 - len(value)) + '/' + str(stat), TEXT_COLOR,
-                   REGION_MENUS['equip menu']['Stat_Rects'][value], TEXT_FONT)
-            elif value == 'mp':
-                stat2 = self.player_index.mp
-                tw(surface, value + ':' + str(stat2).rjust(9 - len(value)) + '/' + str(stat), TEXT_COLOR,
-                   REGION_MENUS['equip menu']['Stat_Rects'][value], TEXT_FONT)
-            else:
-                tw(surface, value + ':' + str(stat).rjust(12 - len(value)), TEXT_COLOR,
-                   REGION_MENUS['equip menu']['Stat_Rects'][value], TEXT_FONT)
-                if Stat[value.upper()] in potential.keys():
-                    if value == 'defense' or value == 'spirit' or value == 'luck':
-                        if potential[Stat[value.upper()]] < 0:
-                            tw(surface, str(potential[Stat[value.upper()]]).rjust(22 - len(value)), (150, 0, 0),
-                               REGION_MENUS['equip menu']['Stat_Rects'][value], TEXT_FONT)
-                        else:
-                            tw(surface, ('+' + str(potential[Stat[value.upper()]])).rjust(22
-                                                                            - len(value)), (0, 150, 0),
-                               REGION_MENUS['equip menu']['Stat_Rects'][value], TEXT_FONT)
-                    elif value == 'magic' or value == 'speed':
-                        if potential[Stat[value.upper()]] < 0:
-                            tw(surface, str(potential[Stat[value.upper()]]).rjust(20 - len(value)), (150, 0, 0),
-                               REGION_MENUS['equip menu']['Stat_Rects'][value],
-                               TEXT_FONT)
-                        else:
-                            tw(surface, ('+' + str(potential[Stat[value.upper()]])).rjust(20
-                                                                            - len(value)), (0, 150, 0),
-                               REGION_MENUS['equip menu']['Stat_Rects'][value],
-                               TEXT_FONT)
-                    elif value == 'strength':
-                        if potential[Stat[value.upper()]] < 0:
-                            tw(surface, str(potential[Stat[value.upper()]]).rjust(23 - len(value)), (150, 0, 0),
-                               REGION_MENUS['equip menu']['Stat_Rects'][value],
-                               TEXT_FONT)
-                        else:
-                            tw(surface, ('+' + str(potential[Stat[value.upper()]])).rjust(23
-                                                                            - len(value)), (0, 150, 0),
-                               REGION_MENUS['equip menu']['Stat_Rects'][value],
-                               TEXT_FONT)
-
-    def potential_stat(self, equipped=None, prospect=None) -> dict:
-        potential = {Stat.HP: 0, Stat.MP: 0, Stat.STRENGTH: 0, Stat.DEFENSE: 0, Stat.MAGIC: 0, Stat.SPIRIT: 0,
-                     Stat.SPEED: 0, Stat.LUCK: 0, Stat.CRITICAL_RATE: 0, Stat.CRITICAL_DAMAGE: 0}
-
-        if type(prospect).__name__.upper() in EquipmentType.__members__:
-            for key in potential.keys():
-                new = 0
-                if prospect:
-                    new = prospect.get_stat(key)
-                old = 0
-                if equipped:
-                    old = equipped.get_stat(key)
-                potential[key] = new - old
-
-        return potential
-
-    def equip_unequip(self):
-        if self.menu_horizontal_index == "Equip":
-            slot = self.parent.persist['characters'][self.player_index].equipment_options[self.equip_selection_index]
-            if slot in self.parent.persist['characters'][self.player_index].equipment.keys():
-                self.parent.persist['inventory'].append(
-                    copy.deepcopy(self.parent.persist['characters'][self.player_index].equipment[slot]))
-                del (self.parent.persist['characters'][self.player_index].equipment[slot])
-
-        elif self.menu_horizontal_index == "Inventory" and 0 <= self.inventory_selection_index <= len(
-                self.parent.persist['inventory']) - 1:
-            slot = type(self.parent.persist['inventory'][self.inventory_selection_index]).__name__
-            if slot in self.parent.persist['characters'][self.player_index].equipment_options:
-                if slot in self.parent.persist['characters'][self.player_index].equipment:
-                    self.parent.persist['inventory'].append(
-                        copy.deepcopy(self.parent.persist['characters'][self.player_index].equipment[slot]))
-                    del (self.parent.persist['characters'][self.player_index].equipment[slot])
-                self.parent.persist['characters'][self.player_index].equipment[slot] = copy.deepcopy(
-                    self.parent.persist['inventory'][self.inventory_selection_index])
-                del self.parent.persist['inventory'][self.inventory_selection_index]
-
-
-class SkillTreeMenu(object):
-    def __init__(self, parent):
-        self.parent = parent
-        self.player_index = 0
-        self.bg_1_rect = [X * 8 / 100, Y * 11 / 100, X * 76 / 100, Y * 85 / 100]
-        self.bg_2_rect = [X * 8.5 / 100, Y * 12 / 100, X * 75 / 100, Y * 83 / 100]
-        self.left_pos = (X * 9 / 100, Y * 32 / 100)
-        self.center_pos = (X * 35 / 100, Y * 32 / 100)
-        self.right_pos = (X * 60 / 100, Y * 32 / 100)
-        self.detail = SkillDetail(self)
-
-    def update(self, dt):
-        self.parent.persist['characters'][self.player_index].left_tree.update(dt)
-        self.parent.persist['characters'][self.player_index].center_tree.update(dt)
-        self.parent.persist['characters'][self.player_index].right_tree.update(dt)
-        self.detail.update(dt)
-
-    def handle_action(self, action):
-        self.parent.persist['characters'][self.player_index].left_tree.handle_action(action)
-        self.parent.persist['characters'][self.player_index].center_tree.handle_action(action)
-        self.parent.persist['characters'][self.player_index].right_tree.handle_action(action)
-        if action == "mouse_move":
-            pass
-        elif action == "escape":
-            self.parent.state = "Browse"
-        elif action == "click":
-            if not click_check(self.bg_1_rect):
-                self.parent.state = "Browse"
-        elif action == "wheel_up":
-            pass
-        elif action == "wheel_down":
-            pass
-        elif action == "tab":
-            self.parent.state = "Equip"
-
-    def draw(self, surface):
-        pygame.draw.rect(surface, (50, 50, 50), self.bg_1_rect, border_radius=int(X / 128))
-        pygame.draw.rect(surface, (0, 0, 0), self.bg_2_rect, border_radius=int(X / 128))
-        pygame.draw.line(surface, (40, 40, 40), (X * 33.5 / 100, Y * 30 / 100), (X * 33.5 / 100, Y * 90 / 100), 5)
-        pygame.draw.line(surface, (40, 40, 40), (X * 59 / 100, Y * 30 / 100), (X * 59 / 100, Y * 90 / 100), 5)
-        self.parent.persist['characters'][self.player_index].left_tree.draw(surface, self.left_pos)
-        self.parent.persist['characters'][self.player_index].center_tree.draw(surface, self.center_pos)
-        self.parent.persist['characters'][self.player_index].right_tree.draw(surface, self.right_pos)
-        name = self.parent.persist['characters'][self.player_index].name
-        tw(surface, name.center(18 - len(name)), TEXT_COLOR,
-           [X * 11 / 100, Y * 16 / 100, (X * 23 / 100), (Y * 7 / 100)],
-           TEXT_FONT)
-        tw(surface, "Skill Tree".center(18 - len(name)), TEXT_COLOR,
-           [X * 35 / 100, Y * 13 / 100, (X * 23 / 100), (Y * 7 / 100)],
-           HEADING_FONT)
-        self.detail.draw(surface)
-
-
 class SkillDetail(object):
     def __init__(self, parent):
         self.parent = parent
@@ -2852,6 +2612,7 @@ class BattleCharacter(pygame.sprite.Sprite):
         super().__init__()
         self.sprites = SpriteSheet(data["sprites"]).load_strip(data["sprite_rect"], data["sprite_count"],
                                                                data["color_key"])
+        self.status_icon = ImageLoader.load_image(data["status_icon"], data["color_key"])
         self.level = level
         self.level = 1
         self.flip_state_on_hit = False
@@ -4439,7 +4200,8 @@ class JsonReader:
 
 
 class ImageLoader:
-    def load_image(self, file_path, color_key=COLOR_KEY):
+    @staticmethod
+    def load_image(file_path, color_key=COLOR_KEY):
         image = pygame.image.load(file_path).convert()
         image.set_colorkey(color_key)
         return image
@@ -4477,7 +4239,7 @@ class ItemGetter:
         return list(ItemGetter.item_dict[type_.name])
 
 
-class RegionGetter:
+class RegionBuilder:
     def __init__(self):
         self.region_dict = JsonReader().read_json("venv/settings_data/Region_Maps.json")
 
@@ -5018,3 +4780,40 @@ class UtilityAI:
 
         # return a list of lists: [[enemy_a_option_eval_1, enemy_a_option_eval_2, ...], [enemy_b_option_eval_1, ...]]
         return evals_list
+
+
+class World:
+    def __init__(self, map_, graph) -> None:
+        self.map = map_
+        self.graph = graph
+
+    def get_next_options(self, current) -> list:
+        pass
+
+
+class WorldBuild:
+
+    @staticmethod
+    def choose_3() -> list:
+        choice = set()
+        choice.add(random.choice(WorldBuild.options))
+        new_options = {x for x in WorldBuild.options if x not in choice}
+        choice.add(random.choice(new_options))
+        new_options = {x for x in WorldBuild.options if x not in choice}
+        choice.add(random.choice(new_options))
+        return list(choice)
+
+    @staticmethod
+    def extract_keys(dict_) -> list:
+        keys = []
+        for key, value in dict_:
+            keys.append(key)
+            if isinstance(value, dict):
+                keys += WorldBuild.extract_keys(value)
+        return keys
+
+    @staticmethod
+    def create_world() -> Type[World]:
+        start = {}
+        map = {}
+

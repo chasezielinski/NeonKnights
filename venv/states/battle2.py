@@ -70,8 +70,7 @@ class Battle(BaseState):
             player.set_pos_by_center(self.character_pos_table[i])
         # construct each enemy sprite object and add them to proper Groups
         for i, enemy in enumerate(self.persist['enemies']):
-            enemy_sprite = eval("settings." + enemy)(i + 5, self.persist['region_index'], len(self.persist['enemies']),
-                                                     self)
+            enemy_sprite = settings.EnemyGetter.get_enemy(**enemy)
             enemy_sprite.add(self.battle_characters, self.enemy_characters, self.battle_objects)
             enemy_sprite.set_pos_by_center(self.character_pos_table[i+5])
         if self.persist['region_type'] in settings.BATTLE_BGS.keys():

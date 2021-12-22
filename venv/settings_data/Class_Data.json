@@ -1,5 +1,6 @@
 {"Fighter": {
     "sprites": "venv\\resources\\sprites\\Character\\Battle\\Fighter\\Fighter_Battle128p.png",
+    "status_icon": "venv\\resources\\sprites\\Region\\Fighter Icon 64.png",
     "sprite_rect": [0, 0, 128, 128],
     "sprite_count": 6,
     "color_key": [255, 55, 202],
@@ -29,7 +30,9 @@
     "equipment": {},
     "abilities": ["KiBlast"]
     },
-"Adept": {"sprites": "venv\\resources\\sprites\\Character\\Battle\\Fighter\\Fighter_Battle128p.png",
+"Adept": {
+    "sprites": "venv\\resources\\sprites\\Character\\Battle\\Fighter\\Fighter_Battle128p.png",
+    "status_icon": "venv\\resources\\sprites\\Region\\Fighter Icon 64.png",
     "sprite_rect": [0, 0, 128, 128],
     "sprite_count": 6,
     "color_key": [255, 55, 202],
@@ -58,7 +61,9 @@
     "attack_type": "Attack",
     "equipment": {},
     "abilities": ["KiBlast"]},
-"Rogue": {"sprites": "venv\\resources\\sprites\\Character\\Battle\\Fighter\\Fighter_Battle128p.png",
+"Rogue": {
+    "sprites": "venv\\resources\\sprites\\Character\\Battle\\Fighter\\Fighter_Battle128p.png",
+    "status_icon": "venv\\resources\\sprites\\Region\\Fighter Icon 64.png",
     "sprite_rect": [0, 0, 128, 128],
     "sprite_count": 6,
     "color_key": [255, 55, 202],
@@ -88,7 +93,9 @@
     "attack_type": "Attack",
     "equipment": {},
     "abilities": ["KiBlast"]},
-"Artificer": {"sprites": "venv\\resources\\sprites\\Character\\Battle\\Fighter\\Fighter_Battle128p.png",
+"Artificer": {
+    "sprites": "venv\\resources\\sprites\\Character\\Battle\\Fighter\\Fighter_Battle128p.png",
+    "status_icon": "venv\\resources\\sprites\\Region\\Fighter Icon 64.png",
     "sprite_rect": [0, 0, 128, 128],
     "sprite_count": 6,
     "color_key": [255, 55, 202],
