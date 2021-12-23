@@ -3,22 +3,14 @@ import settings
 from base import BaseState
 from settings import PartyAbilityManager, PlayerCharacter, X, Y
 
-fighter_128 = r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Character " \
-              r"Select\Fighter_Select128p.png "
-fighter_256 = r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Character " \
-              r"Select\Fighter_Select256p.png "
-adept_128 = r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Character " \
-            r"Select\Adept_Select128p.png "
-adept_256 = r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Character " \
-            r"Select\Adept_Select256p.png "
-rogue_128 = r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Character " \
-            r"Select\Rogue_Select128p.png "
-rogue_256 = r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Character " \
-            r"Select\Rogue_Select256p.png "
-artificer_128 = r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Character " \
-                r"Select\Artificer_Select128p.png "
-artificer_256 = r"C:\Users\Chase\Dropbox\Pycharm\NeonKnights\venv\resources\sprites\Character " \
-                r"Select\Artificer_Select256p.png "
+fighter_128 = r"venv\resources\sprites\Character Select\Fighter_Select128p.png"
+fighter_256 = r"venv\resources\sprites\Character Select\Fighter_Select256p.png"
+adept_128 = r"venv\resources\sprites\Character Select\Adept_Select128p.png"
+adept_256 = r"venv\resources\sprites\Character Select\Adept_Select256p.png"
+rogue_128 = r"venv\resources\sprites\Character Select\Rogue_Select128p.png"
+rogue_256 = r"venv\resources\sprites\Character Select\Rogue_Select256p.png"
+artificer_128 = r"venv\resources\sprites\Character Select\Artificer_Select128p.png"
+artificer_256 = r"venv\resources\sprites\Character Select\Artificer_Select256p.png"
 
 
 class CharacterSelect(BaseState):

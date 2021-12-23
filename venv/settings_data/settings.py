@@ -1,6 +1,8 @@
 import copy
 import math
 import random
+
+import network_generator
 import numpy as np
 import pygame
 import names
@@ -10,6 +12,7 @@ import json
 from enum import Enum, unique, auto
 from itertools import product
 from typing import List, Type, Union
+from region_2 import Node
 
 pygame.init()
 pygame.mixer.init()
@@ -48,7 +51,7 @@ class Status(Enum):
     DISABLED = auto()  # can't use attack
     STUNNED = auto()  # can't act
     PERPLEXED = auto()  # CAN'T USE ITEM
-    TRAPPED = auto()    # CAN'T RUN
+    TRAPPED = auto()  # CAN'T RUN
     VIGILANT = auto()  # DEFENSE UP
     SMITTEN = auto()  # CAN'T DEFEND
     FAITH = auto()  # SPIRIT UP
@@ -972,9 +975,9 @@ class Empty(object):
         pass
 
 
-def event_caller(parent, node):
-    region_index = parent.persist['region_index']
-    region_type = parent.persist['region_type']
+def event_caller(node, region_type, region_index):
+    region_type = region_type
+    region_index = region_index
     if node.type == "Encounter":
         parameter_dictionary = choose_random_weighted(encounter_dictionary["All"] + encounter_dictionary[region_type],
                                                       encounter_dictionary["All_Weights"] + encounter_dictionary[
@@ -1805,6 +1808,11 @@ def node_assign_2(parent):
     else:
         node_type = random.choices(NODE_TYPES_2[0], weights=NODE_TYPES_2[1])
     return node_type[0]
+
+
+def node_assign_3():
+    node_type = random.choices(NODE_TYPES_2[0], weights=NODE_TYPES_2[1])[0]
+    return node_type
 
 
 def ccw(A, B, C):
@@ -2797,7 +2805,7 @@ class BattleCharacter(pygame.sprite.Sprite):
                 damage *= 2
             self.change_hp(damage, delay, test)
 
-    def give_options(self): # can be removed once in-game battle system is updated
+    def give_options(self):  # can be removed once in-game battle system is updated
         options = []
         if hasattr(self, 'action'):
             if getattr(self.action, 'name', "None") != "None":
@@ -2857,14 +2865,14 @@ class BattleCharacter(pygame.sprite.Sprite):
             elif status == Status.TOXIC:
                 damage = int(self.get_missing_hp() * 5 / 100)
             if damage:
-                self.change_hp(damage, 500*delay_index, test)
+                self.change_hp(damage, 500 * delay_index, test)
                 delay_index += 1
             self.status[status] -= 1
             if self.status[status] <= 0:
                 del self.status[status]
                 if not test:
                     self.parent.damage_particle.add_particles(self.rect.centerx, self.rect.centery,
-                                                              f"{status.name} has worn off", delay=500*delay_index)
+                                                              f"{status.name} has worn off", delay=500 * delay_index)
 
     def status_damage(self, status, damage):
         pass
@@ -2893,7 +2901,6 @@ class BattleCharacter(pygame.sprite.Sprite):
 
         if self.defend_action.is_useable(self):
             actions.append(self.defend_action)
-
 
         # also get from equipment, ability_tree
 
@@ -2975,6 +2982,7 @@ class PlayerCharacter(BattleCharacter):
 
     def get_class(self):
         return self.class_
+
 
 class Fighter(PlayerCharacter):
     def __init__(self, name):
@@ -4239,7 +4247,7 @@ class ItemGetter:
         return list(ItemGetter.item_dict[type_.name])
 
 
-class RegionBuilder:
+class WorldBuilder:
     def __init__(self):
         self.region_dict = JsonReader().read_json("venv/settings_data/Region_Maps.json")
 
@@ -4440,7 +4448,8 @@ class Action:
         damage_type_one_hot = [1 if x == self.get_damage_type() else 0 for x in list(DamageType)]
         damage_stat_one_hot = [1 if x == self.get_damage_stat() else 0 for x in list(Stat)]
         character_map = self.get_character_map(ai_characters, enemy_characters)
-        target_multi_hot = [1 if character_map[i] in self.target or character_map[i] == self.target else 0 for i in range(10)]
+        target_multi_hot = [1 if character_map[i] in self.target or character_map[i] == self.target else 0 for i in
+                            range(10)]
         status_turns_multi_hot = [x[1] if x in self.status else 0 for x in list(Status)]
         status_chance_one_hot = [x[0] if x in self.status else 0 for x in list(Status)]
         return properties + damage_type_one_hot + damage_stat_one_hot + target_multi_hot + status_turns_multi_hot + status_chance_one_hot
@@ -4576,7 +4585,7 @@ class MissRoll:
 
     @staticmethod
     def effect_hit_or_miss(accuracy, user: Type[BattleCharacter],
-                    target: Union[Type[BattleCharacter], List[Type[BattleCharacter]]]) -> bool or [bool]:
+                           target: Union[Type[BattleCharacter], List[Type[BattleCharacter]]]) -> bool or [bool]:
         """check for hit or miss on a single target or a list of targets; return True = MISS; return False = HIT"""
         if type(target) == list:
             return [MissRoll.hit_or_miss(accuracy, user, target_) for target_ in target]
@@ -4791,15 +4800,25 @@ class World:
         pass
 
 
+class RegionMapGetter:
+    data = JsonReader.read_json("Region_Maps.json")
+
+    @staticmethod
+    def get_region_map(region_type):
+        options = RegionMapGetter.data[region_type]
+        return choose_random(options)
+
+
 class WorldBuild:
+    region_types = ["Badlands", "Taiga", "Desert", "Savannah", "Tundra", "Valley"]
 
     @staticmethod
     def choose_3() -> list:
         choice = set()
-        choice.add(random.choice(WorldBuild.options))
-        new_options = {x for x in WorldBuild.options if x not in choice}
+        choice.add(random.choice(WorldBuild.region_types))
+        new_options = [x for x in WorldBuild.region_types if x not in choice]
         choice.add(random.choice(new_options))
-        new_options = {x for x in WorldBuild.options if x not in choice}
+        new_options = [x for x in WorldBuild.region_types if x not in choice]
         choice.add(random.choice(new_options))
         return list(choice)
 
@@ -4813,7 +4832,43 @@ class WorldBuild:
         return keys
 
     @staticmethod
-    def create_world() -> Type[World]:
-        start = {}
-        map = {}
+    def create_world(seed="zzzzzzzz") -> Type[World]:
+        if seed:
+            random.seed(seed)
+        region_types = {i: WorldBuild.choose_3() for i in range(8)}
 
+    @staticmethod
+    def region_generate(region_type, region_index):
+        data = RegionMapGetter.get_region_map(region_type)
+        data["random_state"] = random.getstate()
+        network, random_state = NetworkGetter().get_network(data)
+        random.setstate(random_state)
+        data["nodes"] = []
+        data["node_list"] = network[0]
+        data["edge_list"] = network[1]
+        data["neighbors_dict"] = network[2]
+        data["edge_dict"] = network[3]
+
+        for i, value in enumerate(network[0]):
+            if i == 0:
+                data["nodes"].append(Node(value[0], value[1], network[2][i], network[3][i], i, "Boss"))
+            elif i == 1:
+                data["nodes"].append(Node(value[0], value[1], network[2][i], network[3][i], i, "Region Entry"))
+            else:
+                node_type = node_assign_3()
+                data["nodes"].append(Node(value[0], value[1], network[2][i], network[3][i], i, node_type))
+        for node in data["nodes"]:
+            node.event = event_caller(node, region_type, region_index)
+        return data
+
+
+class NetworkGetter:
+    def get_network(self, data):
+        valid = False
+        network, new_data = network_generator.network_gen(X, Y, data)
+        valid = network[4]
+
+        if valid:
+            return network, new_data["random_state"]
+        else:
+            return NetworkGetter.get_network(new_data)

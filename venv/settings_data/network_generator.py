@@ -7,6 +7,10 @@ import networkx as nx
 def network_gen(X, Y, data):
     data_list = list(data.keys())
     nodes = 30
+    if "seed" in data:
+        random.seed(data["seed"])
+    if "random_state" in data_list:
+        random.setstate(data["random_state"])
     if "nodes" in data_list:
         nodes = data["nodes"]
     node_list = []  # list to hold nodes
@@ -218,7 +222,9 @@ def network_gen(X, Y, data):
         neighbors_dict[value[2]] = [n for n in g.neighbors(i)]
         edge_dict = [i for i in g.edges]
 
-    return [node_list, edge_list, neighbors_dict, edge_dict, valid_path]
+    data["random_state"] = random.getstate()
+
+    return [node_list, edge_list, neighbors_dict, edge_dict, valid_path], data
 
 
 def polygon_check(point, polygon):

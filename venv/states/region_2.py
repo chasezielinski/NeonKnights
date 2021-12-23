@@ -1,21 +1,19 @@
 import math
-import random
 import copy
-import network_generator
 import pygame
 import pytweening
 import settings
 from base import BaseState
 import pytweening as pt
 from settings import X, Y, REGION_MENUS, click_check, tw, TEXT_COLOR, TEXT_FONT, SELECTED_COLOR, Equipment, Stat, \
-    EquipmentType, SkillDetail, HEADING_FONT
+    EquipmentType, SkillDetail, HEADING_FONT, NetworkGetter
 
 
 class Node(pygame.sprite.Sprite):
-    def __init__(self, parent, x, y, neighbors, edges, state, node_type, node_event=None):
+    def __init__(self, x, y, neighbors, edges, state, node_type, node_event=None):
         pygame.sprite.Sprite.__init__(self)
         super().__init__()
-        self.parent = parent
+        self.parent = None
         self.index = state
         self.seen = False
         self.visited = False
@@ -690,7 +688,7 @@ class Region(BaseState):
         self.persist['portal'] = []
         data = settings.RegionBuilder().get_region(self.persist['region_type'])
         self.background = settings.ImageLoader().load_image(data["Image"])
-        network = NetworkGetter().get_network(data)
+        network, random_state = NetworkGetter().get_network(data)
         node_list, edge_list, neighbors_dict, edge_dict = network[0], network[1], network[2], network[3]
 
         for i, value in enumerate(node_list):
@@ -721,16 +719,6 @@ class Region(BaseState):
                     self.state = "Event"
                     self.party.node.state = "Explored"
                     self.party.node.visited = True
-
-
-class NetworkGetter:
-    def get_network(self, data):
-        valid = False
-        while not valid:
-            network = network_generator.network_gen(settings.X, settings.Y, data)
-            valid = network[4]
-            if valid:
-                return network
 
 
 class EquipMenu(object):

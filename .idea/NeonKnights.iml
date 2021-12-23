@@ -4,7 +4,7 @@
     <content url="file://$MODULE_DIR$" />
     <content url="file://$MODULE_DIR$/venv/settings_data" />
     <content url="file://$MODULE_DIR$/venv/states" />
-    <orderEntry type="jdk" jdkName="Python 3.9 (NeonKnights)" jdkType="Python SDK" />
+    <orderEntry type="jdk" jdkName="Python 3.9 (venv)" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
 </module>
