@@ -12,7 +12,6 @@ import json
 from enum import Enum, unique, auto
 from itertools import product
 from typing import List, Type, Union
-from region_2 import Node
 
 pygame.init()
 pygame.mixer.init()
@@ -381,8 +380,7 @@ REGION_LAYOUTS = {
         {
             "Badlands_1":
                 {
-                    "Image": image_load(r"venv\resources\sprites\Region\BGs"
-                                        r"\Badlands_720_BG_2.png"),
+                    "Image": image_load(r"venv\resources\sprites\Region\BGs\Badlands_1_720p.png"),
                     "Start": [176, 424, 312, 592],
                     "End": [904, 496, 1024, 528],
                     "Shapes": [[(120, 224), (432, 264), (592, 184), (760, 176), (1048, 280), (1048, 680), (848, 680),
@@ -395,7 +393,7 @@ REGION_LAYOUTS = {
             "Desert_1":
                 {
                     "Image": image_load(r"venv\resources\sprites\Region\BGs"
-                                        r"\Desert_720_BG_1.png"),
+                                        r"\Desert_1_720p.png"),
                     "Start": [120, 264, 296, 440],
                     "End": [856, 344, 1032, 488],
                     "Shapes": [[(120, 96), (950, 96), (950, 504), (912, 528), (824, 432), (816, 288), (720, 232),
@@ -408,7 +406,7 @@ REGION_LAYOUTS = {
             "Desert_2":
                 {
                     "Image": image_load(r"venv\resources\sprites\Region\BGs"
-                                        r"\Desert_720_BG_2.png"),
+                                        r"\Desert_2_720p.png"),
                     "Start": [124, 94, 266, 418],
                     "End": [956, 244, 1022, 506],
                     "Shapes": [[(122, 92), (966, 90), (680, 369), (650, 588), (602, 606), (420, 476), (124, 428)],
@@ -4801,7 +4799,7 @@ class World:
 
 
 class RegionMapGetter:
-    data = JsonReader.read_json("Region_Maps.json")
+    data = JsonReader.read_json("venv/settings_data/Region_Maps.json")
 
     @staticmethod
     def get_region_map(region_type):
@@ -4872,3 +4870,139 @@ class NetworkGetter:
             return network, new_data["random_state"]
         else:
             return NetworkGetter.get_network(new_data)
+
+
+class Node(pygame.sprite.Sprite):
+    def __init__(self, x, y, neighbors, edges, state, node_type, node_event=None):
+        pygame.sprite.Sprite.__init__(self)
+        super().__init__()
+        self.parent = None
+        self.index = state
+        self.seen = False
+        self.visited = False
+        self.x = x
+        self.y = y
+        self.type = node_type
+        self.travel = False
+        if state == 1:
+            self.state = "Explored"
+        elif state == 0:
+            self.state = "Exit"
+        else:
+            self.state = "Unexplored"
+        self.event = node_event
+        self.selected = False
+        self.hover = False
+        self.neighbors = neighbors
+        self.edges = edges
+        self.images = settings.UNEXPLORED_NODE
+        self.animation_index = 0
+        self.image = self.images[0]
+        self.rect = pygame.Rect(self.x, self.y, self.image.get_width(), self.image.get_height())
+        self.animation_speed = 0.25
+        self.quick_speed = 0.25
+        self.slow_speed = 0.375
+
+    def update(self, dt):
+        if self.type == "Shop":
+            if (self.parent.persist['party_abilities'].scout_vision and self.seen) or \
+                    self.parent.persist['party_abilities'].region_revealed or \
+                    self.parent.persist['party_abilities'].locate_shops:
+                self.images = settings.SHOP_NODE
+                self.animation_speed = self.quick_speed
+            elif self.visited:
+                self.images = settings.EXPLORED_NODE
+                self.animation_speed = self.slow_speed
+            else:
+                self.images = settings.UNEXPLORED_NODE
+                self.animation_speed = self.slow_speed
+        elif self.type == "Dungeon":
+            if (self.parent.persist['party_abilities'].scout_vision and self.seen) or \
+                    self.parent.persist['party_abilities'].region_revealed or \
+                    self.parent.persist['party_abilities'].locate_dungeons:
+                self.images = settings.DUNGEON_NODE
+                self.animation_speed = self.quick_speed
+            elif self.visited:
+                self.images = settings.EXPLORED_NODE
+                self.animation_speed = self.slow_speed
+            else:
+                self.images = settings.UNEXPLORED_NODE
+                self.animation_speed = self.slow_speed
+        elif self.type == "Encounter":
+            if (self.parent.persist['party_abilities'].scout_vision and self.seen) or \
+                    self.parent.persist['party_abilities'].region_revealed or \
+                    self.parent.persist['party_abilities'].locate_encounters:
+                self.images = settings.ENCOUNTER_NODE
+                self.animation_speed = self.quick_speed
+            elif self.visited:
+                self.images = settings.EXPLORED_NODE
+                self.animation_speed = self.slow_speed
+            else:
+                self.images = settings.UNEXPLORED_NODE
+                self.animation_speed = self.slow_speed
+        elif self.type == "Event":
+            if (self.parent.persist['party_abilities'].scout_vision and self.seen) or \
+                    self.parent.persist['party_abilities'].region_revealed or \
+                    self.parent.persist['party_abilities'].locate_events:
+                self.images = settings.EVENT_NODE
+                self.animation_speed = self.quick_speed
+            elif self.visited:
+                self.images = settings.EXPLORED_NODE
+                self.animation_speed = self.slow_speed
+            else:
+                self.images = settings.UNEXPLORED_NODE
+                self.animation_speed = self.slow_speed
+        elif self.type == "Empty":
+            if self.visited:
+                self.images = settings.EXPLORED_NODE
+                self.animation_speed = self.slow_speed
+            else:
+                self.images = settings.UNEXPLORED_NODE
+                self.animation_speed = self.slow_speed
+        elif self.type == "Boss":
+            if (self.parent.persist['party_abilities'].scout_vision and self.seen) or \
+                    self.parent.persist['party_abilities'].region_revealed or \
+                    self.parent.persist['party_abilities'].locate_boss:
+                self.images = settings.BOSS_NODE
+                self.animation_speed = self.quick_speed
+            elif self.visited:
+                self.images = settings.EXPLORED_NODE
+                self.animation_speed = self.slow_speed
+            else:
+                self.images = settings.UNEXPLORED_NODE
+                self.animation_speed = self.slow_speed
+        if self.selected:
+            self.animation_index += self.animation_speed
+            self.animation_index %= len(self.images)
+        else:
+            if self.visited:
+                self.animation_index = -1
+            else:
+                self.animation_index = 0
+        self.image = self.images[math.floor(self.animation_index)]
+
+        if self.parent.party.node is not None:
+            if self.index in self.parent.party.node.neighbors:
+                self.travel = True
+            else:
+                self.travel = False
+        else:
+            self.travel = False
+        self.hover = False
+        if self.rect.collidepoint(pygame.mouse.get_pos()):
+            self.hover = True
+        if self.parent.party.node is not None:
+            if self.index in self.parent.party.node.neighbors:
+                self.seen = True
+
+    def cleanup(self):
+        self.kill()
+
+    def hover(self):
+        pass
+
+    def click(self):
+        self.selected = False
+        if self.rect.collidepoint(pygame.mouse.get_pos()) and self.parent.party.node.index != self.index:
+            self.selected = True
+            self.parent.selected_node = self

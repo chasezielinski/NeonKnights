@@ -22,6 +22,8 @@ class MapBounds(BaseState):
         self.y = 0
         self.last_x = 0
         self.last_y = 0
+        self.region_dict = self.get_region_list()
+        self.index = list(self.region_dict.keys())[0]
 
     def handle_action(self, action):
         if self.state == "Map_Input":
@@ -38,190 +40,15 @@ class MapBounds(BaseState):
                     if self.entry in settings.REGION_LAYOUTS[key]:
                         self.image = settings.REGION_LAYOUTS[key][self.entry]['Image']
                         self.state = "Map_View"
-            elif action == "0" and len(self.entry) < settings.MAX_NAME_LENGTH:
-                settings.SOUND_EFFECTS["Menu"]["Toggle_2"].play()
-                self.entry += action
-            elif action == "1" and len(self.entry) < settings.MAX_NAME_LENGTH:
-                settings.SOUND_EFFECTS["Menu"]["Toggle_2"].play()
-                self.entry += action
-            elif action == "2" and len(self.entry) < settings.MAX_NAME_LENGTH:
-                settings.SOUND_EFFECTS["Menu"]["Toggle_2"].play()
-                self.entry += action
-            elif action == "3" and len(self.entry) < settings.MAX_NAME_LENGTH:
-                settings.SOUND_EFFECTS["Menu"]["Toggle_2"].play()
-                self.entry += action
-            elif action == "4" and len(self.entry) < settings.MAX_NAME_LENGTH:
-                settings.SOUND_EFFECTS["Menu"]["Toggle_2"].play()
-                self.entry += action
-            elif action == "5" and len(self.entry) < settings.MAX_NAME_LENGTH:
-                settings.SOUND_EFFECTS["Menu"]["Toggle_2"].play()
-                self.entry += action
-            elif action == "6" and len(self.entry) < settings.MAX_NAME_LENGTH:
-                settings.SOUND_EFFECTS["Menu"]["Toggle_2"].play()
-                self.entry += action
-            elif action == "7" and len(self.entry) < settings.MAX_NAME_LENGTH:
-                settings.SOUND_EFFECTS["Menu"]["Toggle_2"].play()
-                self.entry += action
-            elif action == "8" and len(self.entry) < settings.MAX_NAME_LENGTH:
-                settings.SOUND_EFFECTS["Menu"]["Toggle_2"].play()
-                self.entry += action
-            elif action == "9" and len(self.entry) < settings.MAX_NAME_LENGTH:
+            elif action in ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"] \
+                    and len(self.entry) < settings.MAX_NAME_LENGTH:
                 settings.SOUND_EFFECTS["Menu"]["Toggle_2"].play()
                 self.entry += action
             elif action == "underscore" and len(self.entry) < settings.MAX_NAME_LENGTH:
                 settings.SOUND_EFFECTS["Menu"]["Toggle_2"].play()
                 self.entry += "_"
-            elif action == "a" and len(self.entry) < settings.MAX_NAME_LENGTH:
-                settings.SOUND_EFFECTS["Menu"]["Toggle_2"].play()
-                if mods & pygame.KMOD_SHIFT:
-                    self.entry += action.upper()
-                else:
-                    self.entry += action
-            elif action == "b" and len(self.entry) < settings.MAX_NAME_LENGTH:
-                settings.SOUND_EFFECTS["Menu"]["Toggle_2"].play()
-                if mods & pygame.KMOD_SHIFT:
-                    self.entry += action.upper()
-                else:
-                    self.entry += action
-            elif action == "c" and len(self.entry) < settings.MAX_NAME_LENGTH:
-                settings.SOUND_EFFECTS["Menu"]["Toggle_2"].play()
-                if mods & pygame.KMOD_SHIFT:
-                    self.entry += action.upper()
-                else:
-                    self.entry += action
-            elif action == "d" and len(self.entry) < settings.MAX_NAME_LENGTH:
-                settings.SOUND_EFFECTS["Menu"]["Toggle_2"].play()
-                if mods & pygame.KMOD_SHIFT:
-                    self.entry += action.upper()
-                else:
-                    self.entry += action
-            elif action == "e" and len(self.entry) < settings.MAX_NAME_LENGTH:
-                settings.SOUND_EFFECTS["Menu"]["Toggle_2"].play()
-                if mods & pygame.KMOD_SHIFT:
-                    self.entry += action.upper()
-                else:
-                    self.entry += action
-            elif action == "f" and len(self.entry) < settings.MAX_NAME_LENGTH:
-                settings.SOUND_EFFECTS["Menu"]["Toggle_2"].play()
-                if mods & pygame.KMOD_SHIFT:
-                    self.entry += action.upper()
-                else:
-                    self.entry += action
-            elif action == "g" and len(self.entry) < settings.MAX_NAME_LENGTH:
-                settings.SOUND_EFFECTS["Menu"]["Toggle_2"].play()
-                if mods & pygame.KMOD_SHIFT:
-                    self.entry += action.upper()
-                else:
-                    self.entry += action
-            elif action == "h" and len(self.entry) < settings.MAX_NAME_LENGTH:
-                settings.SOUND_EFFECTS["Menu"]["Toggle_2"].play()
-                if mods & pygame.KMOD_SHIFT:
-                    self.entry += action.upper()
-                else:
-                    self.entry += action
-            elif action == "i" and len(self.entry) < settings.MAX_NAME_LENGTH:
-                settings.SOUND_EFFECTS["Menu"]["Toggle_2"].play()
-                if mods & pygame.KMOD_SHIFT:
-                    self.entry += action.upper()
-                else:
-                    self.entry += action
-            elif action == "j" and len(self.entry) < settings.MAX_NAME_LENGTH:
-                settings.SOUND_EFFECTS["Menu"]["Toggle_2"].play()
-                if mods & pygame.KMOD_SHIFT:
-                    self.entry += action.upper()
-                else:
-                    self.entry += action
-            elif action == "k" and len(self.entry) < settings.MAX_NAME_LENGTH:
-                settings.SOUND_EFFECTS["Menu"]["Toggle_2"].play()
-                if mods & pygame.KMOD_SHIFT:
-                    self.entry += action.upper()
-                else:
-                    self.entry += action
-            elif action == "l" and len(self.entry) < settings.MAX_NAME_LENGTH:
-                settings.SOUND_EFFECTS["Menu"]["Toggle_2"].play()
-                if mods & pygame.KMOD_SHIFT:
-                    self.entry += action.upper()
-                else:
-                    self.entry += action
-            elif action == "m" and len(self.entry) < settings.MAX_NAME_LENGTH:
-                settings.SOUND_EFFECTS["Menu"]["Toggle_2"].play()
-                if mods & pygame.KMOD_SHIFT:
-                    self.entry += action.upper()
-                else:
-                    self.entry += action
-            elif action == "n" and len(self.entry) < settings.MAX_NAME_LENGTH:
-                settings.SOUND_EFFECTS["Menu"]["Toggle_2"].play()
-                if mods & pygame.KMOD_SHIFT:
-                    self.entry += action.upper()
-                else:
-                    self.entry += action
-            elif action == "o" and len(self.entry) < settings.MAX_NAME_LENGTH:
-                settings.SOUND_EFFECTS["Menu"]["Toggle_2"].play()
-                if mods & pygame.KMOD_SHIFT:
-                    self.entry += action.upper()
-                else:
-                    self.entry += action
-            elif action == "p" and len(self.entry) < settings.MAX_NAME_LENGTH:
-                settings.SOUND_EFFECTS["Menu"]["Toggle_2"].play()
-                if mods & pygame.KMOD_SHIFT:
-                    self.entry += action.upper()
-                else:
-                    self.entry += action
-            elif action == "q" and len(self.entry) < settings.MAX_NAME_LENGTH:
-                settings.SOUND_EFFECTS["Menu"]["Toggle_2"].play()
-                if mods & pygame.KMOD_SHIFT:
-                    self.entry += action.upper()
-                else:
-                    self.entry += action
-            elif action == "r" and len(self.entry) < settings.MAX_NAME_LENGTH:
-                settings.SOUND_EFFECTS["Menu"]["Toggle_2"].play()
-                if mods & pygame.KMOD_SHIFT:
-                    self.entry += action.upper()
-                else:
-                    self.entry += action
-            elif action == "s" and len(self.entry) < settings.MAX_NAME_LENGTH:
-                settings.SOUND_EFFECTS["Menu"]["Toggle_2"].play()
-                if mods & pygame.KMOD_SHIFT:
-                    self.entry += action.upper()
-                else:
-                    self.entry += action
-            elif action == "t" and len(self.entry) < settings.MAX_NAME_LENGTH:
-                settings.SOUND_EFFECTS["Menu"]["Toggle_2"].play()
-                if mods & pygame.KMOD_SHIFT:
-                    self.entry += action.upper()
-                else:
-                    self.entry += action
-            elif action == "u" and len(self.entry) < settings.MAX_NAME_LENGTH:
-                settings.SOUND_EFFECTS["Menu"]["Toggle_2"].play()
-                if mods & pygame.KMOD_SHIFT:
-                    self.entry += action.upper()
-                else:
-                    self.entry += action
-            elif action == "v" and len(self.entry) < settings.MAX_NAME_LENGTH:
-                settings.SOUND_EFFECTS["Menu"]["Toggle_2"].play()
-                if mods & pygame.KMOD_SHIFT:
-                    self.entry += action.upper()
-                else:
-                    self.entry += action
-            elif action == "w" and len(self.entry) < settings.MAX_NAME_LENGTH:
-                settings.SOUND_EFFECTS["Menu"]["Toggle_2"].play()
-                if mods & pygame.KMOD_SHIFT:
-                    self.entry += action.upper()
-                else:
-                    self.entry += action
-            elif action == "x" and len(self.entry) < settings.MAX_NAME_LENGTH:
-                settings.SOUND_EFFECTS["Menu"]["Toggle_2"].play()
-                if mods & pygame.KMOD_SHIFT:
-                    self.entry += action.upper()
-                else:
-                    self.entry += action
-            elif action == "y" and len(self.entry) < settings.MAX_NAME_LENGTH:
-                settings.SOUND_EFFECTS["Menu"]["Toggle_2"].play()
-                if mods & pygame.KMOD_SHIFT:
-                    self.entry += action.upper()
-                else:
-                    self.entry += action
-            elif action == "z" and len(self.entry) < settings.MAX_NAME_LENGTH:
+            elif action in ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r",
+                            "s", "t", "u", "v", "w", "x", "y", "z"] and len(self.entry) < settings.MAX_NAME_LENGTH:
                 settings.SOUND_EFFECTS["Menu"]["Toggle_2"].play()
                 if mods & pygame.KMOD_SHIFT:
                     self.entry += action.upper()
@@ -230,6 +57,26 @@ class MapBounds(BaseState):
             elif action == "space" and len(self.entry) < settings.MAX_NAME_LENGTH:
                 settings.SOUND_EFFECTS["Menu"]["Toggle_2"].play()
                 self.entry += "_"
+            elif action == "F1":
+                self.state = "Select_From_List"
+
+        elif self.state == "Select_From_List":
+            if action == "Backspace":
+                settings.SOUND_EFFECTS["Menu"]["Toggle_1"].play()
+                if len(self.entry) > 0:
+                    self.entry = self.entry[:-1]
+                else:
+                    self.state = "Class_Select"
+            elif action == "Return":
+                settings.SOUND_EFFECTS["Menu"]["Toggle_1"].play()
+                self.image = settings.image_load(self.region_dict[self.index])
+                self.state = "Map_View"
+            elif action == "Up":
+                settings.SOUND_EFFECTS["Menu"]["Toggle_1"].play()
+                self.toggle_index(up=True)
+            elif action == "Down":
+                settings.SOUND_EFFECTS["Menu"]["Toggle_1"].play()
+                self.toggle_index()
 
         elif self.state == "Map_View":
             if action == "Click":
@@ -287,12 +134,16 @@ class MapBounds(BaseState):
                 self.handle_action("Left")
             elif event.key == pygame.K_RIGHT:
                 self.handle_action("Right")
+            if event.key == pygame.K_UP:
+                self.handle_action("Up")
+            elif event.key == pygame.K_DOWN:
+                self.handle_action("Down")
             elif event.key == pygame.K_RETURN:
                 self.handle_action("Return")
             elif event.key == pygame.K_BACKSPACE:
                 self.handle_action("Backspace")
             elif event.key == pygame.K_ESCAPE:
-                self.handle_action("ESCAPE")
+                self.handle_action("Escape")
             elif event.key == pygame.K_DELETE:
                 self.handle_action("Delete")
             elif event.key == pygame.K_HOME:
@@ -377,6 +228,8 @@ class MapBounds(BaseState):
                 self.handle_action("0")
             elif event.key == pygame.K_MINUS:
                 self.handle_action("underscore")
+            elif event.key == pygame.K_F1:
+                self.handle_action("F1")
 
         elif event.type == pygame.MOUSEBUTTONDOWN:
             if event.button == 1:
@@ -389,6 +242,9 @@ class MapBounds(BaseState):
         surface.fill(pygame.Color("black"))
         if self.state == "Map_Input":
             settings.tw(surface, self.entry, self.text_color, (300, 200, 600, 500), settings.HEADING_FONT)
+        elif self.state == "Select_From_List":
+            settings.tw(surface, self.index, settings.SELECTED_COLOR, [0, 0, settings.X, settings.Y],
+                        settings.HEADING_FONT, x_mode="center", y_mode="center")
         if self.state == "Map_View":
             if self.image:
                 surface.blit(self.image, (0, 0))
@@ -399,3 +255,21 @@ class MapBounds(BaseState):
         for biome in settings.REGION_LAYOUTS:
             if self.entry in settings.REGION_LAYOUTS[biome]:
                 self.text_color = settings.SELECTED_COLOR
+
+    def toggle_index(self, up=False):
+        index = list(self.region_dict).index(self.index)
+        if up:
+            index -= 1
+        else:
+            index += 1
+        index %= len(list(self.region_dict))
+        self.index = list(self.region_dict)[index]
+
+    @staticmethod
+    def get_region_list() -> dict:
+        data = settings.JsonReader.read_json("venv/settings_data/Region_Maps.json")
+        image_dict = {}
+        for region_type, map_list in data.items():
+            for region, settings_ in map_list.items():
+                image_dict[region] = settings_["Image"]
+        return image_dict
