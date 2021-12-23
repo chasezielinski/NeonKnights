@@ -4895,7 +4895,7 @@ class Node(pygame.sprite.Sprite):
         self.hover = False
         self.neighbors = neighbors
         self.edges = edges
-        self.images = settings.UNEXPLORED_NODE
+        self.images = UNEXPLORED_NODE
         self.animation_index = 0
         self.image = self.images[0]
         self.rect = pygame.Rect(self.x, self.y, self.image.get_width(), self.image.get_height())
@@ -4908,68 +4908,68 @@ class Node(pygame.sprite.Sprite):
             if (self.parent.persist['party_abilities'].scout_vision and self.seen) or \
                     self.parent.persist['party_abilities'].region_revealed or \
                     self.parent.persist['party_abilities'].locate_shops:
-                self.images = settings.SHOP_NODE
+                self.images = SHOP_NODE
                 self.animation_speed = self.quick_speed
             elif self.visited:
-                self.images = settings.EXPLORED_NODE
+                self.images = EXPLORED_NODE
                 self.animation_speed = self.slow_speed
             else:
-                self.images = settings.UNEXPLORED_NODE
+                self.images = UNEXPLORED_NODE
                 self.animation_speed = self.slow_speed
         elif self.type == "Dungeon":
             if (self.parent.persist['party_abilities'].scout_vision and self.seen) or \
                     self.parent.persist['party_abilities'].region_revealed or \
                     self.parent.persist['party_abilities'].locate_dungeons:
-                self.images = settings.DUNGEON_NODE
+                self.images = DUNGEON_NODE
                 self.animation_speed = self.quick_speed
             elif self.visited:
-                self.images = settings.EXPLORED_NODE
+                self.images = EXPLORED_NODE
                 self.animation_speed = self.slow_speed
             else:
-                self.images = settings.UNEXPLORED_NODE
+                self.images = UNEXPLORED_NODE
                 self.animation_speed = self.slow_speed
         elif self.type == "Encounter":
             if (self.parent.persist['party_abilities'].scout_vision and self.seen) or \
                     self.parent.persist['party_abilities'].region_revealed or \
                     self.parent.persist['party_abilities'].locate_encounters:
-                self.images = settings.ENCOUNTER_NODE
+                self.images = ENCOUNTER_NODE
                 self.animation_speed = self.quick_speed
             elif self.visited:
-                self.images = settings.EXPLORED_NODE
+                self.images = EXPLORED_NODE
                 self.animation_speed = self.slow_speed
             else:
-                self.images = settings.UNEXPLORED_NODE
+                self.images = UNEXPLORED_NODE
                 self.animation_speed = self.slow_speed
         elif self.type == "Event":
             if (self.parent.persist['party_abilities'].scout_vision and self.seen) or \
                     self.parent.persist['party_abilities'].region_revealed or \
                     self.parent.persist['party_abilities'].locate_events:
-                self.images = settings.EVENT_NODE
+                self.images = EVENT_NODE
                 self.animation_speed = self.quick_speed
             elif self.visited:
-                self.images = settings.EXPLORED_NODE
+                self.images = EXPLORED_NODE
                 self.animation_speed = self.slow_speed
             else:
-                self.images = settings.UNEXPLORED_NODE
+                self.images = UNEXPLORED_NODE
                 self.animation_speed = self.slow_speed
         elif self.type == "Empty":
             if self.visited:
-                self.images = settings.EXPLORED_NODE
+                self.images = EXPLORED_NODE
                 self.animation_speed = self.slow_speed
             else:
-                self.images = settings.UNEXPLORED_NODE
+                self.images = UNEXPLORED_NODE
                 self.animation_speed = self.slow_speed
         elif self.type == "Boss":
             if (self.parent.persist['party_abilities'].scout_vision and self.seen) or \
                     self.parent.persist['party_abilities'].region_revealed or \
                     self.parent.persist['party_abilities'].locate_boss:
-                self.images = settings.BOSS_NODE
+                self.images = BOSS_NODE
                 self.animation_speed = self.quick_speed
             elif self.visited:
-                self.images = settings.EXPLORED_NODE
+                self.images = EXPLORED_NODE
                 self.animation_speed = self.slow_speed
             else:
-                self.images = settings.UNEXPLORED_NODE
+                self.images = UNEXPLORED_NODE
                 self.animation_speed = self.slow_speed
         if self.selected:
             self.animation_index += self.animation_speed
