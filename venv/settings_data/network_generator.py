@@ -136,39 +136,26 @@ def network_gen(X, Y, data):
                 node_list.append(Node(x, y, index))
                 index += 1
 
-
-    # # make list of all node pairs
-    # edge_list_ = [Edge(pair[0], pair[1]) for pair in combinations(node_list, 2)]
-    #
-    # # eliminate all edges out of length spec
-    # edge_list_ = [edge for edge in edge_list_ if ll < edge.get_length() < ul]
-    #
-    # # make a list of all crossing edges
-    # cross_pairs = [(pair[0], pair[1]) for pair in combinations(edge_list_, 2) if pair[0].cross(pair[1])]
-    #
-    # while 1:
-    #     if not cross_pairs:
-    #         break
-    #     edge_list_.remove(edge_pairs[0][0])
-
     edge_list_ = set()
 
     for node in node_list:
-        candidates = [x for x in node_list if ul > node.get_distance(x.x, x.y) > spacing]
-        if candidates:
-            for i in range(knn):
-                c_node = candidates.pop(candidates.index(random.choice(candidates)))
+        candidates = [x for x in node_list if ul > node.get_distance(x.x, x.y) > ll]
+        for i in range(knn):
+            if candidates:
+                c_node = random.choice(candidates)
+                candidates.remove(c_node)
                 if node.index > c_node.index:
                     new_edge = Edge(node, c_node)
                 else:
                     new_edge = Edge(c_node, node)
                 for edge in edge_list_:
-                    if edge.cross(new_edge, ignore_endpoints=True):
+                    if share_node((new_edge.node_1.x, new_edge.node_1.y,new_edge.node_2.x,new_edge.node_2.y),
+                                  (edge.node_1.x, edge.node_1.y, edge.node_2.x, edge.node_2.y)):
+                        pass
+                    elif edge.cross(new_edge):
                         break
                 else:
                     edge_list_.add(new_edge)
-
-    print(len(edge_list_))
 
     for node in node_list:
         node_edges = [edge for edge in edge_list_ if edge.has_node(node)]
@@ -183,12 +170,6 @@ def network_gen(X, Y, data):
         g.add_edge(edge.node_1.index, edge.node_2.index)
 
     valid_path = nx.has_path(g, 0, 1)
-    if valid_path:
-        entry_exit_pathlength = nx.shortest_path_length(g, 0, 1)
-        valid_path = 1
-    else:
-        entry_exit_pathlength = "N/A"
-        valid_path = 0
     num_isolates = nx.number_of_isolates(g)
     set_island_check = set()
     number_islands = 0

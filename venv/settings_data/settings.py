@@ -4936,9 +4936,9 @@ class WorldBuild:
 
     @staticmethod
     def region_generate(region_type, region_index):
-        data = RegionMapGetter.get_region_map(region_type)
-        data["random_state"] = random.getstate()
-        network, data = NetworkGetter().get_network(data)
+        base_data = RegionMapGetter.get_region_map(region_type)
+        base_data["random_state"] = random.getstate()
+        network, data = NetworkGetter().get_network(base_data)
         random.setstate(data["random_state"])
         data["nodes"] = []
         data["node_list"] = network[0]
