@@ -33,9 +33,9 @@ class Edge:
     def __lt__(self, other):
         return self.get_length() < other.get_length()
     
-    def cross(self, other):
+    def cross(self, other, ignore_endpoints=False):
         return cross_check_2((self.node_1.x, self.node_1.y), (self.node_2.x, self.node_2.y), 
-                             (other.node_1.x, other.node_1.y), (other.node_2.x, other.node_2.y))
+                             (other.node_1.x, other.node_1.y), (other.node_2.x, other.node_2.y), ignore_endpoints)
 
     def propose_cross(self, node_1, node_2):
         return cross_check_2((self.node_1.x, self.node_1.y), (self.node_2.x, self.node_2.y),
@@ -156,18 +156,17 @@ def network_gen(X, Y, data):
     for node in node_list:
         candidates = [x for x in node_list if ul > node.get_distance(x.x, x.y) > spacing]
         if candidates:
-            choice_list = random.choices(candidates, k=knn)
-            for c_node in choice_list:
-                edge_list_.add(Edge(node, c_node))
-                # if node.index > c_node.index:
-                #     new_edge = Edge(node, c_node)
-                # else:
-                #     new_edge = Edge(c_node, node)
-                # for edge in edge_list_:
-                #     if edge.cross(new_edge):
-                #         break
-                # else:
-                #     edge_list_.add(new_edge)
+            for i in range(knn):
+                c_node = candidates.pop(candidates.index(random.choice(candidates)))
+                if node.index > c_node.index:
+                    new_edge = Edge(node, c_node)
+                else:
+                    new_edge = Edge(c_node, node)
+                for edge in edge_list_:
+                    if edge.cross(new_edge, ignore_endpoints=True):
+                        break
+                else:
+                    edge_list_.add(new_edge)
 
     print(len(edge_list_))
 
@@ -266,7 +265,7 @@ class Point:
         self.y = y
 
 
-def onSegment(p, q, r):
+def on_segment(p, q, r, ignore_endpoints=False):
     if ((q[0] <= max(p[0], r[0])) and (q[0] >= min(p[0], r[0])) and
             (q[1] <= max(p[1], r[1])) and (q[1] >= min(p[1], r[1]))):
         return True
@@ -283,7 +282,7 @@ def orientation(p, q, r):
         return 0
 
 
-def do_intersect(p1, q1, p2, q2):
+def do_intersect(p1, q1, p2, q2, ignore_endpoints=False):
     o1 = orientation(p1, q1, p2)
     o2 = orientation(p1, q1, q2)
     o3 = orientation(p2, q2, p1)
@@ -292,23 +291,24 @@ def do_intersect(p1, q1, p2, q2):
     if (o1 != o2) and (o3 != o4):
         return True
 
-    if (o1 == 0) and onSegment(p1, p2, q1):
-        return True
-    if (o2 == 0) and onSegment(p1, q2, q1):
-        return True
-    if (o3 == 0) and onSegment(p2, p1, q2):
-        return True
-    if (o4 == 0) and onSegment(p2, q1, q2):
-        return True
+    if not ignore_endpoints:
+        if (o1 == 0) and on_segment(p1, p2, q1):
+            return True
+        if (o2 == 0) and on_segment(p1, q2, q1):
+            return True
+        if (o3 == 0) and on_segment(p2, p1, q2):
+            return True
+        if (o4 == 0) and on_segment(p2, q1, q2):
+            return True
     return False
 
 
-def cross_check_2(a, b, c, d):
+def cross_check_2(a, b, c, d, ignore_endpoints=False):
     p1 = a[0], a[1]
     q1 = b[0], b[1]
     p2 = c[0], c[1]
     q2 = d[0], d[1]
-    if do_intersect(p1, q1, p2, q2):
+    if do_intersect(p1, q1, p2, q2, ignore_endpoints):
         return True
     return False
 
