@@ -4,6 +4,7 @@ from itertools import product, permutations, combinations
 from dataclasses import dataclass
 import networkx as nx
 import settings
+import numpy as np
 
 
 @dataclass(eq=True, frozen=True)
@@ -14,6 +15,9 @@ class Node:
 
     def get_distance(self, x, y) -> float:
         return pythag(self.x, self.y, x, y)
+
+    def __post_init__(self):
+        object.__setattr__(self, "pos", np.array([float(self.x), float(self.y)]))
 
 
 @dataclass(eq=True, frozen=True)
@@ -33,13 +37,12 @@ class Edge:
     def __lt__(self, other):
         return self.get_length() < other.get_length()
     
-    def cross(self, other, ignore_endpoints=False):
-        return cross_check_2((self.node_1.x, self.node_1.y), (self.node_2.x, self.node_2.y), 
-                             (other.node_1.x, other.node_1.y), (other.node_2.x, other.node_2.y), ignore_endpoints)
+    # def cross(self, other, ignore_endpoints=False):
+    #     return cross_check_2((self.node_1.x, self.node_1.y), (self.node_2.x, self.node_2.y),
+    #                          (other.node_1.x, other.node_1.y), (other.node_2.x, other.node_2.y))
 
-    def propose_cross(self, node_1, node_2):
-        return cross_check_2((self.node_1.x, self.node_1.y), (self.node_2.x, self.node_2.y),
-                             (node_1.x, node_1.y), (node_2.x, node_2.y))
+    def cross(self, other):
+        return segment_intersect(self.node_1.pos, self.node_2.pos, other.node_1.pos, other.node_2.pos)
 
 
 def polygon_test(x, y, polygon, positive):
@@ -51,49 +54,45 @@ def polygon_test(x, y, polygon, positive):
 
 
 def network_gen(X, Y, data):
-    data_list = list(data.keys())
+    fields = ["seed", "random_state", "nodes", "knn", "node_space_ll", "node_space_ul", "p_space", "spacing",
+              "start_rect", "end_rect", "min_edge_angle", "shapes", "positive"]
     nodes = 30
-    if "seed" in data:
-        random.seed(data["seed"])
-    if "random_state" in data_list:
+    if "random_state" in data:
         random.setstate(data["random_state"])
-    if "nodes" in data_list:
+    if "nodes" in data:
         nodes = data["nodes"]
     node_list = []  # list to hold nodes
     edge_list = []  # list to hold edges
     knn = 5
-    if "knn" in data_list:
+    if "knn" in data:
         knn = data["knn"]
     ul = 350  # parameter, upper limit of edge length
-    if "node_space_ul" in data_list:
+    if "node_space_ul" in data:
         ul = data["node_space_ul"]
     ll = 0  # parameter, lower limit of path length
-    if "node_space_ll" in data_list:
+    if "node_space_ll" in data:
         ll = data["node_space_ll"]
     p_space = 99  # parameter, probability of ignoring spacing parameter
-    if "p_space" in data_list:
+    if "p_space" in data:
         p_space = data["p_space"]
     spacing = 90  # parameter, defines minimum node spacing
-    if "spacing" in data_list:
+    if "spacing" in data:
         spacing = data["spacing"]
     # calculate mandatory region for starting node, based on xy_bounds
     start_bound = None
-    if "start_rect" in data_list:
+    if "start_rect" in data:
         start_bound = data["start_rect"]
     end_bound = None
-    if "end_rect" in data_list:
+    if "end_rect" in data:
         end_bound = data["end_rect"]
-    # calculate mandatory region for ending node, based on xy_bounds
-    start_node = [0, 0]  # placeholder for starting node
-    end_node = [0, 0]  # placeholder for ending node
     theta_min = 15  # parameter, defines angular spacing minimum for edges around a node
-    if "min_edge_angle" in data_list:
+    if "min_edge_angle" in data:
         theta_min = data["min_edge_angle"]
     shapes = None
-    if "shapes" in data_list:
+    if "shapes" in data:
         shapes = data["shapes"]
     positive = True
-    if "positive" in data_list:
+    if "positive" in data:
         positive = data["positive"]
     theta_flag = False  # shouldn't be needed, simplify code
     flag = False
@@ -101,18 +100,12 @@ def network_gen(X, Y, data):
     # start node
     x = random.randint(start_bound[0], start_bound[2])
     y = random.randint(start_bound[1], start_bound[3])
-    # start_node[0] = x
-    # start_node[1] = y
-    # node_list.append(start_node)
-    node_list.append(Node(x, y, 0))
+    node_list.append(Node(x, y, 1))
 
     # end node
     x = random.randint(end_bound[0], end_bound[2])
     y = random.randint(end_bound[1], end_bound[3])
-    # end_node[0] = x
-    # end_node[1] = y
-    # node_list.append(end_node)
-    node_list.append(Node(x, y, 1))
+    node_list.append(Node(x, y, 0))
 
     count = 0
     index = 2
@@ -157,9 +150,6 @@ def network_gen(X, Y, data):
                 else:
                     edge_list_.add(new_edge)
 
-    for node in node_list:
-        node_edges = [edge for edge in edge_list_ if edge.has_node(node)]
-        # node_edges.sort(reverse=True)
 
     g = nx.Graph()
 
@@ -197,25 +187,45 @@ def network_gen(X, Y, data):
 
     data["random_state"] = random.getstate()
 
-    print(valid_path)
-
     return [node_list, edge_list, neighbors_dict, edge_dict, valid_path], data
 
 
+# def polygon_check(point, polygon):
+#     check_point = (point[0] + 5000, point[1])
+#     check_point_b = (point[0], point[1] + 5000)
+#     n = 0
+#     a = None
+#     b = None
+#     for i in range(len(polygon)):
+#         if cross_check_2(point, check_point, polygon[i - 1], polygon[i]):
+#             n += 1
+#     if n % 2 == 1:
+#         a = True
+#     n = 0
+#     for i in range(len(polygon)):
+#         if cross_check_2(point, check_point_b, polygon[i - 1], polygon[i]):
+#             n += 1
+#     if n % 2 == 1:
+#         b = True
+#     if a and b:
+#         return True
+#     return False
+
+
 def polygon_check(point, polygon):
-    check_point = (point[0] + 5000, point[1])
-    check_point_b = (point[0], point[1] + 5000)
+    check_point = np.array([point[0] + 5000, point[1]])
+    check_point_b = np.array([point[0], point[1] + 5000])
     n = 0
     a = None
     b = None
     for i in range(len(polygon)):
-        if cross_check_2(point, check_point, polygon[i - 1], polygon[i]):
+        if segment_intersect(point, check_point, np.array(polygon[i - 1]), np.array(polygon[i])):
             n += 1
     if n % 2 == 1:
         a = True
     n = 0
     for i in range(len(polygon)):
-        if cross_check_2(point, check_point_b, polygon[i - 1], polygon[i]):
+        if segment_intersect(point, check_point_b, np.array(polygon[i - 1]), np.array(polygon[i])):
             n += 1
     if n % 2 == 1:
         b = True
@@ -261,6 +271,31 @@ def orientation(p, q, r):
         return 2
     else:
         return 0
+
+
+def perp(a):
+    b = np.empty_like(a)
+    b[0] = -a[1]
+    b[1] = a[0]
+    return b
+
+
+def segment_intersect(a1, a2, b1, b2) -> bool:
+    da = a2 - a1
+    db = b2 - b1
+    dp = a1 - b1
+    dap = perp(da)
+    denom = np.dot(dap, db)
+    num = np.dot(dap, dp)
+    if denom != 0:
+        point = (num / denom) * db + b1
+    else:
+        point = (num / 0.01) * db + b1
+    if point[0] > a1[0] and point[0] > a2[0]:
+        return False
+    elif point[0] < a1[0] and point[0] < a2[0]:
+        return False
+    return True
 
 
 def do_intersect(p1, q1, p2, q2, ignore_endpoints=False):
