@@ -1,7 +1,53 @@
 import math
 import random
-
+from itertools import product, permutations, combinations
+from dataclasses import dataclass
 import networkx as nx
+import settings
+
+
+@dataclass(eq=True, frozen=True)
+class Node:
+    x: int
+    y: int
+    index: int
+
+    def get_distance(self, x, y) -> float:
+        return pythag(self.x, self.y, x, y)
+
+
+@dataclass(eq=True, frozen=True)
+class Edge:
+    node_1: Node
+    node_2: Node
+
+    def get_length(self) -> float:
+        return pythag(self.node_1.x, self.node_1.y, self.node_2.x, self.node_2.y)
+
+    def get_angle(self) -> float:
+        return theta_calc((0, 0, 1, 0), (self.node_1.x, self.node_1.y, self.node_2.x, self.node_2.y))
+    
+    def has_node(self, node):
+        return node == self.node_1 or node == self.node_2
+    
+    def __lt__(self, other):
+        return self.get_length() < other.get_length()
+    
+    def cross(self, other):
+        return cross_check_2((self.node_1.x, self.node_1.y), (self.node_2.x, self.node_2.y), 
+                             (other.node_1.x, other.node_1.y), (other.node_2.x, other.node_2.y))
+
+    def propose_cross(self, node_1, node_2):
+        return cross_check_2((self.node_1.x, self.node_1.y), (self.node_2.x, self.node_2.y),
+                             (node_1.x, node_1.y), (node_2.x, node_2.y))
+
+
+def polygon_test(x, y, polygon, positive):
+    if polygon_check((x, y), polygon) and positive:
+        return True
+    elif not polygon_check((x, y), polygon) and not positive:
+        return True
+    return False
 
 
 def network_gen(X, Y, data):
@@ -15,7 +61,7 @@ def network_gen(X, Y, data):
         nodes = data["nodes"]
     node_list = []  # list to hold nodes
     edge_list = []  # list to hold edges
-    knn = 4
+    knn = 5
     if "knn" in data_list:
         knn = data["knn"]
     ul = 350  # parameter, upper limit of edge length
@@ -24,10 +70,10 @@ def network_gen(X, Y, data):
     ll = 0  # parameter, lower limit of path length
     if "node_space_ll" in data_list:
         ll = data["node_space_ll"]
-    p_space = 100  # parameter, probability of ignoring spacing parameter
+    p_space = 99  # parameter, probability of ignoring spacing parameter
     if "p_space" in data_list:
         p_space = data["p_space"]
-    spacing = 100  # parameter, defines minimum node spacing
+    spacing = 90  # parameter, defines minimum node spacing
     if "spacing" in data_list:
         spacing = data["spacing"]
     # calculate mandatory region for starting node, based on xy_bounds
@@ -55,140 +101,87 @@ def network_gen(X, Y, data):
     # start node
     x = random.randint(start_bound[0], start_bound[2])
     y = random.randint(start_bound[1], start_bound[3])
-    start_node[0] = x
-    start_node[1] = y
-    node_list.append(start_node)
+    # start_node[0] = x
+    # start_node[1] = y
+    # node_list.append(start_node)
+    node_list.append(Node(x, y, 0))
 
     # end node
     x = random.randint(end_bound[0], end_bound[2])
     y = random.randint(end_bound[1], end_bound[3])
-    end_node[0] = x
-    end_node[1] = y
-    node_list.append(end_node)
+    # end_node[0] = x
+    # end_node[1] = y
+    # node_list.append(end_node)
+    node_list.append(Node(x, y, 1))
+
     count = 0
+    index = 2
     while len(node_list) < nodes:
-        print(count)
+        # print(count)
         count += 1
         if count % nodes == 0:
             spacing -= 1
         x = random.randint(0, X)
         y = random.randint(0, Y)
 
-        valid = False
+        valid = [True]
         if shapes:
-            for polygon in shapes:
-                if polygon_check((x, y), polygon) and positive:
-                    valid = True
+            valid = [True if polygon_test(x, y, polygon, positive) else False for polygon in shapes]
+
+        if True in valid:
+            for node in node_list:
+                if node.get_distance(x, y) < spacing:
                     break
-                elif not polygon_check((x, y), polygon) and not positive:
-                    valid = True
-                    break
-        if not shapes or valid:
-            init_pair = [x, y]
-            rand_int = random.randint(0, 100)
-            if rand_int > p_space:
-                for value in enumerate(node_list):
-                    if value == init_pair:
-                        flag = True
-                if not flag:
-                    node_list.append(init_pair)
-                flag = False
             else:
-                for i, pair in enumerate(node_list):
-                    path_dist = pythag(pair[0], pair[1], init_pair[0], init_pair[1])
-                    if path_dist < spacing:
-                        flag = True
-                if not flag:
-                    node_list.append(init_pair)
-                flag = False
-    # nested for loops iterate over every pair of nodes, once each
-    #   and place into a list of pairs
-    for i, option_i in enumerate(node_list):
-        pair_1x = node_list[i - 1][0]
-        pair_1y = node_list[i - 1][1]
-        pair_list = []
-        for j, option_j in enumerate(node_list[i:]):
-            pair_2x = node_list[j + i][0]
-            pair_2y = node_list[j + i][1]
-            pair = [pair_1x, pair_1y, pair_2x, pair_2y]
-            pair_list.append(pair)
-
-        # compute path distance between each pair of nodes in list
-        for k, pair in enumerate(pair_list):
-            path_dist = pythag(pair[0], pair[1], pair[2], pair[3])
-            pair_list[k].append(path_dist)
-            pair_list[k].append(0)
-
-        # sort list by path distance, ascending
-        pair_list = sorted(pair_list, key=lambda x: x[4])
-        index = 0
-        flag = False
-        temp_list = []
-
-        # eliminate pairs with zero path distance, MAY BE OBSOLETE
-        while flag:
-            if pair_list[0][1] == 0:
-                pair_list = pair_list[1:]
-            else:
-                flag = False
-
-        # take up to k pairs and add to edge list, starting with shortest path
-        #   distance, check path distance is between ul and ll, check candidate
-        #   angle spacing with respect to existing edges at that node
-        while index < knn - 1:
-            if len(pair_list) > index and ul > pair_list[index][4] > ll:
-                for t, temp in enumerate(edge_list):
-                    if share_node(temp, pair_list[index]):
-                        theta = theta_calc(temp, pair_list[index])
-                        if abs(theta) < theta_min:
-                            theta_flag = True
-                if not theta_flag:
-                    edge_list.append(pair_list[index])
-                    temp_list.append(pair_list[index])
-                theta_flag = False
-                index += 1
-            else:
+                node_list.append(Node(x, y, index))
                 index += 1
 
-    # append number name '0' to all nodes nodes
-    for i, value in enumerate(node_list):
-        node_list[i].append(2)
 
-    # name entry node '1' and exit node '0'
-    for i, value in enumerate(node_list):
-        if value[0] == start_node[0] and value[1] == start_node[1]:
-            node_list[i][2] = 1
-        elif value[0] == end_node[0] and value[1] == end_node[1]:
-            node_list[i][2] = 0
+    # # make list of all node pairs
+    # edge_list_ = [Edge(pair[0], pair[1]) for pair in combinations(node_list, 2)]
+    #
+    # # eliminate all edges out of length spec
+    # edge_list_ = [edge for edge in edge_list_ if ll < edge.get_length() < ul]
+    #
+    # # make a list of all crossing edges
+    # cross_pairs = [(pair[0], pair[1]) for pair in combinations(edge_list_, 2) if pair[0].cross(pair[1])]
+    #
+    # while 1:
+    #     if not cross_pairs:
+    #         break
+    #     edge_list_.remove(edge_pairs[0][0])
 
-    # sort node_list by name, ascending
-    node_list = sorted(node_list, key=lambda x: x[2])
-    # append number 'name' to other nodes nodes
-    for i, value in enumerate(node_list):
-        node_list[i][2] = i
+    edge_list_ = set()
 
-    while not flag:
-        edge_list = cross_check(edge_list)
-        if edge_list[len(edge_list) - 1][5] == 0:
-            flag = True
-        else:
-            del (edge_list[len(edge_list) - 1])
+    for node in node_list:
+        candidates = [x for x in node_list if ul > node.get_distance(x.x, x.y) > spacing]
+        if candidates:
+            choice_list = random.choices(candidates, k=knn)
+            for c_node in choice_list:
+                edge_list_.add(Edge(node, c_node))
+                # if node.index > c_node.index:
+                #     new_edge = Edge(node, c_node)
+                # else:
+                #     new_edge = Edge(c_node, node)
+                # for edge in edge_list_:
+                #     if edge.cross(new_edge):
+                #         break
+                # else:
+                #     edge_list_.add(new_edge)
 
-    # create empty graph
+    print(len(edge_list_))
+
+    for node in node_list:
+        node_edges = [edge for edge in edge_list_ if edge.has_node(node)]
+        # node_edges.sort(reverse=True)
 
     g = nx.Graph()
 
-    for i, value in enumerate(node_list):
-        g.add_node(value[2], X=value[0], Y=value[1])
-    for i, value in enumerate(edge_list):
-        n1 = 0
-        n2 = 0
-        for j, pair in enumerate(node_list):
-            if value[0] == pair[0] and value[1] == pair[1]:
-                n1 = pair[2]
-            if value[2] == pair[0] and value[3] == pair[1]:
-                n2 = pair[2]
-        g.add_edge(n1, n2)
+    for node in node_list:
+        g.add_node(node.index, x=node.x, Y=node.y)
+
+    for edge in edge_list_:
+        g.add_edge(edge.node_1.index, edge.node_2.index)
 
     valid_path = nx.has_path(g, 0, 1)
     if valid_path:
@@ -219,10 +212,12 @@ def network_gen(X, Y, data):
     edge_dict = []
 
     for i, value in enumerate(node_list):
-        neighbors_dict[value[2]] = [n for n in g.neighbors(i)]
+        neighbors_dict[value.index] = [n for n in g.neighbors(value.index)]
         edge_dict = [i for i in g.edges]
 
     data["random_state"] = random.getstate()
+
+    print(valid_path)
 
     return [node_list, edge_list, neighbors_dict, edge_dict, valid_path], data
 
@@ -272,14 +267,14 @@ class Point:
 
 
 def onSegment(p, q, r):
-    if ((q.x <= max(p.x, r.x)) and (q.x >= min(p.x, r.x)) and
-            (q.y <= max(p.y, r.y)) and (q.y >= min(p.y, r.y))):
+    if ((q[0] <= max(p[0], r[0])) and (q[0] >= min(p[0], r[0])) and
+            (q[1] <= max(p[1], r[1])) and (q[1] >= min(p[1], r[1]))):
         return True
     return False
 
 
 def orientation(p, q, r):
-    val = (float(q.y - p.y) * (r.x - q.x)) - (float(q.x - p.x) * (r.y - q.y))
+    val = (float(q[1] - p[1]) * (r[0] - q[0])) - (float(q[0] - p[0]) * (r[1] - q[1]))
     if (val > 0):
         return 1
     elif (val < 0):
@@ -288,32 +283,32 @@ def orientation(p, q, r):
         return 0
 
 
-def doIntersect(p1, q1, p2, q2):
+def do_intersect(p1, q1, p2, q2):
     o1 = orientation(p1, q1, p2)
     o2 = orientation(p1, q1, q2)
     o3 = orientation(p2, q2, p1)
     o4 = orientation(p2, q2, q1)
 
-    if ((o1 != o2) and (o3 != o4)):
+    if (o1 != o2) and (o3 != o4):
         return True
 
-    if ((o1 == 0) and onSegment(p1, p2, q1)):
+    if (o1 == 0) and onSegment(p1, p2, q1):
         return True
-    if ((o2 == 0) and onSegment(p1, q2, q1)):
+    if (o2 == 0) and onSegment(p1, q2, q1):
         return True
-    if ((o3 == 0) and onSegment(p2, p1, q2)):
+    if (o3 == 0) and onSegment(p2, p1, q2):
         return True
-    if ((o4 == 0) and onSegment(p2, q1, q2)):
+    if (o4 == 0) and onSegment(p2, q1, q2):
         return True
     return False
 
 
-def cross_check_2(A, B, C, D):
-    p1 = Point(A[0], A[1])
-    q1 = Point(B[0], B[1])
-    p2 = Point(C[0], C[1])
-    q2 = Point(D[0], D[1])
-    if doIntersect(p1, q1, p2, q2):
+def cross_check_2(a, b, c, d):
+    p1 = a[0], a[1]
+    q1 = b[0], b[1]
+    p2 = c[0], c[1]
+    q2 = d[0], d[1]
+    if do_intersect(p1, q1, p2, q2):
         return True
     return False
 
@@ -350,6 +345,6 @@ def cross_check(elist):
     return elist
 
 
-def pythag(A, B, C, D):
-    distance = int(math.sqrt(((A - C) ** 2) + ((B - D) ** 2)))
+def pythag(a, b, c, d):
+    distance = int(math.sqrt(((a - c) ** 2) + ((b - d) ** 2)))
     return distance

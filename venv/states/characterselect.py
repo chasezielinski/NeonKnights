@@ -180,6 +180,7 @@ class CharacterSelect(BaseState):
                                      settings.StimPack(), settings.StimPack()]
         self.persist['equip menu indices'] = settings.REGION_MENUS['equip menu']['equip menu indices']
         self.persist['party_abilities'] = PartyAbilityManager()
+        self.persist["world"] = settings.WorldBuild.create_world(seed="zzzzzzzz")
         self.next_state = "REGION_SELECT"
         self.done = True
         

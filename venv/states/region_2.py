@@ -550,26 +550,18 @@ class Region(BaseState):
         self.persist['party_group'] = pygame.sprite.Group()
         self.persist['nodes'] = []
         self.persist['portal'] = []
-        data = settings.RegionBuilder().get_region(self.persist['region_type'])
+        data = self.persist["world"].get_region(self.persist["region_index"], self.persist["region_type"])
         self.background = settings.ImageLoader().load_image(data["Image"])
-        network, random_state = NetworkGetter().get_network(data)
-        node_list, edge_list, neighbors_dict, edge_dict = network[0], network[1], network[2], network[3]
 
-        for i, value in enumerate(node_list):
-            if i == 0:
-                self.nodes.add(Node(self, value[0], value[1], neighbors_dict[i], edge_dict[i], i, "Boss"))
-            elif i == 1:
-                self.nodes.add(Node(self, value[0], value[1], neighbors_dict[i], edge_dict[i], i, "Region Entry"))
-            else:
-                node_type = settings.node_assign_2(self)
-                self.nodes.add(Node(self, value[0], value[1], neighbors_dict[i], edge_dict[i], i, node_type))
-        for node in self.nodes.sprites():
-            node.event = settings.event_caller(self, node)
-            if node.index == 1:
+        for node in data["nodes"]:
+            self.persist["node_group"].add(node)
+            self.nodes.add(node)
+            node.parent = self
+            if node.type == "Region Entry":
                 self.party.node = node
         self.persist['current_position'] = 1
         self.persist['region_generate'] = False
-        for value in edge_dict:
+        for value in data["edge_dict"]:
             self.paths.append(Path(self, value[0], value[1]))
 
     def travel(self):

@@ -362,12 +362,18 @@ REGION_BIOMES = ["Desert", "Grasslands", "Valley"]  # , "Forest", "Savannah", "B
 REGION_CARDS = {
     "Desert": image_load(
         r"venv\resources\sprites\Region\Cards\Desert_Card_480p_1.png"),
-    "Grasslands": image_load(
-        r"venv\resources\sprites\Region\Cards\Grasslands_Card_480p_1.png"),
+    # "Grasslands": image_load(
+    #     r"venv\resources\sprites\Region\Cards\Grasslands_Card_480p_1.png"),
     "Valley": image_load(
         r"venv\resources\sprites\Region\Cards\Valley_Card_480p_1.png"),
     "Savannah": image_load(
         r"venv\resources\sprites\Region\Cards\Savannah_Card_480p_1.png"),
+    "Badlands": image_load(
+        r"venv\resources\sprites\Region\Cards\Valley_Card_480p_1.png"),
+    "Tundra": image_load(
+        r"venv\resources\sprites\Region\Cards\Savannah_Card_480p_1.png"),
+    "Taiga": image_load(
+        r"venv\resources\sprites\Region\Cards\Valley_Card_480p_1.png"),
 }
 
 REGION_SHAPES = ["Land-Locked", "Coastal", "Archipelago", "Island", "Plateau",
@@ -1062,7 +1068,17 @@ encounter_dictionary = {
          "enemies": ["Slime", "Slime"]}],
     "All_Weights": [1],
     "Desert": [],
-    "Desert_Weights": [], }
+    "Desert_Weights": [],
+    "Tundra": [],
+    "Tundra_Weights": [],
+    "Taiga": [],
+    "Taiga_Weights": [],
+    "Badlands": [],
+    "Badlands_Weights": [],
+    "Valley": [],
+    "Valley_Weights": [],
+    "Savannah": [],
+    "Savannah_Weights": [], }
 
 shop_dictionary = {
     "All": [
@@ -1071,7 +1087,17 @@ shop_dictionary = {
                      ["Not interested.", [{"state": "Exit"}], [1]]], }],
     "All_Weights": [1],
     "Desert": [],
-    "Desert_Weights": [], }
+    "Desert_Weights": [],
+    "Tundra": [],
+    "Tundra_Weights": [],
+    "Taiga": [],
+    "Taiga_Weights": [],
+    "Badlands": [],
+    "Badlands_Weights": [],
+    "Valley": [],
+    "Valley_Weights": [],
+    "Savannah": [],
+    "Savannah_Weights": [], }
 
 event_dictionary = {
     "All": [
@@ -1087,7 +1113,17 @@ event_dictionary = {
          "display_cost_reward": True}],
     "All_Weights": [1],
     "Desert": [],
-    "Desert_Weights": [], }
+    "Desert_Weights": [],
+    "Tundra": [],
+    "Tundra_Weights": [],
+    "Taiga": [],
+    "Taiga_Weights": [],
+    "Badlands": [],
+    "Badlands_Weights": [],
+    "Valley": [],
+    "Valley_Weights": [],
+    "Savannah": [],
+    "Savannah_Weights": [], }
 
 P_NODE_TYPES = [10, 15, 20, 60]
 
@@ -1417,6 +1453,61 @@ BATTLE_MENU_SPRITES = {
 
 MUSIC = {'Title': r"venv\resources\music\title.oga",
          'Desert': {'constant': pygame.mixer.Sound(
+             r"venv\resources\music\Desert_Layer\constant-Constant.wav"),
+             'shop': pygame.mixer.Sound(
+                 r"venv\resources\music\Desert_Layer\shop-Shop.wav"),
+             'map': pygame.mixer.Sound(
+                 r"venv\resources\music\Desert_Layer\map-Map.wav"),
+             'battle': pygame.mixer.Sound(
+                 r"venv\resources\music\Desert_Layer\battle-Battle.wav"),
+             'event': pygame.mixer.Sound(
+                 r"venv\resources\music\Desert_Layer\event-Event.wav"),
+         },
+         'Savannah': {'constant': pygame.mixer.Sound(
+             r"venv\resources\music\Desert_Layer\constant-Constant.wav"),
+             'shop': pygame.mixer.Sound(
+                 r"venv\resources\music\Desert_Layer\shop-Shop.wav"),
+             'map': pygame.mixer.Sound(
+                 r"venv\resources\music\Desert_Layer\map-Map.wav"),
+             'battle': pygame.mixer.Sound(
+                 r"venv\resources\music\Desert_Layer\battle-Battle.wav"),
+             'event': pygame.mixer.Sound(
+                 r"venv\resources\music\Desert_Layer\event-Event.wav"),
+         },
+         'Tundra': {'constant': pygame.mixer.Sound(
+             r"venv\resources\music\Desert_Layer\constant-Constant.wav"),
+             'shop': pygame.mixer.Sound(
+                 r"venv\resources\music\Desert_Layer\shop-Shop.wav"),
+             'map': pygame.mixer.Sound(
+                 r"venv\resources\music\Desert_Layer\map-Map.wav"),
+             'battle': pygame.mixer.Sound(
+                 r"venv\resources\music\Desert_Layer\battle-Battle.wav"),
+             'event': pygame.mixer.Sound(
+                 r"venv\resources\music\Desert_Layer\event-Event.wav"),
+         },
+         'Taiga': {'constant': pygame.mixer.Sound(
+             r"venv\resources\music\Desert_Layer\constant-Constant.wav"),
+             'shop': pygame.mixer.Sound(
+                 r"venv\resources\music\Desert_Layer\shop-Shop.wav"),
+             'map': pygame.mixer.Sound(
+                 r"venv\resources\music\Desert_Layer\map-Map.wav"),
+             'battle': pygame.mixer.Sound(
+                 r"venv\resources\music\Desert_Layer\battle-Battle.wav"),
+             'event': pygame.mixer.Sound(
+                 r"venv\resources\music\Desert_Layer\event-Event.wav"),
+         },
+         'Badlands': {'constant': pygame.mixer.Sound(
+             r"venv\resources\music\Desert_Layer\constant-Constant.wav"),
+             'shop': pygame.mixer.Sound(
+                 r"venv\resources\music\Desert_Layer\shop-Shop.wav"),
+             'map': pygame.mixer.Sound(
+                 r"venv\resources\music\Desert_Layer\map-Map.wav"),
+             'battle': pygame.mixer.Sound(
+                 r"venv\resources\music\Desert_Layer\battle-Battle.wav"),
+             'event': pygame.mixer.Sound(
+                 r"venv\resources\music\Desert_Layer\event-Event.wav"),
+         },
+         'Valley': {'constant': pygame.mixer.Sound(
              r"venv\resources\music\Desert_Layer\constant-Constant.wav"),
              'shop': pygame.mixer.Sound(
                  r"venv\resources\music\Desert_Layer\shop-Shop.wav"),
@@ -1974,8 +2065,8 @@ class PartyAbilityManager(object):
         self.create_portal = True  # create an edge using many resources
         self.less_empty_nodes = True  # less empty nodes spawn
         self.no_empty_nodes = True  # no empty nodes spawn
-        self.path_vision = False  # see all paths in region
-        self.static_path = False  # false = paths only visible when hovering over node
+        self.path_vision = True  # see all paths in region
+        self.static_path = True  # false = paths only visible when hovering over node
         self.region_revealed = False  # all region info revealed
         self.locate_shops = False  # see all shops in region
         self.locate_encounters = False  # see all encounters in region
@@ -4790,12 +4881,17 @@ class UtilityAI:
 
 
 class World:
-    def __init__(self, map_, graph) -> None:
-        self.map = map_
-        self.graph = graph
+    """Contains map of all regions and region objects. Regions are fully populated with nodes and events"""
+    def __init__(self, region_map) -> None:
+        self.region_map = region_map
 
-    def get_next_options(self, current) -> list:
-        pass
+    def get_options(self, index: int):
+        """Give current region region index as int and receive region options"""
+        return list(self.region_map[index])
+
+    def get_region(self, index, region):
+        """Give index and region selection and receive region object"""
+        return self.region_map[index][region]
 
 
 class RegionMapGetter:
@@ -4803,8 +4899,8 @@ class RegionMapGetter:
 
     @staticmethod
     def get_region_map(region_type):
-        options = RegionMapGetter.data[region_type]
-        return choose_random(options)
+        options = list(RegionMapGetter.data[region_type])
+        return copy.deepcopy(RegionMapGetter.data[region_type][choose_random(options)])
 
 
 class WorldBuild:
@@ -4830,44 +4926,48 @@ class WorldBuild:
         return keys
 
     @staticmethod
-    def create_world(seed="zzzzzzzz") -> Type[World]:
+    def create_world(seed=None) -> World:
         if seed:
             random.seed(seed)
         region_types = {i: WorldBuild.choose_3() for i in range(8)}
+        region_map = {region_index: {region_type: WorldBuild.region_generate(region_type, region_index) for region_type
+                                     in region_list} for region_index, region_list in region_types.items()}
+        return World(region_map)
 
     @staticmethod
     def region_generate(region_type, region_index):
         data = RegionMapGetter.get_region_map(region_type)
         data["random_state"] = random.getstate()
-        network, random_state = NetworkGetter().get_network(data)
-        random.setstate(random_state)
+        network, data = NetworkGetter().get_network(data)
+        random.setstate(data["random_state"])
         data["nodes"] = []
         data["node_list"] = network[0]
         data["edge_list"] = network[1]
         data["neighbors_dict"] = network[2]
         data["edge_dict"] = network[3]
 
-        for i, value in enumerate(network[0]):
-            if i == 0:
-                data["nodes"].append(Node(value[0], value[1], network[2][i], network[3][i], i, "Boss"))
-            elif i == 1:
-                data["nodes"].append(Node(value[0], value[1], network[2][i], network[3][i], i, "Region Entry"))
+        for value in network[0]:
+            if value.index == 0:
+                data["nodes"].append(Node(value.x, value.y, network[2][value.index], network[3][value.index], value.index, "Boss"))
+            elif value.index == 1:
+                data["nodes"].append(Node(value.x, value.y, network[2][value.index], network[3][value.index], value.index, "Region Entry"))
             else:
                 node_type = node_assign_3()
-                data["nodes"].append(Node(value[0], value[1], network[2][i], network[3][i], i, node_type))
+                data["nodes"].append(Node(value.x, value.y, network[2][value.index], network[3][value.index], value.index, node_type))
         for node in data["nodes"]:
             node.event = event_caller(node, region_type, region_index)
         return data
 
 
 class NetworkGetter:
-    def get_network(self, data):
+    @staticmethod
+    def get_network(data):
         valid = False
         network, new_data = network_generator.network_gen(X, Y, data)
         valid = network[4]
 
         if valid:
-            return network, new_data["random_state"]
+            return network, new_data
         else:
             return NetworkGetter.get_network(new_data)
 
