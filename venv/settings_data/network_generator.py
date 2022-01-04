@@ -4,6 +4,7 @@ from itertools import product, permutations, combinations
 from dataclasses import dataclass
 import networkx as nx
 import settings
+from shapely.geometry import Point as Pt, MultiPolygon, Polygon
 
 
 @dataclass(eq=True, frozen=True)
@@ -13,7 +14,7 @@ class Node:
     index: int
 
     def get_distance(self, x, y) -> float:
-        return pythag(self.x, self.y, x, y)
+        return (self.x - x)**2 + (self.y - y)**2
 
 
 @dataclass(eq=True, frozen=True)
@@ -41,6 +42,10 @@ class Edge:
         return cross_check_2((self.node_1.x, self.node_1.y), (self.node_2.x, self.node_2.y),
                              (node_1.x, node_1.y), (node_2.x, node_2.y))
 
+    def share_node(self, other):
+        return self.node_1 == other.node_1 or self.node_1 == other.node_2 \
+               or self.node_2 == other.node_1 or self.node_2 == other.node_2
+
 
 def polygon_test(x, y, polygon, positive):
     if polygon_check((x, y), polygon) and positive:
@@ -65,6 +70,7 @@ def network_gen(X, Y, data):
     if "knn" in data_list:
         knn = data["knn"]
     ul = 350  # parameter, upper limit of edge length
+    ul_compare = ul**2
     if "node_space_ul" in data_list:
         ul = data["node_space_ul"]
     ll = 0  # parameter, lower limit of path length
@@ -74,6 +80,7 @@ def network_gen(X, Y, data):
     if "p_space" in data_list:
         p_space = data["p_space"]
     spacing = 90  # parameter, defines minimum node spacing
+    spacing_compare = spacing**2
     if "spacing" in data_list:
         spacing = data["spacing"]
     # calculate mandatory region for starting node, based on xy_bounds
@@ -116,63 +123,50 @@ def network_gen(X, Y, data):
 
     count = 0
     index = 2
+    if shapes:
+        polygons = [Polygon(x) for x in shapes]
+        m_polygon = MultiPolygon(polygons)
+
     while len(node_list) < nodes:
         # print(count)
         count += 1
         if count % nodes == 0:
             spacing -= 1
-        x = random.randint(0, X)
-        y = random.randint(0, Y)
+        # x = random.randint(0, X)
+        # y = random.randint(0, Y)
+        point = Pt(random.randint(0, X), random.randint(0, Y))
 
-        valid = [True]
+        valid = True
         if shapes:
-            valid = [True if polygon_test(x, y, polygon, positive) else False for polygon in shapes]
+            valid = m_polygon.contains(point)
+            # for pg in polygons:
+            #     valid = pg.contains(point)
 
-        if True in valid:
+        if valid:
             for node in node_list:
-                if node.get_distance(x, y) < spacing:
+                if node.get_distance(point.x, point.y) < spacing_compare:
                     break
             else:
-                node_list.append(Node(x, y, index))
+                node_list.append(Node(point.x, point.y, index))
                 index += 1
-
-
-    # # make list of all node pairs
-    # edge_list_ = [Edge(pair[0], pair[1]) for pair in combinations(node_list, 2)]
-    #
-    # # eliminate all edges out of length spec
-    # edge_list_ = [edge for edge in edge_list_ if ll < edge.get_length() < ul]
-    #
-    # # make a list of all crossing edges
-    # cross_pairs = [(pair[0], pair[1]) for pair in combinations(edge_list_, 2) if pair[0].cross(pair[1])]
-    #
-    # while 1:
-    #     if not cross_pairs:
-    #         break
-    #     edge_list_.remove(edge_pairs[0][0])
 
     edge_list_ = set()
 
     for node in node_list:
-        candidates = [x for x in node_list if ul > node.get_distance(x.x, x.y) > spacing]
-        if candidates:
-            for i in range(knn):
+        candidates = [x for x in node_list if ul_compare > node.get_distance(x.x, x.y) > spacing]
+        for i in range(knn):
+            if candidates:
                 c_node = candidates.pop(candidates.index(random.choice(candidates)))
                 if node.index > c_node.index:
                     new_edge = Edge(node, c_node)
                 else:
                     new_edge = Edge(c_node, node)
                 for edge in edge_list_:
-                    if edge.cross(new_edge):
-                        break
+                    if not edge.share_node(new_edge):
+                        if edge.cross(new_edge):
+                            break
                 else:
                     edge_list_.add(new_edge)
-
-    print(len(edge_list_))
-
-    for node in node_list:
-        node_edges = [edge for edge in edge_list_ if edge.has_node(node)]
-        # node_edges.sort(reverse=True)
 
     g = nx.Graph()
 
@@ -215,8 +209,6 @@ def network_gen(X, Y, data):
         edge_dict = [i for i in g.edges]
 
     data["random_state"] = random.getstate()
-
-    print(valid_path)
 
     return [node_list, edge_list, neighbors_dict, edge_dict, valid_path], data
 

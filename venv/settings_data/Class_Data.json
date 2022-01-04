@@ -28,8 +28,102 @@
     "equipment_options": ["Weapon", "Helm", "Armor", "Boots", "Shield"],
     "attack_type": "Attack",
     "equipment": {},
-    "abilities": ["KiBlast"]
-    },
+    "abilities": ["KiBlast"],
+    "skill_trees": {
+        "left_skill_tree": {
+            "tree_name": "Brute",
+            "skills": [
+        {
+            "tier": 0,
+            "index": 0,
+            "name": "skill_1",
+            "skill_type": "Ability",
+            "description": "This is a skill. You can unlock it by clicking here, if you have sufficient skill points.",
+            "cost": 1,
+            "prerequisite": 0
+        },
+    {
+            "tier": 0,
+            "index": 1,
+            "name": "skill_2",
+            "skill_type": "Ability",
+            "description": "This is a skill. You can unlock it by clicking here, if you have sufficient skill points.",
+            "cost": 1,
+            "prerequisite": 0
+        },
+        {
+            "tier": 1,
+            "index": 0,
+            "name": "skill_1",
+            "skill_type": "Ability",
+            "description": "This is a skill. You can unlock it by clicking here, if you have sufficient skill points.",
+            "cost": 1,
+            "prerequisite": 0
+        }
+    ]},
+        "center_skill_tree":  {
+            "tree_name": "Knight",
+            "skills": [
+        {
+            "tier": 0,
+            "index": 0,
+            "name": "skill_1",
+            "skill_type": "Ability",
+            "description": "This is a skill. You can unlock it by clicking here, if you have sufficient skill points.",
+            "cost": 1,
+            "prerequisite": 0
+        },
+    {
+            "tier": 0,
+            "index": 1,
+            "name": "skill_2",
+            "skill_type": "Ability",
+            "description": "This is a skill. You can unlock it by clicking here, if you have sufficient skill points.",
+            "cost": 1,
+            "prerequisite": 0
+        },
+        {
+            "tier": 1,
+            "index": 0,
+            "name": "skill_1",
+            "skill_type": "Ability",
+            "description": "This is a skill. You can unlock it by clicking here, if you have sufficient skill points.",
+            "cost": 1,
+            "prerequisite": 0
+        }
+    ]},
+        "right_skill_tree": {
+            "tree_name": "Paladin",
+            "skills": [
+        {
+            "tier": 0,
+            "index": 0,
+            "name": "skill_1",
+            "skill_type": "Ability",
+            "description": "This is a skill. You can unlock it by clicking here, if you have sufficient skill points.",
+            "cost": 1,
+            "prerequisite": 0
+        },
+    {
+            "tier": 0,
+            "index": 1,
+            "name": "skill_2",
+            "skill_type": "Ability",
+            "description": "This is a skill. You can unlock it by clicking here, if you have sufficient skill points.",
+            "cost": 1,
+            "prerequisite": 0
+        },
+        {
+            "tier": 1,
+            "index": 0,
+            "name": "skill_1",
+            "skill_type": "Ability",
+            "description": "This is a skill. You can unlock it by clicking here, if you have sufficient skill points.",
+            "cost": 1,
+            "prerequisite": 0
+        }
+    ]}
+    }},
 "Adept": {
     "sprites": "venv\\resources\\sprites\\Character\\Battle\\Fighter\\Fighter_Battle128p.png",
     "status_icon": "venv\\resources\\sprites\\Region\\Fighter Icon 64.png",
@@ -60,7 +154,101 @@
     "equipment_options": ["Weapon", "Helm", "Armor", "Boots", "Shield"],
     "attack_type": "Attack",
     "equipment": {},
-    "abilities": ["KiBlast"]},
+    "abilities": ["KiBlast"],
+    "skill_trees": {
+        "left_skill_tree": {
+            "tree_name": "Brute",
+            "skills": [
+        {
+            "tier": 0,
+            "index": 0,
+            "name": "skill_1",
+            "skill_type": "Ability",
+            "description": "This is a skill. You can unlock it by clicking here, if you have sufficient skill points.",
+            "cost": 1,
+            "prerequisite": 0
+        },
+    {
+            "tier": 0,
+            "index": 1,
+            "name": "skill_2",
+            "skill_type": "Ability",
+            "description": "This is a skill. You can unlock it by clicking here, if you have sufficient skill points.",
+            "cost": 1,
+            "prerequisite": 0
+        },
+        {
+            "tier": 1,
+            "index": 0,
+            "name": "skill_1",
+            "skill_type": "Ability",
+            "description": "This is a skill. You can unlock it by clicking here, if you have sufficient skill points.",
+            "cost": 1,
+            "prerequisite": 0
+        }
+    ]},
+        "center_skill_tree":  {
+            "tree_name": "Knight",
+            "skills": [
+        {
+            "tier": 0,
+            "index": 0,
+            "name": "skill_1",
+            "skill_type": "Ability",
+            "description": "This is a skill. You can unlock it by clicking here, if you have sufficient skill points.",
+            "cost": 1,
+            "prerequisite": 0
+        },
+    {
+            "tier": 0,
+            "index": 1,
+            "name": "skill_2",
+            "skill_type": "Ability",
+            "description": "This is a skill. You can unlock it by clicking here, if you have sufficient skill points.",
+            "cost": 1,
+            "prerequisite": 0
+        },
+        {
+            "tier": 1,
+            "index": 0,
+            "name": "skill_1",
+            "skill_type": "Ability",
+            "description": "This is a skill. You can unlock it by clicking here, if you have sufficient skill points.",
+            "cost": 1,
+            "prerequisite": 0
+        }
+    ]},
+        "right_skill_tree": {
+            "tree_name": "Paladin",
+            "skills": [
+        {
+            "tier": 0,
+            "index": 0,
+            "name": "skill_1",
+            "skill_type": "Ability",
+            "description": "This is a skill. You can unlock it by clicking here, if you have sufficient skill points.",
+            "cost": 1,
+            "prerequisite": 0
+        },
+    {
+            "tier": 0,
+            "index": 1,
+            "name": "skill_2",
+            "skill_type": "Ability",
+            "description": "This is a skill. You can unlock it by clicking here, if you have sufficient skill points.",
+            "cost": 1,
+            "prerequisite": 0
+        },
+        {
+            "tier": 1,
+            "index": 0,
+            "name": "skill_1",
+            "skill_type": "Ability",
+            "description": "This is a skill. You can unlock it by clicking here, if you have sufficient skill points.",
+            "cost": 1,
+            "prerequisite": 0
+        }
+    ]}}},
 "Rogue": {
     "sprites": "venv\\resources\\sprites\\Character\\Battle\\Fighter\\Fighter_Battle128p.png",
     "status_icon": "venv\\resources\\sprites\\Region\\Fighter Icon 64.png",
@@ -92,7 +280,94 @@
     "equipment_options": ["Weapon", "Helm", "Armor", "Boots", "Shield"],
     "attack_type": "Attack",
     "equipment": {},
-    "abilities": ["KiBlast"]},
+    "abilities": ["KiBlast"],
+    "skill_trees": {
+        "left_skill_tree": {
+            "tree_name": "Brute",
+            "skills": [
+        {
+            "tier": 0,
+            "index": 0,
+            "name": "skill_1",
+            "skill_type": "Ability",
+            "description": "This is a skill. You can unlock it by clicking here, if you have sufficient skill points.",
+            "cost": 1,
+            "prerequisite": 0
+        },
+    {
+            "tier": 0,
+            "index": 1,
+            "name": "skill_2",
+            "skill_type": "Ability",
+            "description": "This is a skill. You can unlock it by clicking here, if you have sufficient skill points.",
+            "cost": 1,
+            "prerequisite": 0
+        },
+        {
+            "tier": 1,
+            "index": 0,
+            "name": "skill_1",
+            "skill_type": "Ability",
+            "description": "This is a skill. You can unlock it by clicking here, if you have sufficient skill points.",
+            "cost": 1
+        }
+    ]},
+        "center_skill_tree":  {
+            "tree_name": "Knight",
+            "skills": [
+        {
+            "tier": 0,
+            "index": 0,
+            "name": "skill_1",
+            "skill_type": "Ability",
+            "description": "This is a skill. You can unlock it by clicking here, if you have sufficient skill points.",
+            "cost": 1
+        },
+    {
+            "tier": 0,
+            "index": 1,
+            "name": "skill_2",
+            "skill_type": "Ability",
+            "description": "This is a skill. You can unlock it by clicking here, if you have sufficient skill points.",
+            "cost": 1
+        },
+        {
+            "tier": 1,
+            "index": 0,
+            "name": "skill_1",
+            "skill_type": "Ability",
+            "description": "This is a skill. You can unlock it by clicking here, if you have sufficient skill points.",
+            "cost": 1
+        }
+    ]},
+        "right_skill_tree": {
+            "tree_name": "Paladin",
+            "skills": [
+        {
+            "tier": 0,
+            "index": 0,
+            "name": "skill_1",
+            "skill_type": "Ability",
+            "description": "This is a skill. You can unlock it by clicking here, if you have sufficient skill points.",
+            "cost": 1
+        },
+    {
+            "tier": 0,
+            "index": 1,
+            "name": "skill_2",
+            "skill_type": "Ability",
+            "description": "This is a skill. You can unlock it by clicking here, if you have sufficient skill points.",
+            "cost": 1
+        },
+        {
+            "tier": 1,
+            "index": 0,
+            "name": "skill_1",
+            "skill_type": "Ability",
+            "description": "This is a skill. You can unlock it by clicking here, if you have sufficient skill points.",
+            "cost": 1
+        }
+    ]}}},
 "Artificer": {
     "sprites": "venv\\resources\\sprites\\Character\\Battle\\Fighter\\Fighter_Battle128p.png",
     "status_icon": "venv\\resources\\sprites\\Region\\Fighter Icon 64.png",
@@ -123,4 +398,99 @@
     "equipment_options": ["Weapon", "Helm", "Armor", "Boots", "Shield"],
     "attack_type": "Attack",
     "equipment": {},
-    "abilities": ["KiBlast"]}}
+    "abilities": ["KiBlast"],
+    "skill_trees": {
+        "left_skill_tree": {
+            "tree_name": "Brute",
+            "skills": [
+        {
+            "tier": 0,
+            "index": 0,
+            "name": "skill_1",
+            "skill_type": "Ability",
+            "description": "This is a skill. You can unlock it by clicking here, if you have sufficient skill points.",
+            "cost": 1,
+            "prerequisite": 0
+        },
+    {
+            "tier": 0,
+            "index": 1,
+            "name": "skill_2",
+            "skill_type": "Ability",
+            "description": "This is a skill. You can unlock it by clicking here, if you have sufficient skill points.",
+            "cost": 1,
+            "prerequisite": 0
+        },
+        {
+            "tier": 1,
+            "index": 0,
+            "name": "skill_1",
+            "skill_type": "Ability",
+            "description": "This is a skill. You can unlock it by clicking here, if you have sufficient skill points.",
+            "cost": 1,
+            "prerequisite": 0
+        }
+    ]},
+        "center_skill_tree":  {
+            "tree_name": "Knight",
+            "skills": [
+        {
+            "tier": 0,
+            "index": 0,
+            "name": "skill_1",
+            "skill_type": "Ability",
+            "description": "This is a skill. You can unlock it by clicking here, if you have sufficient skill points.",
+            "cost": 1,
+            "prerequisite": 0
+        },
+    {
+            "tier": 0,
+            "index": 1,
+            "name": "skill_2",
+            "skill_type": "Ability",
+            "description": "This is a skill. You can unlock it by clicking here, if you have sufficient skill points.",
+            "cost": 1,
+            "prerequisite": 0
+        },
+        {
+            "tier": 1,
+            "index": 0,
+            "name": "skill_1",
+            "skill_type": "Ability",
+            "description": "This is a skill. You can unlock it by clicking here, if you have sufficient skill points.",
+            "cost": 1,
+            "prerequisite": 0
+        }
+    ]},
+        "right_skill_tree": {
+            "tree_name": "Paladin",
+            "skills": [
+        {
+            "tier": 0,
+            "index": 0,
+            "name": "skill_1",
+            "skill_type": "Ability",
+            "description": "This is a skill. You can unlock it by clicking here, if you have sufficient skill points.",
+            "cost": 1,
+            "prerequisite": 0
+        },
+    {
+            "tier": 0,
+            "index": 1,
+            "name": "skill_2",
+            "skill_type": "Ability",
+            "description": "This is a skill. You can unlock it by clicking here, if you have sufficient skill points.",
+            "cost": 1,
+            "prerequisite": 0
+        },
+        {
+            "tier": 1,
+            "index": 0,
+            "name": "skill_1",
+            "skill_type": "Ability",
+            "description": "This is a skill. You can unlock it by clicking here, if you have sufficient skill points.",
+            "cost": 1,
+            "prerequisite": 0
+        }
+    ]}}
+}}

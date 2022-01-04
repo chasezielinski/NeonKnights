@@ -3,6 +3,7 @@ import math
 import random
 
 import network_generator
+from network_generator_2 import NetworkGenerator
 import numpy as np
 import pygame
 import names
@@ -201,16 +202,17 @@ FIGHTER_RIGHT_TREE = ["Paladin",
 
 
 class TreeNode(object):
-    def __init__(self, parent, prerequisite, branch, skill, cost=1, info=None):
+    def __init__(self, data, parent):
         self.parent = parent
-        self.prerequisite = prerequisite
+        self.prerequisite = data["prerequisite"]
         self.visible = False
         self.purchased = False
         self.hover = False
-        self.branch = branch
-        self.skill = skill
-        self.cost = cost
-        self.info = info
+        self.branch = data["tier"]
+        self.index = data["index"]
+        self.name = data["name"]
+        self.cost = data["cost"]
+        self.info = data["description"]
         self.order = 0
         self.width = 23
         self.y_pos = Y * (8 * (self.branch - 1)) / 100
@@ -264,12 +266,10 @@ class TreeNode(object):
 
 
 class SkillTree(object):
-    def __init__(self, character_class, tree, parent):
-        self.character_class = character_class
-        self.tree = tree
+    def __init__(self, data, parent):
         self.parent = parent
         self.points = 0
-        self.skill_nodes = []
+        self.skill_nodes = [TreeNode(x, self) for x in data["skills"]]
         self.node_third_rect = []
         self.third_offset = None
         self.node_half_rect = []
@@ -277,9 +277,7 @@ class SkillTree(object):
         self.node_rect = []
         self.y_offset = None
         self.structure = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-        self.name = eval(self.character_class.upper() + "_" + self.tree.upper() + "_TREE")[0]
-        for skill in eval(self.character_class.upper() + "_" + self.tree.upper() + "_TREE")[1]:
-            self.skill_nodes.append(TreeNode(self, skill[0], skill[1], skill[2], skill[3], skill[4]))
+        self.name = data["tree_name"]
 
     def update(self, dt):
         for branch in range(len(self.structure)):
@@ -300,6 +298,33 @@ class SkillTree(object):
     def handle_action(self, action):
         for node in self.skill_nodes:
             node.handle_action(action)
+
+    def get_hover_skill_tree_node(self):
+        for node in self.skill_nodes:
+            if node.hover:
+                return node
+        else:
+            return None
+
+
+class SkillTreeManager:
+    def __init__(self, data):
+        self.skill_tree_list = [SkillTree(data["skill_trees"][x], self) for x in data["skill_trees"]]
+
+    def get_stat(self):
+        pass
+
+    def update(self, dt):
+        for skill_tree in self.skill_tree_list:
+            skill_tree.update(dt)
+
+    def get_hover_skill_tree_node(self):
+        for skill_tree in self.skill_tree_list:
+            if skill_tree.get_hover_skill_tree_node():
+                return skill_tree.get_hover_skill_tree_node()
+        else:
+            return None
+
 
 
 def character_initial(char, char_class):
@@ -2010,43 +2035,33 @@ class SkillDetail(object):
         self.right_description = [X * 61 / 100, Y * 31 / 100, X * 32 / 100, Y * 25 / 100]
         self.right_cost = [X * 61 / 100, Y * 80 / 100, X * 32 / 100, Y * 7 / 100]
 
+    def set_right(self):
+        self.bg_1_rect = self.right_bg_1_rect
+        self.bg_2_rect = self.right_bg_2_rect
+        self.name_rect = self.right_name
+        self.ability_type_rect = self.right_type
+        self.description_rect = self.right_description
+        self.cost_rect = self.right_cost
+
+    def set_left(self):
+        self.bg_1_rect = self.left_bg_1_rect
+        self.bg_2_rect = self.left_bg_2_rect
+        self.name_rect = self.left_name
+        self.ability_type_rect = self.left_type
+        self.description_rect = self.left_description
+        self.cost_rect = self.left_cost
+
     def update(self, dt):
         self.visible = False
-        for node in self.parent.parent.persist['characters'][self.parent.player_index].left_tree.skill_nodes:
-            if node.hover:
-                self.visible = True
-                self.bg_1_rect = self.right_bg_1_rect
-                self.bg_2_rect = self.right_bg_2_rect
-                self.name_rect = self.right_name
-                self.ability_type_rect = self.right_type
-                self.description_rect = self.right_description
-                self.cost_rect = self.right_cost
-                self.info = node.info
-                break
-        if not self.visible:
-            for node in self.parent.parent.persist['characters'][self.parent.player_index].center_tree.skill_nodes:
-                if node.hover:
-                    self.visible = True
-                    self.bg_1_rect = self.right_bg_1_rect
-                    self.bg_2_rect = self.right_bg_2_rect
-                    self.name_rect = self.right_name
-                    self.ability_type_rect = self.right_type
-                    self.description_rect = self.right_description
-                    self.cost_rect = self.right_cost
-                    self.info = node.info
-                    break
-        if not self.visible:
-            for node in self.parent.parent.persist['characters'][self.parent.player_index].right_tree.skill_nodes:
-                if node.hover:
-                    self.visible = True
-                    self.bg_1_rect = self.left_bg_1_rect
-                    self.bg_2_rect = self.left_bg_2_rect
-                    self.name_rect = self.left_name
-                    self.ability_type_rect = self.left_type
-                    self.description_rect = self.left_description
-                    self.cost_rect = self.left_cost
-                    self.info = node.info
-                    break
+        self.parent.player_index.update_skill_trees()
+        hover_node = self.parent.player_index.get_hover_skill_tree_node()
+        if hover_node:
+            self.visible = True
+            self.info = hover_node.info
+            if hover_node.parent.name == "right_skill_tree":
+                self.set_left()
+            else:
+                self.set_right()
 
     def draw(self, surface):
         if self.visible:
@@ -2294,136 +2309,6 @@ STATUS_LIST_EOT = {
     "toxic": {'effect': 5, 'animation': 'none', },  # hp loss based on missing hp
     "burn": {'effect': 5, 'animation': 'none', },  # flat hp loss
 }
-
-
-def weights_convert(idle_speed, idle_weights):
-    weight_sum = 0
-    for value in idle_weights:
-        weight_sum += value
-    for i, value in enumerate(idle_weights):
-        idle_weights[i] = value * idle_speed / weight_sum
-    return idle_weights
-
-
-def vector_sum(v1=None, v2=None, v3=None, v4=None, v5=None):
-    vector = []
-    if v1:
-        vector = copy.deepcopy(v1)
-        print(vector)
-    if v2:
-        for i in range(len(vector)):
-            vector[i] = vector[i] + v2[i]
-        print(vector)
-    if v3:
-        for i in range(len(vector)):
-            vector[i] = vector[i] + v3[i]
-    if v4:
-        for i in range(len(vector)):
-            vector[i] = vector[i] + v4[i]
-    if v5:
-        for i in range(len(vector)):
-            vector[i] = vector[i] + v5[i]
-    return vector
-
-
-def flip_sign(vector):
-    if not len(vector) == 10:
-        return vector
-    else:
-        vector[5] *= -1
-        vector[6] *= -1
-        vector[7] *= -1
-        vector[8] *= -1
-        vector[9] *= -1
-        return vector
-
-
-def normalize_ultity(vector):
-    for i in range(len(vector)):
-        if vector[i] > 1:
-            vector[i] = math.log10(vector[i]) + 1
-    return vector
-
-
-def utility_select(options):
-    n = len(options)
-    max_utility = 0
-    choices = []
-    enemy_1_choice = None
-    enemy_2_choice = None
-    enemy_3_choice = None
-    enemy_4_choice = None
-    enemy_5_choice = None
-
-    if n > 0:
-        for option_enemy_1 in options[0]:
-            if n > 1:
-                for option_enemy_2 in options[1]:
-                    if n > 2:
-                        for option_enemy_3 in options[2]:
-                            if n > 3:
-                                for option_enemy_4 in options[3]:
-                                    if n > 4:
-                                        for option_enemy_5 in options[4]:
-                                            if n == 4:
-                                                outcome_total = vector_sum(option_enemy_1[3], option_enemy_2[3],
-                                                                           option_enemy_3[3], option_enemy_4[3])
-                                                outcome_total = flip_sign(outcome_total)
-                                                outcome_total = normalize_ultity(outcome_total)
-                                                if sum(outcome_total) > max_utility:
-                                                    max_utility = sum(outcome_total)
-                                                    enemy_1_choice = option_enemy_1
-                                                    enemy_2_choice = option_enemy_2
-                                                    enemy_3_choice = option_enemy_3
-                                                    enemy_4_choice = option_enemy_4
-                                                    enemy_5_choice = option_enemy_5
-                                    else:
-                                        outcome_total = vector_sum(option_enemy_1[3], option_enemy_2[3],
-                                                                   option_enemy_3[3], option_enemy_4[3])
-                                        outcome_total = flip_sign(outcome_total)
-                                        outcome_total = normalize_ultity(outcome_total)
-                                        if sum(outcome_total) > max_utility:
-                                            max_utility = sum(outcome_total)
-                                            enemy_1_choice = option_enemy_1
-                                            enemy_2_choice = option_enemy_2
-                                            enemy_3_choice = option_enemy_3
-                                            enemy_4_choice = option_enemy_4
-                            else:
-                                outcome_total = vector_sum(option_enemy_1[3], option_enemy_2[3], option_enemy_3[3])
-                                outcome_total = flip_sign(outcome_total)
-                                outcome_total = normalize_ultity(outcome_total)
-                                if sum(outcome_total) > max_utility:
-                                    max_utility = sum(outcome_total)
-                                    enemy_1_choice = option_enemy_1
-                                    enemy_2_choice = option_enemy_2
-                                    enemy_3_choice = option_enemy_3
-                    else:
-                        outcome_total = vector_sum(option_enemy_1[3], option_enemy_2[3])
-                        outcome_total = flip_sign(outcome_total)
-                        outcome_total = normalize_ultity(outcome_total)
-                        if sum(outcome_total) > max_utility:
-                            max_utility = sum(outcome_total)
-                            enemy_1_choice = option_enemy_1
-                            enemy_2_choice = option_enemy_2
-            else:
-                outcome_total = option_enemy_1[3]
-                outcome_total = flip_sign(outcome_total)
-                outcome_total = normalize_ultity(outcome_total)
-                if sum(outcome_total) > max_utility:
-                    max_utility = sum(outcome_total)
-                    enemy_1_choice = option_enemy_1
-    if enemy_1_choice:
-        choices.append(enemy_1_choice)
-    if enemy_2_choice:
-        choices.append(enemy_2_choice)
-    if enemy_3_choice:
-        choices.append(enemy_3_choice)
-    if enemy_4_choice:
-        choices.append(enemy_4_choice)
-    if enemy_5_choice:
-        choices.append(enemy_5_choice)
-
-    return choices
 
 
 class VictoryDisplay:
@@ -2752,8 +2637,8 @@ class BattleCharacter(pygame.sprite.Sprite):
         self.animation_index = 0
         self.image = self.sprites[0]
         self.rect = pygame.rect.Rect(self.pos[0], self.pos[1], self.image.get_width(), self.image.get_height())
-        self.hp = self.stats[Stat.HP][self.level]
-        self.mp = self.stats[Stat.MP][self.level]
+        self.hp = self.stats[Stat.HP][self.level-1]
+        self.mp = self.stats[Stat.MP][self.level-1]
         self.class_ = data["attributes"]["class_type"]
 
     def get_class(self):
@@ -3047,6 +2932,13 @@ class PlayerCharacter(BattleCharacter):
         self.equipment = {}
         self.abilities = []
         self.class_ = class_
+        self.skill_tree = SkillTreeGetter().get_skill_tree_by_class(class_)
+
+    def update_skill_trees(self):
+        self.skill_tree.update(dt)
+
+    def get_hover_skill_tree_node(self):
+        return self.skill_tree.get_hover_skill_tree_node()
 
     def level_check(self):
         if self.level < len(EXPERIENCE_CURVE) + 1:
@@ -3071,227 +2963,6 @@ class PlayerCharacter(BattleCharacter):
 
     def get_class(self):
         return self.class_
-
-
-class Fighter(PlayerCharacter):
-    def __init__(self, name):
-        super(Fighter, self).__init__(name)
-        self.sprites = SpriteSheet(
-            r"venv\resources\sprites\Character\Battle\Fighter\Fighter_Battle128p.png").load_strip([0, 0, 128, 128], 6,
-                                                                                                  (255, 55, 202))
-        self.idle_frames = [0, 1, 2, 3]
-        self.idle_speed = [1331, 134, 400, 134]
-        self.attack_frames = [4]
-        self.attack_speed = [1000]
-        self.cast_frames = [4]
-        self.cast_speed = [1000]
-        self.hit_frames = [0]
-
-        self.hit_speed = [1000]
-        self.miss_frames = [2]
-        self.miss_speed = [1000]
-        self.pos = 0, 0
-        self.image = self.sprites[0]
-        self.rect = pygame.rect.Rect(self.pos[0], self.pos[1], self.image.get_width(), self.image.get_height())
-        self.equipment_options = self.base_equipment_options = ["Weapon", "Helm", "Armor", "Boots", "Shield"]
-        self.base_attack_type = self.attack_type = "Attack"
-        self.equipment = {}
-        self.abilities = self.base_abilities = ["Bash", "Strike", "Impale", "Dash", "Fortify", "Magic Strike",
-                                                "True Strike"]
-        self.abilities = [KiBlast(self)]
-        self.left_tree = SkillTree("Fighter", "left", self)
-        self.center_tree = SkillTree("Fighter", "center", self)
-        self.right_tree = SkillTree("Fighter", "right", self)
-
-
-class Slime(BattleCharacter):
-    def __init__(self, enemy_slot, region_index, n_enemy, parent):
-        super().__init__(parent)
-        self.name = "Slime"
-        self.hover = False
-        self.battle_slot = enemy_slot
-        self.sprites = SpriteSheet(r"venv\resources\sprites\Enemy\Slime"
-                                   r"\Slime128p.png").load_strip([0, 0, 128, 128], 4, (255, 55, 202))
-        self.idle_frames = [0, 1]
-        self.idle_speed = [750, 250]
-        self.attack_frames = [2]
-        self.attack_speed = [1000]
-        self.cast_frames = [3]
-        self.cast_speed = [1000]
-        self.hit_frames = [2]
-        self.hit_speed = [1000]
-        self.miss_frames = [3]
-        self.miss_speed = [1000]
-        self.pos = self.base_pos = BATTLE_MENUS['enemy positions'][n_enemy][self.battle_slot - 5]
-        self.image = self.sprites[0]
-        self.rect = pygame.rect.Rect(self.pos[0], self.pos[1], self.image.get_width(), self.image.get_height())
-        self.hp = self.max_hp = [100, 120, 140, 160, 190, 220, 250, 300][region_index]
-        self.mp = self.max_mp = [100, 110, 120, 130, 140, 150, 160, 180][region_index]
-        self.strength = [10, 12, 14, 16, 18, 20, 22, 28][region_index]
-        self.magic = [10, 12, 14, 16, 18, 20, 22, 28][region_index]
-        self.defense = [10, 12, 14, 16, 18, 20, 22, 28][region_index]
-        self.spirit = [10, 12, 14, 16, 18, 20, 22, 28][region_index]
-        self.luck = [10, 12, 14, 16, 18, 20, 22, 28][region_index]
-        self.speed = [10, 12, 14, 16, 18, 20, 22, 28][region_index]
-        self.crit_rate = [1, 1, 1, 1, 1, 1.1, 1.1, 1.1][region_index]
-        self.crit_damage = [1, 1, 1, 1, 1, 1, 1, 1][region_index]
-        self.exp_reward = [200, 12, 14, 16, 18, 20, 22, 28][region_index]
-        self.supply_reward = random_int([0, 0, 0, 0, 0, 0, 0, 0][region_index], [1, 1, 1, 1, 2, 2, 2, 2][region_index])
-        self.elixir_reward = random_int([0, 0, 0, 0, 0, 0, 0, 0][region_index], [1, 1, 1, 1, 2, 2, 2, 2][region_index])
-        self.charger_reward = random_int([0, 0, 0, 0, 0, 0, 0, 0][region_index], [1, 1, 1, 1, 2, 2, 2, 2][region_index])
-        self.gold_reward = random_int([0, 0, 0, 0, 0, 0, 0, 0][region_index],
-                                      [10, 12, 14, 16, 18, 20, 22, 24][region_index])
-        self.action_options = [Attack(self), SlimeBall(self)]
-        self.item_reward = self.reward(region_index)
-
-    def reward(self, region_index):
-        if len([['none', 'common', 'rare'], [60, 37, 3]][region_index]) == 1:
-            if [['none', 'common', 'rare'], [60, 37, 3]][region_index][0] != 'none':
-                item = item_generate([['none', 'common', 'rare'], [60, 37, 3]][region_index])
-            else:
-                item = 'none'
-        else:
-            n = random_int(0, len([['none', 'common', 'rare'], [60, 37, 3]][region_index]))
-            if [['none', 'common', 'rare'], [60, 37, 3]][region_index][n - 1] != 'none':
-                item = item_generate([['none', 'common', 'rare'], [60, 37, 3]][region_index])
-            else:
-                item = 'none'
-        return item
-
-    def ko(self):
-        self.kill()
-        self.parent.battle_characters_ko.add(self)
-        self.parent.battle_objects.add(self)
-        self.battle_action.kill()
-        self.parent.supply_reward += self.supply_reward
-        self.parent.charger_reward += self.charger_reward
-        self.parent.elixir_reward += self.elixir_reward
-        self.parent.exp_reward += self.exp_reward
-        self.parent.gold_reward += self.gold_reward
-
-
-class DesertWurm(BattleCharacter):
-    def __init__(self, enemy_slot, region_index, n_enemy, parent):
-        super().__init__(parent)
-        self.name = "Slime" + enemy_slot[5:]
-        self.hover = False
-        self.slot = enemy_slot
-        self.sprites = [image_load(r"venv\resources\sprites\Enemy\Slime\Slime128p1.png"),
-                        image_load(r"venv\resources\sprites\Enemy\Slime\Slime128p2.png"),
-                        image_load(r"venv\resources\sprites\Enemy\Slime\Slime128p3.png"),
-                        image_load(r"venv\resources\sprites\Enemy\Slime\Slime128p4.png")]
-        self.idle_frames = [0, 1]
-        self.idle_weights = [3, 1]
-        self.idle_speed = 1000
-        self.idle_time = random_int(0, self.idle_speed)
-        self.idle_index = 0
-        self.idle_weights = weights_convert(self.idle_speed, self.idle_weights)
-        self.attack_frames = [2]
-        self.cast_frames = [3]
-        self.hit_frames = [2]
-        self.miss_frames = [3]
-        self.x = self.base_x = BATTLE_MENUS['enemy positions'][n_enemy][enemy_slot][0]
-        self.y = self.base_y = BATTLE_MENUS['enemy positions'][n_enemy][enemy_slot][1]
-        self.image = self.sprites[self.idle_frames[self.idle_index]]
-        self.rect = pygame.rect.Rect(self.x, self.y, self.image.get_width(), self.image.get_height())
-        self.hp = self.max_hp = [500, 700, 1000, 1400, 1900, 2500, 3100, 3700][region_index]
-        self.mp = self.max_mp = [100, 110, 120, 130, 140, 150, 160, 180][region_index]
-        self.strength = [20, 25, 30, 35, 40, 45, 50, 60][region_index]
-        self.magic = [10, 12, 14, 16, 18, 20, 22, 28][region_index]
-        self.defense = [20, 25, 30, 35, 40, 45, 50, 60][region_index]
-        self.spirit = [10, 12, 14, 16, 18, 20, 22, 28][region_index]
-        self.luck = [10, 12, 14, 16, 18, 20, 22, 28][region_index]
-        self.speed = [10, 12, 14, 16, 18, 20, 22, 28][region_index]
-        self.crit_rate = [1, 1, 1, 1, 1, 1.1, 1.1, 1.1][region_index]
-        self.crit_damage = [1, 1, 1, 1, 1, 1, 1, 1][region_index]
-        self.exp_reward = [200, 12, 14, 16, 18, 20, 22, 28][region_index]
-        self.supply_reward = random_int([0, 0, 0, 0, 0, 0, 0, 0][region_index], [1, 1, 1, 1, 2, 2, 2, 2][region_index])
-        self.elixir_reward = random_int([0, 0, 0, 0, 0, 0, 0, 0][region_index], [1, 1, 1, 1, 2, 2, 2, 2][region_index])
-        self.charger_reward = random_int([0, 0, 0, 0, 0, 0, 0, 0][region_index], [1, 1, 1, 1, 2, 2, 2, 2][region_index])
-        self.gold_reward = random_int([0, 0, 0, 0, 0, 0, 0, 0][region_index],
-                                      [10, 12, 14, 16, 18, 20, 22, 24][region_index])
-        self.action_options = []
-        self.item_reward = self.reward(region_index)
-        self.state = "Main"  # "Burrow", "Hidden"
-
-    def reward(self, region_index):
-        if len([['none', 'common', 'rare'], [60, 37, 3]][region_index]) == 1:
-            if [['none', 'common', 'rare'], [60, 37, 3]][region_index][0] != 'none':
-                item = item_generate([['none', 'common', 'rare'], [60, 37, 3]][region_index])
-            else:
-                item = 'none'
-        else:
-            n = random_int(0, len([['none', 'common', 'rare'], [60, 37, 3]][region_index]))
-            if [['none', 'common', 'rare'], [60, 37, 3]][region_index][n - 1] != 'none':
-                item = item_generate([['none', 'common', 'rare'], [60, 37, 3]][region_index])
-            else:
-                item = 'none'
-        return item
-
-    def update(self, dt):
-        if self.state == "Idle":
-            self.idle_time += random_int(15, 20)
-            if self.idle_time > self.idle_weights[self.idle_index]:
-                self.idle_time -= self.idle_weights[self.idle_index]
-                self.idle_index += 1
-                if self.idle_index >= len(self.idle_frames):
-                    self.idle_index = 0
-            self.image = self.sprites[self.idle_frames[self.idle_index]]
-        elif self.state == "Attack":
-            self.image = self.sprites[self.attack_frames[0]]
-        elif self.state == "Cast":
-            self.image = self.sprites[self.cast_frames[0]]
-        elif self.state == "Hit":
-            self.image = self.sprites[self.hit_frames[0]]
-        elif self.state == "Miss":
-            self.image = self.sprites[self.miss_frames[0]]
-        self.rect = pygame.rect.Rect(self.x, self.y, self.image.get_width(), self.image.get_height())
-
-        self.action_options = []
-        if self.state == "Main":
-            self.action_options = [Attack(self), SandBreath(self), Impale(self), Burrow(self), Bolster(self),
-                                   DesertWrath(self)]
-
-    def ko(self):
-        self.kill()
-        self.parent.battle_characters_ko.add(self)
-        self.parent.battle_objects.add(self)
-        self.battle_action.kill()
-        self.parent.supply_reward += self.supply_reward
-        self.parent.charger_reward += self.charger_reward
-        self.parent.elixir_reward += self.elixir_reward
-        self.parent.exp_reward += self.exp_reward
-        self.parent.gold_reward += self.gold_reward
-
-    def flip_state(self, state):
-        self.action_options.clear()
-        if state == "Main":
-            self.action_options = [Attack(self), SandBreath(self), Impale(self), Burrow(self), Bolster(self),
-                                   DesertWrath(self)]
-            self.state = "Main"
-        elif state == "Burrow":
-            self.action_options = [TailSweep(self)]
-            self.state = "Burrow"
-        elif state == "Hidden":
-            self.action_options = [Emerge(self)]
-            self.state = "Hidden"
-
-    def give_options(self):
-        options = []
-
-
-#        if hasattr(self, 'action'):
-#            if getattr(self.action, 'name', "None") != "None":
-#                return [(self.slot, "None", ["None"], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0])]
-#        for action in self.action_options:
-#            if action.is_usable():
-#                action_outcomes = action.expected_value()
-#                for i in range(len(action_outcomes)):
-#                    options.append(action_outcomes[i])
-#        if options:
-#            return options
-#        else:
-#            return [(self.slot, "None", ["None"], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0])]
 
 
 class BattleOverlay(object):
@@ -3409,17 +3080,6 @@ class BattleActionCard(pygame.sprite.Sprite):
         self.animation_speed = BATTLE_MENU_SPRITES['animation_speed']
         self.sprites = BATTLE_MENU_SPRITES['action_slot_sprites']
         self.attack_frames = BATTLE_MENU_SPRITES['attack_action']
-        self.attack_weights = weights_convert(self.animation_speed, BATTLE_MENU_SPRITES['attack_action_weights'])
-        self.ability_frames = BATTLE_MENU_SPRITES['ability_action']
-        self.ability_weights = weights_convert(self.animation_speed, BATTLE_MENU_SPRITES['ability_action_weights'])
-        self.item_frames = BATTLE_MENU_SPRITES['item_action']
-        self.item_weights = weights_convert(self.animation_speed, BATTLE_MENU_SPRITES['item_action_weights'])
-        self.defend_frames = BATTLE_MENU_SPRITES['defend_action']
-        self.defend_weights = weights_convert(self.animation_speed, BATTLE_MENU_SPRITES['defend_action_weights'])
-        self.skill_frames = BATTLE_MENU_SPRITES['ability_action']
-        self.skill_weights = weights_convert(self.animation_speed, BATTLE_MENU_SPRITES['ability_action_weights'])
-        self.none_frames = BATTLE_MENU_SPRITES['no_action']
-        self.none_weights = weights_convert(self.animation_speed, BATTLE_MENU_SPRITES['no_action_weights'])
         self.image = self.sprites[4]
         self.timer = self.animation_speed
         self.animation_index = 0
@@ -3534,540 +3194,6 @@ class NoActionCardSelected(BattleActionCard):
         self.parent.parent.battle_objects.add(self)
 
 
-class Run(BattleActionCard):
-    def __init__(self, parent, target=None):
-        super(Run, self).__init__(parent, target=None)
-
-    def is_usable(self):
-        return True
-
-    def do_action(self):
-        self.end_action_timer = 1000
-
-    def target_set(self, source, battle_character):
-        self.target = None
-        if self.parent.battle_action:
-            self.parent.battle_action.kill()
-        self.parent.battle_action = self
-        self.parent.parent.battle_actions.add(self)
-        self.parent.parent.battle_objects.add(self)
-
-
-class Defend(BattleActionCard):
-    def __init__(self, parent, target=None):
-        super(Defend, self).__init__(parent, target=None)
-        self.priority = True
-
-    def is_usable(self):
-        return True
-
-    def do_action(self):
-        self.parent.defend += 1
-        self.end_action_timer = 1000
-
-    def target_set(self, source, battle_character):
-        self.target = None
-        if self.parent.battle_action:
-            self.parent.battle_action.kill()
-        self.parent.battle_action = self
-        self.parent.parent.battle_actions.add(self)
-        self.parent.parent.battle_objects.add(self)
-
-
-class Recharge(BattleActionCard):
-    def __init__(self, parent, target=None):
-        super(Recharge, self).__init__(parent, target=None)
-
-    def is_usable(self):
-        if self.parent.parent.persist['chargers'] > 0:
-            return True
-
-    def do_action(self):
-        self.parent.equipment['Weapon'].charge = self.parent.equipment['Weapon'].max_charge
-        self.parent.parent.persist['chargers'] -= 1
-        self.end_action_timer = 1000
-
-    def target_set(self, source, battle_character):
-        self.target = battle_character
-        if self.parent.battle_action:
-            self.parent.battle_action.kill()
-        self.parent.battle_action = self
-        self.parent.parent.battle_actions.add(self)
-        self.parent.parent.battle_objects.add(self)
-
-
-class SlimeBall(BattleActionCard):
-    def __init__(self, parent, target=None):
-        super(SlimeBall, self).__init__(parent, target=None)
-        self.target_type = "Single"
-        self.attack_stat = "strength"
-        self.defend_stat = "defense"
-        self.power = 10
-        self.mp_cost = 10
-        self.accuracy = 90
-        self.effect = [("frail", 100)]
-        self.name = "SlimeBall"
-        self.action_type = "Skill"
-        self.action_time = 1000
-
-    def situational_value(self):
-        value_set = []
-        for player in self.parent.parent.player_characters.sprites():
-            if self.parent.mp < self.mp_cost:
-                value = 0
-            elif player.frail == 0:
-                value = player.defense
-            else:
-                value = player.defense / 2
-            value_set.append((self.name, player.battle_slot, value))
-        return value_set
-
-    def do_action(self):
-        damage_roll = random_int(85, 100)
-        critical_roll = random_int(0, 100)
-        effect_roll = random_int(0, 100)
-        miss_roll = random_int(0, 100)
-        source_luck = getattr(self.parent, 'luck')
-        target_luck = getattr(self.parent.parent, self.target[0]).luck
-        attack = getattr(self.parent, 'attack')
-        defense = getattr(self.parent.parent, self.target[0]).defense
-        if self.parent.brave > 0:
-            attack *= 1.5
-        if self.parent.weak > 0:
-            attack /= 1.5
-        if getattr(self.parent.parent, self.target).vigilant > 0:
-            defense *= 1.5
-        if getattr(self.parent.parent, self.target).frail > 0:
-            defense /= 1.5
-        if self.parent.lucky > 0:
-            source_luck *= 1.5
-        if self.parent.hex > 0:
-            source_luck /= 1.5
-        if getattr(self.parent.parent, self.target).lucky > 0:
-            target_luck *= 1.5
-        if getattr(self.parent.parent, self.target).hex > 0:
-            target_luck /= 1.5
-        if miss_roll * source_luck / target_luck < self.accuracy:
-            damage = 'miss'
-        else:
-            critical = 1
-            if critical_roll * self.parent.crit_rate * target_luck / source_luck <= self.crit_rate:
-                critical = 1.5 * self.parent.crit_damage
-            damage = int((self.power * attack / defense) * critical * damage_roll / 100)
-        self.parent.state = "Attack"
-        # animation class needed
-        getattr(self.parent.parent, self.target[0]).damage(damage, self, self.action_time / 1000)
-        for i, status in enumerate(self.effect):
-            if effect_roll <= status[1]:
-                getattr(self.parent.parent, self.target[0]).status(status[0], self,
-                                                                   (self.action_time + (100 * i)) / 1000)
-        self.end_action_timer = Timer(int(self.action_time / 1000), self.action_done())
-        self.end_action_timer.start()
-
-    def action_done(self):
-        self.parent.parent.stop_wait()
-        self.kill()
-
-
-class Attack(BattleActionCard):
-    def __init__(self, parent, target=None):
-        super().__init__(parent, target=None)
-        self.target_type = "Single"
-        self.attack_stat = "strength"
-        self.defend_stat = "defense"
-        self.power = 20
-        self.animation = "Slash_1"
-        self.name = "Attack"
-        self.action_type = "Attack"
-
-    def expected_value(self):
-        value_set = []
-        for character in self.parent.parent.battle_characters.sprites():
-            outcome = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-            damage_low, damage_high, p_hit, critical_low, critical_high, p_critical = \
-                attack_defense_calculate(self, self.parent, character, ev=True)
-            outcome[character.battle_slot] = ((damage_low + damage_high) * p_hit * (1 - p_critical) / (
-                    2 * character.hp)) + ((critical_low + critical_high) * p_hit * p_critical / (2 * character.hp))
-            value_set.append((self.parent, self, [character], outcome))
-        return value_set
-
-    def is_usable(self):
-        if self.parent.disabled > 0 or self.parent.stunned > 0:
-            return False
-        return True
-
-    def do_action(self):
-        for target in self.target:
-            damage = attack_defense_calculate(self, self.parent, target)
-            target.damage(damage, self, delay=100)
-            self.parent.parent.persist['SFX'].schedule_sfx('Attack_1')
-        self.end_action_timer = 1000
-
-    def target_set(self, source, battle_character):
-        self.target = battle_character
-        if self.parent.battle_action:
-            self.parent.battle_action.cancel()
-        self.parent.battle_action = self
-        self.parent.parent.battle_actions.add(self)
-        self.parent.parent.battle_objects.add(self)
-
-
-class KiBlast(BattleActionCard):
-    def __init__(self, parent, target=None):
-        super(KiBlast, self).__init__(parent, target=None)
-        self.parent = parent
-        self.target_type = "Team"
-        self.attack_stat = "strength"
-        self.defend_stat = "defense"
-        self.power = 40
-        self.name = "Ki Blast"
-        self.action_type = "Ability"
-        self.animation_sprites = SpriteSheet(
-            r"venv\resources\sprites\Battle\Effects"
-            r"\attack_all_enemy_animation_1_720p.png").load_strip([0, 0, 1280, 720], 19, (255, 55, 202)),
-        self.animation_frames = [0, 1, 2, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18]
-        self.frame_times = [50, 50, 50, 50, 50, 50, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 50, 50, 50,
-                            150, 100],
-        self.delay = 100
-        self.animation_type = 'screen'
-        self.mp_cost = 2
-
-    def expected_value(self):
-        value_set = []
-        for character in self.parent.parent.battle_characters.sprites():
-            outcome = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-            damage_low, damage_high, p_hit, critical_low, critical_high, p_critical = \
-                attack_defense_calculate(self, self.parent, character, ev=True)
-            outcome[BATTLE_MENUS['battle_slot_index'][character.battle_slot]] = \
-                ((damage_low + damage_high) * p_hit * (1 - p_critical) / (2 * character.hp)) + \
-                ((critical_low + critical_high) * p_hit * p_critical / (2 * character.hp))
-            value_set.append((self.parent, self, [character], outcome))
-        return value_set
-
-    def is_usable(self):
-        if self.parent.dazed > 0 or self.parent.stunned > 0 or self.parent.mp < self.mp_cost:
-            return False
-        return True
-
-    def do_action(self):
-        for target in self.target:
-            damage = attack_defense_calculate(self, self.parent, target)
-            target.damage(damage, self, delay=2000)
-        self.parent.parent.persist['FX'].add_effect(self.animation_sprites, self.animation_frames, self.frame_times,
-                                                    self.delay, self.animation_type)
-        self.parent.parent.persist['SFX'].schedule_sfx('Blast_1')
-        self.end_action_timer = 3000
-
-    def target_set(self, source, battle_character):
-        target = []
-        if isinstance(battle_character, PlayerCharacter):
-            for character in self.parent.parent.player_characters.sprites():
-                target.append(character)
-        else:
-            for character in self.parent.parent.enemy_characters.sprites():
-                target.append(character)
-        self.target = target
-        if self.parent.battle_action:
-            self.parent.battle_action.cancel()
-        self.parent.battle_action = self
-        self.parent.parent.battle_actions.add(self)
-        self.parent.parent.battle_objects.add(self)
-
-
-class SandBreath(BattleActionCard):
-    def __init__(self, parent, target=None):
-        super(SandBreath, self).__init__(parent, target=None)
-        self.target_type = "Team"
-        self.attack_stat = "strength"
-        self.defend_stat = "defense"
-        self.power = 30
-        self.animation = "Slash_1"
-        self.name = "Sand Breath"
-        self.action_type = "Ability"
-        self.effects = [("daze", 3, 50), ("frail", 3, 50)]
-
-    def expected_value(self):
-        value_set = []
-        for character in self.parent.parent.battle_characters.sprites():
-            outcome = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-            damage_low, damage_high, p_hit, critical_low, critical_high, p_critical = \
-                attack_defense_calculate(self, self.parent, character, ev=True)
-            outcome[BATTLE_MENUS['battle_slot_index'][character.battle_slot]] = \
-                ((damage_low + damage_high) * p_hit * (1 - p_critical) / (2 * character.hp)) + \
-                ((critical_low + critical_high) * p_hit * p_critical / (2 * character.hp))
-            value_set.append((self.parent, self, [character], outcome))
-        return value_set
-
-    def is_usable(self):
-        if self.parent.dazed > 0 or self.parent.stunned > 0:
-            return False
-        return True
-
-    def do_action(self):
-        for target in self.target:
-            damage = attack_defense_calculate(self, self.parent, target)
-            target.damage(damage, self, delay=100)
-        self.end_action_timer = 1000
-
-    def target_set(self, source, battle_character):
-        self.target = battle_character
-        if self.parent.battle_action:
-            self.parent.battle_action.cancel()
-        self.parent.battle_action = self
-        self.parent.parent.battle_actions.add(self)
-        self.parent.parent.battle_objects.add(self)
-
-
-class Impale(BattleActionCard):
-    def __init__(self, parent, target=None):
-        super(Impale, self).__init__(parent, target=None)
-        self.target_type = "Single"
-        self.attack_stat = "strength"
-        self.defend_stat = "defense"
-        self.power = 60
-        self.animation = "Slash_1"
-        self.name = "Impale"
-        self.action_type = "Ability"
-        self.effects = [("stun", 2, 25), ("bleed", 3, 75)]
-
-    def expected_value(self):
-        value_set = []
-        for character in self.parent.parent.battle_characters.sprites():
-            outcome = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-            damage_low, damage_high, p_hit, critical_low, critical_high, p_critical = \
-                attack_defense_calculate(self, self.parent, character, ev=True)
-            outcome[BATTLE_MENUS['battle_slot_index'][character.battle_slot]] = \
-                ((damage_low + damage_high) * p_hit * (1 - p_critical) / (2 * character.hp)) + \
-                ((critical_low + critical_high) * p_hit * p_critical / (2 * character.hp))
-            value_set.append((self.parent, self, [character], outcome))
-        return value_set
-
-    def is_usable(self):
-        if self.parent.dazed > 0 or self.parent.stunned > 0:
-            return False
-        return True
-
-    def do_action(self):
-        for target in self.target:
-            damage = attack_defense_calculate(self, self.parent, target)
-            target.damage(damage, self, delay=100)
-        self.end_action_timer = 1000
-
-    def target_set(self, source, battle_character):
-        self.target = battle_character
-        if self.parent.battle_action:
-            self.parent.battle_action.cancel()
-        self.parent.battle_action = self
-        self.parent.parent.battle_actions.add(self)
-        self.parent.parent.battle_objects.add(self)
-
-
-class Burrow(BattleActionCard):
-    def __init__(self, parent, target=None):
-        super(Burrow, self).__init__(parent, target=None)
-        self.target_type = "None"
-        self.attack_stat = "strength"
-        self.defend_stat = "defense"
-        self.power = 60
-        self.animation = "Slash_1"
-        self.name = "Burrow"
-        self.action_type = "Ability"
-
-    def expected_value(self):
-        value_set = []
-        for character in self.parent.parent.battle_characters.sprites():
-            outcome = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-            damage_low, damage_high, p_hit, critical_low, critical_high, p_critical = \
-                attack_defense_calculate(self, self.parent, character, ev=True)
-            outcome[BATTLE_MENUS['battle_slot_index'][character.battle_slot]] = \
-                ((damage_low + damage_high) * p_hit * (1 - p_critical) / (2 * character.hp)) + \
-                ((critical_low + critical_high) * p_hit * p_critical / (2 * character.hp))
-            value_set.append((self.parent, self, [character], outcome))
-        return value_set
-
-    def is_usable(self):
-        return True
-
-    def do_action(self):
-        self.parent.state = "Burrow"
-        self.end_action_timer = 1000
-
-    def target_set(self, source, battle_character):
-        pass
-
-
-class TailSweep(BattleActionCard):
-    def __init__(self, parent, target=None):
-        super(TailSweep, self).__init__(parent, target=None)
-        self.target_type = "Team"
-        self.attack_stat = "strength"
-        self.defend_stat = "defense"
-        self.power = 60
-        self.animation = "Slash_1"
-        self.name = "Tail Sweep"
-        self.action_type = "Ability"
-
-    def expected_value(self):
-        value_set = []
-        for character in self.parent.parent.battle_characters.sprites():
-            outcome = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-            damage_low, damage_high, p_hit, critical_low, critical_high, p_critical = \
-                attack_defense_calculate(self, self.parent, character, ev=True)
-            outcome[BATTLE_MENUS['battle_slot_index'][character.battle_slot]] = \
-                ((damage_low + damage_high) * p_hit * (1 - p_critical) / (2 * character.hp)) + \
-                ((critical_low + critical_high) * p_hit * p_critical / (2 * character.hp))
-            value_set.append((self.parent, self, [character], outcome))
-        return value_set
-
-    def is_usable(self):
-        return True
-
-    def do_action(self):
-        for target in self.target:
-            damage = attack_defense_calculate(self, self.parent, target)
-            target.damage(damage, self, delay=100)
-        self.parent.state = "Hidden"
-        self.end_action_timer = 1000
-
-    def target_set(self, source, battle_character):
-        self.target = battle_character
-        if self.parent.battle_action:
-            self.parent.battle_action.cancel()
-        self.parent.battle_action = self
-        self.parent.parent.battle_actions.add(self)
-        self.parent.parent.battle_objects.add(self)
-
-
-class Emerge(BattleActionCard):
-    def __init__(self, parent, target=None):
-        super(Emerge, self).__init__(parent, target=None)
-        self.target_type = "Team"
-        self.attack_stat = "strength"
-        self.defend_stat = "defense"
-        self.power = 20
-        self.animation = "Slash_1"
-        self.name = "Sand Breath"
-        self.action_type = "Ability"
-        self.effects = [("stun", 2, 100)]
-
-    def expected_value(self):
-        value_set = []
-        for character in self.parent.parent.battle_characters.sprites():
-            outcome = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-            damage_low, damage_high, p_hit, critical_low, critical_high, p_critical = \
-                attack_defense_calculate(self, self.parent, character, ev=True)
-            outcome[BATTLE_MENUS['battle_slot_index'][character.battle_slot]] = \
-                ((damage_low + damage_high) * p_hit * (1 - p_critical) / (2 * character.hp)) + \
-                ((critical_low + critical_high) * p_hit * p_critical / (2 * character.hp))
-            value_set.append((self.parent, self, [character], outcome))
-        return value_set
-
-    def is_usable(self):
-        return True
-
-    def do_action(self):
-        for target in self.target:
-            damage = attack_defense_calculate(self, self.parent, target)
-            target.damage(damage, self, delay=100)
-        self.parent.state = "Main"
-        self.end_action_timer = 1000
-
-    def target_set(self, source, battle_character):
-        self.target = battle_character
-        if self.parent.battle_action:
-            self.parent.battle_action.cancel()
-        self.parent.battle_action = self
-        self.parent.parent.battle_actions.add(self)
-        self.parent.parent.battle_objects.add(self)
-
-
-class Bolster(BattleActionCard):
-    def __init__(self, parent, target=None):
-        super(Bolster, self).__init__(parent, target=None)
-        self.target_type = "Single"
-        self.attack_stat = "strength"
-        self.defend_stat = "defense"
-        self.power = 0
-        self.animation = "Slash_1"
-        self.name = "Bolster"
-        self.action_type = "Ability"
-        self.effects = [("Vigilant", 3, 100), ("Faith", 3, 100)]
-
-    def expected_value(self):
-        value_set = []
-        for character in self.parent.parent.battle_characters.sprites():
-            outcome = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-            damage_low, damage_high, p_hit, critical_low, critical_high, p_critical = \
-                attack_defense_calculate(self, self.parent, character, ev=True)
-            outcome[BATTLE_MENUS['battle_slot_index'][character.battle_slot]] = \
-                ((damage_low + damage_high) * p_hit * (1 - p_critical) / (2 * character.hp)) + \
-                ((critical_low + critical_high) * p_hit * p_critical / (2 * character.hp))
-            value_set.append((self.parent, self, [character], outcome))
-        return value_set
-
-    def is_usable(self):
-        if self.parent.dazed > 0 or self.parent.stunned > 0:
-            return False
-        return True
-
-    def do_action(self):
-        for target in self.target:
-            damage = attack_defense_calculate(self, self.parent, target)
-            target.damage(damage, self, delay=100)
-        self.end_action_timer = 1000
-
-    def target_set(self, source, battle_character):
-        self.target = battle_character
-        if self.parent.battle_action:
-            self.parent.battle_action.cancel()
-        self.parent.battle_action = self
-        self.parent.parent.battle_actions.add(self)
-        self.parent.parent.battle_objects.add(self)
-
-
-class DesertWrath(BattleActionCard):
-    def __init__(self, parent, target=None):
-        super(DesertWrath, self).__init__(parent, target=None)
-        self.target_type = "Single"
-        self.attack_stat = "strength"
-        self.defend_stat = "defense"
-        self.power = 10
-        self.animation = "Slash_1"
-        self.name = "Desert's Wrath"
-        self.action_type = "Ability"
-        self.effects = [("bleed", 2, 10), ("toxic", 2, 10), ("burn", 2, 10), ("curse", 2, 10), ("spite", 2, 10),
-                        ("hex", 2, 10), ("slow", 2, 10)]
-
-    def expected_value(self):
-        value_set = []
-        for character in self.parent.parent.battle_characters.sprites():
-            outcome = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-            damage_low, damage_high, p_hit, critical_low, critical_high, p_critical = \
-                attack_defense_calculate(self, self.parent, character, ev=True)
-            outcome[BATTLE_MENUS['battle_slot_index'][character.battle_slot]] = \
-                ((damage_low + damage_high) * p_hit * (1 - p_critical) / (2 * character.hp)) + \
-                ((critical_low + critical_high) * p_hit * p_critical / (2 * character.hp))
-            value_set.append((self.parent, self, [character], outcome))
-        return value_set
-
-    def is_usable(self):
-        return True
-
-    def do_action(self):
-        for target in self.target:
-            damage = attack_defense_calculate(self, self.parent, target)
-            target.damage(damage, self, delay=100)
-        self.end_action_timer = 1000
-
-    def target_set(self, source, battle_character):
-        self.target = battle_character
-        if self.parent.battle_action:
-            self.parent.battle_action.cancel()
-        self.parent.battle_action = self
-        self.parent.parent.battle_actions.add(self)
-        self.parent.parent.battle_objects.add(self)
-
-
 ITEM_LIST = {"All": ["StimPack"],
              "All_Shop_Weights": [1],
              "All_Reward_Weights": [1],
@@ -4118,111 +3244,6 @@ ADJECTIVES = ["accurate", "accessible", "adaptable", "advisable", "aesthetically
               "valuable", "vast", "well-made", "wide", "wise", "workable", "youthful", ]
 
 TITLES = ["Sir", "Madam"]
-
-
-class BattleConsumableCard(BattleActionCard):
-    def __init__(self, parent=None, target=None):
-        super().__init__(parent, target=None)
-        self.action_type = "Item"
-
-
-class StimPack(BattleConsumableCard):
-    def __init__(self, parent=None, target=None):
-        super().__init__(parent=None, target=None)
-        self.parent = parent
-        self.target = target
-        self.target_type = "Single"
-        self.animation = "Slash_1"
-        self.name = "StimPack"
-        self.buy_value = 50
-        self.sell_value = 25
-        self.effects = [("regen", 4, 100), ("quick", 4, 100)]
-
-    def cancel(self):
-        self.parent.parent.persist['inventory'].append(StimPack())
-        self.kill()
-
-    def do_action(self):
-        for target in self.target:
-            target.damage(-int(target.max_hp * 0.1), self, delay=100)
-        self.end_action_timer = 1000
-
-    def target_set(self, source, battle_character):
-        if hasattr(source, 'battle_action'):
-            pass
-        source.battle_action.cancel()
-        source.battle_action = StimPack(source, battle_character)
-        source.parent.battle_actions.add(source.battle_action)
-        source.parent.battle_objects.add(source.battle_action)
-        self.kill()
-        source.parent.persist['inventory'].remove(self)
-
-
-def attack_defense_calculate(action, source, target, estimate=False, ev=False):
-    critical_roll = random_int(0, 100)
-    miss_roll = random_int(0, 100)
-    damage_roll = random_int(85, 100)
-    attack = source.strength
-    defense = target.defense
-    source_luck = source.luck
-    target_luck = target.luck
-    if source.brave > 0:
-        attack *= 1.5
-    if source.weak > 0:
-        attack /= 1.5
-    if target.vigilant > 0:
-        defense *= 1.5
-    if target.frail > 0:
-        defense /= 1.5
-    if source.lucky > 0:
-        source_luck *= 1.5
-    if source.hex > 0:
-        source_luck /= 1.5
-    if target.lucky > 0:
-        target_luck *= 1.5
-    if target.hex > 0:
-        target_luck /= 1.5
-    if estimate or ev:
-        low_end = (action.power * attack / defense) * 85 / 100
-        high_end = (action.power * attack / defense)
-        critical_low = (action.power * attack / defense) * 1.5 * 85 / 100
-        critical_high = (action.power * attack / defense) * 1.5
-        if target.shield > 0:
-            low_end /= 2
-            high_end /= 2
-            critical_low /= 2
-            critical_high /= 2
-        if target.invincible > 0:
-            low_end = 0
-            high_end = 0
-            critical_low = 0
-            critical_high = 0
-        if target.spite > 0:
-            low_end += 10
-            high_end += 10
-            critical_low += 10
-            critical_high += 10
-        if target.curse > 0:
-            low_end *= 2
-            high_end *= 2
-            critical_low *= 2
-            critical_high *= 2
-        p_hit = (source_luck / target_luck) * action.accuracy / 100
-        p_critical = 1 - (0.95 / ((source_luck / target_luck) * source.crit_rate * action.crit_rate))
-        if p_critical < 0:
-            p_critical = 0
-        if ev:
-            return low_end, high_end, p_hit, critical_low, critical_high, p_critical
-        elif estimate:
-            return low_end, high_end, p_hit
-    if miss_roll * target_luck / source_luck > action.accuracy:
-        damage = 'miss'
-    else:
-        critical = 1
-        if critical_roll * source.crit_rate * action.crit_rate * target_luck / source_luck >= 95:
-            critical = 1.5 * source.crit_damage
-        damage = (action.power * attack / defense) * critical * damage_roll / 100
-    return damage
 
 
 class SettingsManager(object):
@@ -4551,7 +3572,11 @@ class Action:
 
 class SkillTreeGetter:
     def __init__(self):
-        self.data = JsonReader.read_json("venv/settings_data/Tree_Nodes.json")
+        self.data = JsonReader.read_json("venv/settings_data/Class_Data.json")
+
+    def get_skill_tree_by_class(self, class_):
+        tree_manager = SkillTreeManager(self.data[class_])
+        return tree_manager
 
 
 class DamageCalculator:
@@ -4938,42 +3963,40 @@ class WorldBuild:
     def region_generate(region_type, region_index):
         base_data = RegionMapGetter.get_region_map(region_type)
         base_data["random_state"] = random.getstate()
-        network, data = NetworkGetter().get_network(base_data)
-        random.setstate(data["random_state"])
-        data["nodes"] = []
-        data["node_list"] = network[0]
-        data["edge_list"] = network[1]
-        data["neighbors_dict"] = network[2]
-        data["edge_dict"] = network[3]
+        node_list, graph, edge_list, new_data = NetworkGetter().get_network(base_data)
+        random.setstate(new_data["random_state"])
+        new_data["nodes"] = []
+        new_data["node_list"] = node_list
+        new_data["edge_list"] = edge_list
+        new_data["neighbors_dict"] = graph
+        new_data["edge_dict"] = edge_list
 
-        for value in network[0]:
+        for value in node_list:
             if value.index == 0:
-                data["nodes"].append(Node(value.x, value.y, network[2][value.index], network[3][value.index], value.index, "Boss"))
+                new_data["nodes"].append(Node(value.x, value.y, graph[value.index], value.index, "Boss"))
             elif value.index == 1:
-                data["nodes"].append(Node(value.x, value.y, network[2][value.index], network[3][value.index], value.index, "Region Entry"))
+                new_data["nodes"].append(Node(value.x, value.y, graph[value.index], value.index, "Region Entry"))
             else:
                 node_type = node_assign_3()
-                data["nodes"].append(Node(value.x, value.y, network[2][value.index], network[3][value.index], value.index, node_type))
-        for node in data["nodes"]:
+                new_data["nodes"].append(Node(value.x, value.y, graph[value.index], value.index, node_type))
+        for node in new_data["nodes"]:
             node.event = event_caller(node, region_type, region_index)
-        return data
+        return new_data
 
 
 class NetworkGetter:
     @staticmethod
     def get_network(data):
-        valid = False
-        network, new_data = network_generator.network_gen(X, Y, data)
-        valid = network[4]
+        node_list, graph, edge_list, valid_path, new_data = NetworkGenerator(X, Y, data).get_region()
 
-        if valid:
-            return network, new_data
+        if valid_path:
+            return node_list, graph, edge_list, new_data
         else:
             return NetworkGetter.get_network(new_data)
 
 
 class Node(pygame.sprite.Sprite):
-    def __init__(self, x, y, neighbors, edges, state, node_type, node_event=None):
+    def __init__(self, x, y, neighbors, state, node_type, node_event=None):
         pygame.sprite.Sprite.__init__(self)
         super().__init__()
         self.parent = None
@@ -4994,7 +4017,6 @@ class Node(pygame.sprite.Sprite):
         self.selected = False
         self.hover = False
         self.neighbors = neighbors
-        self.edges = edges
         self.images = UNEXPLORED_NODE
         self.animation_index = 0
         self.image = self.images[0]

@@ -176,8 +176,7 @@ class CharacterSelect(BaseState):
         self.persist['elixirs'] = 5
         self.persist['gold'] = 1000
         self.persist['region_type'] = "None"
-        self.persist['inventory'] = [settings.StimPack(), settings.StimPack(), settings.StimPack(),
-                                     settings.StimPack(), settings.StimPack()]
+        self.persist['inventory'] = []
         self.persist['equip menu indices'] = settings.REGION_MENUS['equip menu']['equip menu indices']
         self.persist['party_abilities'] = PartyAbilityManager()
         self.persist["world"] = settings.WorldBuild.create_world(seed="zzzzzzzz")

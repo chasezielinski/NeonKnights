@@ -159,11 +159,11 @@ class Party(pygame.sprite.Sprite):
         surface.blit(self.image, (self.x, self.y))
 
 
-class TravelButton(object):
+class TravelButton:
     def __init__(self, parent):
-        self.bg_rect = [X * 14 / 100, Y * 2 / 100, X * 14 / 100, Y * 9 / 100]
-        self.border_rect = [X * 14 / 100, Y * 2 / 100, X * 14 / 100, Y * 9 / 100]
-        self.text_rect = [X * 17 / 100, Y * 5 / 100, X * 14 / 100, Y * 1 / 16]
+        self.bg_rect = pygame.rect.Rect(X * 14 / 100, Y * 2 / 100, X * 14 / 100, Y * 9 / 100)
+        self.border_rect = pygame.rect.Rect(X * 14 / 100, Y * 2 / 100, X * 14 / 100, Y * 9 / 100)
+        self.text_rect = pygame.rect.Rect(X * 17 / 100, Y * 5 / 100, X * 14 / 100, Y * 1 / 16)
         self.state = "Active"
         self.hover = True
         self.parent = parent
@@ -175,9 +175,15 @@ class TravelButton(object):
         self.text_color = (150, 150, 0)
         self.color = (0, 0, 0)
 
+    def update_pos(self):
+        if self.hover:
+            self.bg_rect.centery = self.border_rect.centery = self.text_rect.centery = Y * 5.5 / 100
+        else:
+            self.bg_rect.centery = self.border_rect.centery = self.text_rect.centery = 0
+
     def draw(self, surface):
         pygame.draw.rect(surface, self.color, self.bg_rect, border_radius=8)
-        tw(surface, "TRAVEL", self.text_color, self.text_rect, TEXT_FONT)
+        tw(surface, "TRAVEL", self.text_color, self.text_rect, TEXT_FONT, y_mode="center")
         pygame.draw.rect(surface, (0, 0, 0), self.bg_rect, 8, border_radius=8)
 
     def update(self, dt):
@@ -198,8 +204,8 @@ class TravelButton(object):
                 break
             else:
                 self.state = "Dormant"
-            self.hover = False
-        if settings.click_check(self.bg_rect):
+        self.hover = False
+        if self.bg_rect.collidepoint(pygame.mouse.get_pos()):
             self.hover = True
         if self.state == "Dormant":
             self.color = (50, 50, 50)
@@ -208,6 +214,7 @@ class TravelButton(object):
                 self.color = (200, 200, 200)
             else:
                 self.color = color
+        self.update_pos()
 
     def click(self):
         if settings.click_check(self.bg_rect):
@@ -343,15 +350,15 @@ class StatusBar(object):
                              [self.hp_rect[0], self.hp_rect[1] + (i * self.Y * self.offset), self.hp_rect[2],
                               self.hp_rect[3]])
             pygame.draw.rect(surface, (0, 150, 0),
-                             [self.hp_rect[0] + (self.hp_rect[0] * (1 - player.hp / player.get_stat(settings.Stat.HP))),
+                             [self.hp_rect[0],
                               self.hp_rect[1] + (i * self.Y * self.offset),
                               (self.hp_rect[2] * player.hp / player.get_stat(settings.Stat.HP)), self.hp_rect[3]])
             pygame.draw.rect(surface, (0, 0, 0), self.hp_rect, 4)
             pygame.draw.rect(surface, (150, 0, 0),
                              [self.mp_rect[0], self.mp_rect[1] + (i * self.Y * self.offset), self.mp_rect[2],
                               self.mp_rect[3]])
-            pygame.draw.rect(surface, (0, 150, 0),
-                             [self.mp_rect[0] + (self.mp_rect[0] * (1 - player.mp / player.get_stat(settings.Stat.MP))),
+            pygame.draw.rect(surface, (0, 0, 150),
+                             [self.mp_rect[0],
                               self.mp_rect[1] + (i * self.Y * self.offset),
                               (self.mp_rect[2] * player.mp / player.get_stat(settings.Stat.MP)), self.mp_rect[3]])
             pygame.draw.rect(surface, (0, 0, 0), self.mp_rect, 4)
@@ -389,6 +396,7 @@ class Background(object):
 
     def update(self, dt):
         pass
+
 
 
 class Region(BaseState):
@@ -534,7 +542,7 @@ class Region(BaseState):
         #        for node in self.nodes.sprites():
         #            settings.tw(surface, node.type, (0, 0, 0), [node.x + 50, node.y + 50, 100, 100], settings.DETAIL_FONT)
         self.party.draw(surface)
-        surface.blit(self.overlay_image, (0, 0))
+        # surface.blit(self.overlay_image, (0, 0))
         for button in self.buttons:
             button.draw(surface)
         self.cursor.draw(surface)
@@ -775,9 +783,6 @@ class SkillTreeMenu(object):
         self.detail = SkillDetail(self)
 
     def update(self, dt):
-        self.parent.persist['characters'][self.player_index].left_tree.update(dt)
-        self.parent.persist['characters'][self.player_index].center_tree.update(dt)
-        self.parent.persist['characters'][self.player_index].right_tree.update(dt)
         self.detail.update(dt)
 
     def handle_action(self, action):
