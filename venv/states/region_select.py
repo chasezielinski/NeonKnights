@@ -24,11 +24,6 @@ class RegionSelect(BaseState):
     def startup(self, persistent):
         self.persist = persistent
         self.options = self.persist["world"].get_options(self.persist["region_index"])
-        # while len(self.options) < 4:
-        #     choice = settings.choose_random(settings.REGION_BIOMES)
-        #     if choice not in self.options:
-        #         self.options.append(choice)
-        # self.options = self.options[1:]
 
     def handle_action(self, action):
         if action == "return":

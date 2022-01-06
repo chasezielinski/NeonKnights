@@ -398,7 +398,6 @@ class Background(object):
         pass
 
 
-
 class Region(BaseState):
     def __init__(self):
         super(Region, self).__init__()

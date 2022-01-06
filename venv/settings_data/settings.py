@@ -2590,12 +2590,15 @@ class DamageParticle:
 
 
 class BattleCharacter(pygame.sprite.Sprite):
-    def __init__(self, data, level, parent=None):
+    def __init__(self, data, parent=None, **kwargs):
         super().__init__()
         self.sprites = SpriteSheet(data["sprites"]).load_strip(data["sprite_rect"], data["sprite_count"],
                                                                data["color_key"])
         self.status_icon = ImageLoader.load_image(data["status_icon"], data["color_key"])
-        self.level = level
+        fields = ["level"]
+        for key, value in kwargs:
+            if key in fields:
+                setattr(self, key, value)
         self.level = 1
         self.flip_state_on_hit = False
         self.flip_state_on_magic = False
@@ -3413,15 +3416,17 @@ class EnemyGetter:
 
     @staticmethod
     def get_enemy(**kwargs):
-        level = 1
-        if "level" in kwargs.keys():
-            level = kwargs["level"]
+        try:
+            class_set = kwargs["class"]
+        except KeyError:
+            raise KeyError(f"Enemy class not provided in **kwargs")
 
-        class_ = choose_random(list(EnemyGetter.data))
-        if "class" in kwargs.keys():
-            class_ = kwargs["class"]
+        try:
+            class_ = EnemyGetter.data[class_set]
+        except KeyError:
+            raise KeyError(f"Enemy class, {class_set}, does not exist in Enemy_Data.json")
 
-        return BattleCharacter(EnemyGetter.data[class_], level)
+        return BattleCharacter(EnemyGetter.data[class_], **kwargs)
 
     @staticmethod
     def get_list() -> list:

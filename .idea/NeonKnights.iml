@@ -6,7 +6,7 @@
     </content>
     <content url="file://$MODULE_DIR$/venv/settings_data" />
     <content url="file://$MODULE_DIR$/venv/states" />
-    <orderEntry type="inheritedJdk" />
+    <orderEntry type="jdk" jdkName="Python 3.9" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
 </module>
